@@ -3,6 +3,7 @@ import { api } from '../services/api.js';
 import { HeatmapItem, SectorStatItem, TickerData } from '../types/index.js';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Compass, Shield, Activity } from 'lucide-react';
 import { WhaleRadarWidget } from '../components/WhaleRadarWidget.js';
+import { realtimeService } from '../services/realtime.js';
 
 interface MarketOverviewPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -17,6 +18,17 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
   useEffect(() => {
     api.getHeatmap().then(setHeatmap);
     api.getSectorStats().then(setSectorStats);
+
+    const unsub = realtimeService.subscribeTicks((ticks) => {
+      setHeatmap((prev) =>
+        prev.map((item) => {
+          const t = ticks[item.symbol];
+          return t ? { ...item, price: t.price, change24h: t.change24h } : item;
+        })
+      );
+    });
+
+    return unsub;
   }, []);
 
   const multiplier = currency === 'THB' ? 34.5 : 1;

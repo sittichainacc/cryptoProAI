@@ -24,6 +24,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   isCollapsed,
   setIsCollapsed,
+  isMobileOpen = false,
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
@@ -56,18 +58,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
+      className={isMobileOpen ? '' : 'sidebar-mobile-hidden'}
       style={{
-        width: isCollapsed ? '72px' : '250px',
+        width: isCollapsed && !isMobileOpen ? '72px' : '250px',
         backgroundColor: 'var(--bg-sidebar)',
         borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'width 0.25s ease-in-out',
+        transition: 'width 0.25s ease-in-out, transform 0.25s ease-in-out',
         flexShrink: 0,
         height: '100vh',
         position: 'sticky',
         top: 0,
         zIndex: 40,
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}
     >
       {/* Brand Header */}

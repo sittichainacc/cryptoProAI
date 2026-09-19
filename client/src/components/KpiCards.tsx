@@ -9,7 +9,7 @@ interface KpiCardsProps {
 export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
   if (!kpis) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px', marginBottom: '20px' }}>
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
         {[...Array(5)].map((_, i) => (
           <div key={i} className="crypto-card" style={{ height: '110px', animation: 'pulse 1.5s infinite' }} />
         ))}
@@ -49,9 +49,10 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
 
   return (
     <div
+      className="kpi-grid"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '14px',
         marginBottom: '20px',
       }}

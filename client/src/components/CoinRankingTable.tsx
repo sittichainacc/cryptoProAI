@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TickerData } from '../types/index.js';
 import { Star, ArrowUpDown, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
+import { PriceCell } from './PriceCell.js';
 
 interface CoinRankingTableProps {
   coins: TickerData[];
@@ -232,7 +233,7 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
                     </div>
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 700 }}>
-                    {prefix}{displayPrice}
+                    <PriceCell price={coin.price * multiplier} prefix={prefix} />
                   </td>
                   <td
                     style={{

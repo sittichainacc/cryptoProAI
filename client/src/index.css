@@ -94,6 +94,7 @@ body {
   display: flex;
   min-height: 100vh;
   background-color: var(--bg-app);
+  position: relative;
 }
 
 .main-content {
@@ -101,14 +102,155 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: hidden;
 }
 
 .content-body {
   padding: 20px 24px 40px;
   overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
 }
 
-/* Card Styling */
+/* Mobile Sidebar Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 39;
+  cursor: pointer;
+}
+
+/* Responsive Trading Main Grid — 3-col desktop */
+.trading-main-grid {
+  display: grid;
+  grid-template-columns: 260px minmax(380px, 1fr) 280px;
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+/* ────────────────── 1600px and below ────────────────── */
+@media (max-width: 1599px) {
+  .trading-main-grid {
+    grid-template-columns: 240px minmax(320px, 1fr) 260px;
+  }
+}
+
+/* ────────────────── 1350px – tablet landscape ─────────── */
+@media (max-width: 1350px) {
+  .trading-main-grid {
+    grid-template-columns: 240px 1fr;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-column: span 2;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px;
+  }
+}
+
+/* ────────────────── 1100px ──────────────────────────── */
+@media (max-width: 1100px) {
+  .content-body {
+    padding: 16px 16px 36px;
+  }
+  .trading-main-grid {
+    grid-template-columns: 220px 1fr;
+    gap: 12px;
+  }
+}
+
+/* ────────────────── 960px – tablet portrait ─────────── */
+@media (max-width: 960px) {
+  .trading-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-column: span 1;
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .content-body {
+    padding: 14px 14px 32px;
+  }
+}
+
+/* ────────────────── 768px – mobile / small tablet ──── */
+@media (max-width: 768px) {
+  /* Sidebar becomes a slide-in overlay on mobile */
+  aside.sidebar-mobile-hidden {
+    transform: translateX(-100%);
+  }
+  aside {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    z-index: 50 !important;
+    transition: transform 0.25s ease-in-out, width 0.25s ease-in-out !important;
+  }
+  .sidebar-overlay {
+    display: block;
+  }
+  .trading-main-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-template-columns: 1fr !important;
+  }
+  .content-body {
+    padding: 12px 12px 28px;
+  }
+  /* KPI cards — 2 col on mobile */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ────────────────── 480px – small phones ─────────────── */
+@media (max-width: 480px) {
+  .content-body {
+    padding: 10px 10px 24px;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-template-columns: 1fr !important;
+  }
+  /* KPI stack to 1 col */
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile menu toggle button (shows on ≤768px) */
+.mobile-menu-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+}
+
+
 .crypto-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -320,52 +462,36 @@ body {
   animation: pulseGlow 2s infinite ease-in-out;
 }
 
-/* Responsive Trading Main Grid (Section 33) */
-.trading-main-grid {
-  display: grid;
-  grid-template-columns: 270px minmax(420px, 1fr) 290px;
-  gap: 14px;
-  align-items: stretch;
-  margin-bottom: 20px;
-}
 
-@media (max-width: 1350px) {
-  .trading-main-grid {
-    grid-template-columns: 270px 1fr;
-  }
-  .trading-main-grid > .right-signals-column {
-    grid-column: span 2;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 14px;
-  }
-}
 
-@media (max-width: 960px) {
-  .trading-main-grid {
-    grid-template-columns: 1fr;
-  }
-  .trading-main-grid > .right-signals-column {
-    grid-column: span 1;
-    grid-template-columns: 1fr !important;
-  }
-}
 
 /* Price Flash Animation */
 @keyframes flashGreen {
-  0% { background-color: rgba(16, 185, 129, 0.4); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(16, 185, 129, 0.35);
+    color: #34D399;
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 @keyframes flashRed {
-  0% { background-color: rgba(239, 68, 68, 0.4); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(239, 68, 68, 0.35);
+    color: #F87171;
+    text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 .flash-up {
-  animation: flashGreen 1.2s ease-out;
+  animation: flashGreen 1s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .flash-down {
-  animation: flashRed 1.2s ease-out;
+  animation: flashRed 1s cubic-bezier(0.25, 1, 0.5, 1);
 }

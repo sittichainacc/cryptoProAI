@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { api } from './services/api.js';
 import { 
   AlertItem, 
@@ -46,9 +46,31 @@ export const App: React.FC = () => {
   const [activeSidebarTab, setActiveSidebarTab] = useState('dashboard');
   const [activeTopTab, setActiveTopTab] = useState('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<'THB' | 'USDT'>('USDT');
   const [userRole, setUserRole] = useState<'admin' | 'analyst' | 'investor'>('analyst');
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Close mobile sidebar when resizing to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) setIsMobileSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSidebarNavigation = useCallback((tabId: string) => {
+    setActiveSidebarTab(tabId);
+    setIsMobileSidebarOpen(false); // auto-close on mobile after navigation
+    if (tabId === 'dashboard') setActiveTopTab('overview');
+    else if (tabId === 'screener') setActiveTopTab('screener');
+    else if (tabId === 'technical' || tabId === 'analysis') setActiveTopTab('chart');
+    else if (tabId === 'signals') setActiveTopTab('signals');
+    else if (tabId === 'portfolio') setActiveTopTab('portfolio');
+    else if (tabId === 'alerts') setActiveTopTab('alerts');
+    else if (tabId === 'reports') setActiveTopTab('reports');
+  }, []);
 
   // Market Data State
   const [kpis, setKpis] = useState<MarketOverviewKPIs | null>(null);
@@ -84,16 +106,7 @@ export const App: React.FC = () => {
     else if (tabId === 'reports') setActiveSidebarTab('reports');
   };
 
-  const handleSidebarTabChange = (tabId: string) => {
-    setActiveSidebarTab(tabId);
-    if (tabId === 'dashboard') setActiveTopTab('overview');
-    else if (tabId === 'screener') setActiveTopTab('screener');
-    else if (tabId === 'technical' || tabId === 'analysis') setActiveTopTab('chart');
-    else if (tabId === 'signals') setActiveTopTab('signals');
-    else if (tabId === 'portfolio') setActiveTopTab('portfolio');
-    else if (tabId === 'alerts') setActiveTopTab('alerts');
-    else if (tabId === 'reports') setActiveTopTab('reports');
-  };
+  const handleSidebarTabChange = handleSidebarNavigation;
 
   // Initial Data Fetching
   const loadMarketData = async () => {
@@ -409,12 +422,21 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Mobile sidebar backdrop overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeSidebarTab}
         setActiveTab={handleSidebarTabChange}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
       />
 
       {/* Main Content Viewport */}
@@ -428,6 +450,7 @@ export const App: React.FC = () => {
           setActiveTopTab={handleTopTabChange}
           userRole={userRole}
           setUserRole={setUserRole}
+          onMobileMenuToggle={() => setIsMobileSidebarOpen((p) => !p)}
         />
 
         <div className="content-body">

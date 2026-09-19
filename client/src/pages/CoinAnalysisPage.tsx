@@ -3,7 +3,8 @@ import { api } from '../services/api.js';
 import { Candle, DeepAnalysisData, TickerData } from '../types/index.js';
 import { MainChartWidget } from '../components/MainChartWidget.js';
 import { TradingViewTechnicalGauge } from '../components/TradingViewTechnicalGauge.js';
-import { Sparkles, Layers, Target, AlertTriangle, CheckCircle2, Shield, Activity, Compass } from 'lucide-react';
+import { Sparkles, Layers, Target, AlertTriangle, CheckCircle2, Shield, Activity, Compass, Radio } from 'lucide-react';
+import { realtimeService } from '../services/realtime.js';
 
 interface CoinAnalysisPageProps {
   selectedSymbol: string;
@@ -27,6 +28,45 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
   useEffect(() => {
     api.getDeepAnalysis(selectedSymbol).then(setAnalysisData);
     api.getChartData(selectedSymbol).then((res) => setCandles(res.candles));
+  }, [selectedSymbol]);
+
+  useEffect(() => {
+    const unsub = realtimeService.subscribeTicks((ticks) => {
+      const live = ticks[selectedSymbol];
+      if (live) {
+        setAnalysisData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            ticker: {
+              ...prev.ticker,
+              price: live.price,
+              change24h: live.change24h,
+              high24h: live.high24h,
+              low24h: live.low24h,
+              volume24h: live.volume24h,
+            },
+          };
+        });
+
+        setCandles((prevCandles) => {
+          if (!prevCandles || prevCandles.length === 0) return prevCandles;
+          const lastIdx = prevCandles.length - 1;
+          const last = prevCandles[lastIdx];
+          const updatedLast: Candle = {
+            ...last,
+            close: live.price,
+            high: Math.max(last.high, live.price),
+            low: Math.min(last.low, live.price),
+          };
+          const next = [...prevCandles];
+          next[lastIdx] = updatedLast;
+          return next;
+        });
+      }
+    });
+
+    return () => unsub();
   }, [selectedSymbol]);
 
   const multiplier = currency === 'THB' ? 34.5 : 1;
@@ -53,6 +93,23 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
               วิเคราะห์เชิงลึก: {selectedSymbol}/{currency === 'THB' ? 'THB' : 'USDT'}
             </h2>
             <span className="badge badge-strong-buy">{ticker.signalLabelTh}</span>
+            <span
+              style={{
+                fontSize: '11px',
+                color: 'var(--neon-green-light)',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+              }}
+            >
+              <span className="live-dot" />
+              LIVE TICKER
+            </span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Technical Score 100 คะแนน • การวิเคราะห์โครงสร้างตลาด • Consensus Matrix

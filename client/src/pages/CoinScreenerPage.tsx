@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { TickerData } from '../types/index.js';
 import { Sparkles, Filter, Zap, RotateCcw, ArrowUpDown, ArrowUpRight, ArrowDownRight, Star, Download } from 'lucide-react';
+import { realtimeService } from '../services/realtime.js';
 
 interface CoinScreenerPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -45,6 +46,26 @@ export const CoinScreenerPage: React.FC<CoinScreenerPageProps> = ({
 
   useEffect(() => {
     handleRunScan('breakout');
+
+    const unsub = realtimeService.subscribeTicks((ticks) => {
+      setResults((prev) =>
+        prev.map((c) => {
+          const t = ticks[c.symbol];
+          return t
+            ? {
+                ...c,
+                price: t.price,
+                change24h: t.change24h,
+                high24h: t.high24h,
+                low24h: t.low24h,
+                volume24h: t.quoteVolume24h,
+              }
+            : c;
+        })
+      );
+    });
+
+    return unsub;
   }, [selectedSector, minVolume]);
 
   const multiplier = currency === 'THB' ? 34.5 : 1;

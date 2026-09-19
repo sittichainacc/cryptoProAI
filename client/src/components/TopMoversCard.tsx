@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TickerData } from '../types/index.js';
+import { PriceCell } from './PriceCell.js';
 
 interface TopMoversCardProps {
   gainers: TickerData[];
@@ -124,7 +125,7 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
                     </div>
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 600, padding: '8px 8px' }}>
-                    {currencyPrefix}{displayPrice}
+                    <PriceCell price={coin.price * (currency === 'THB' ? 34.5 : 1)} prefix={currencyPrefix} />
                   </td>
                   <td
                     style={{

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Moon, Sun, Bell, User, Shield, ChevronDown, Check, Sparkles, Volume2, VolumeX, Radio, Keyboard, X } from 'lucide-react';
+import { Search, Moon, Sun, Bell, User, Shield, ChevronDown, Check, Sparkles, Volume2, VolumeX, Radio, Keyboard, X, Menu } from 'lucide-react';
 import { TickerData } from '../types/index.js';
 import { realtimeService } from '../services/realtime.js';
 
@@ -12,6 +12,7 @@ interface TopbarProps {
   setActiveTopTab: (tab: string) => void;
   userRole?: 'admin' | 'analyst' | 'investor';
   setUserRole?: (role: 'admin' | 'analyst' | 'investor') => void;
+  onMobileMenuToggle?: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -23,6 +24,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   setActiveTopTab,
   userRole = 'analyst',
   setUserRole,
+  onMobileMenuToggle,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDark, setIsDark] = useState(true);
@@ -156,8 +158,16 @@ export const Topbar: React.FC<TopbarProps> = ({
         backdropFilter: 'blur(10px)',
       }}
     >
-      {/* Left / Center: Top Navigation Tabs (from Image 1) */}
+      {/* Left / Center: Hamburger (mobile) + Top Navigation Tabs */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Mobile hamburger menu button — visible only on ≤768px via CSS */}
+        <button
+          className="mobile-menu-btn"
+          onClick={onMobileMenuToggle}
+          title="เมนู"
+        >
+          <Menu size={18} />
+        </button>
         {topTabs.map((tab) => {
           const isActive = activeTopTab === tab.id;
           return (
