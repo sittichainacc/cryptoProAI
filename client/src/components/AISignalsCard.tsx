@@ -1,0 +1,122 @@
+import React from 'react';
+import { TickerData } from '../types/index.js';
+import { ChevronRight, ArrowUpRight } from 'lucide-react';
+
+interface AISignalsCardProps {
+  signals: TickerData[];
+  onSelectCoin: (symbol: string) => void;
+  onViewAll?: () => void;
+}
+
+export const AISignalsCard: React.FC<AISignalsCardProps> = ({
+  signals,
+  onSelectCoin,
+  onViewAll,
+}) => {
+  const getBadgeClass = (signal: string) => {
+    switch (signal) {
+      case 'STRONG_BUY':
+        return 'badge-strong-buy';
+      case 'BUY':
+        return 'badge-buy';
+      case 'WAIT_FOR_RETEST':
+        return 'badge-retest';
+      case 'WAIT_FOR_PULLBACK':
+        return 'badge-watch';
+      default:
+        return 'badge-neutral';
+    }
+  };
+
+  const getAvatarColor = (symbol: string) => {
+    const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#06B6D4'];
+    let hash = 0;
+    for (let i = 0; i < symbol.length; i++) hash += symbol.charCodeAt(i);
+    return colors[hash % colors.length];
+  };
+
+  return (
+    <div className="crypto-card" style={{ marginBottom: '14px' }}>
+      <div className="card-header-row">
+        <div className="card-title" style={{ fontSize: '14px' }}>
+          <span>สัญญาณเด่นวันนี้ (AI)</span>
+        </div>
+        <div className="card-action-link" onClick={onViewAll}>
+          <span>ดูทั้งหมด</span>
+          <ChevronRight size={14} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {signals.slice(0, 5).map((item, index) => (
+          <div
+            key={item.symbol}
+            onClick={() => onSelectCoin(item.symbol)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)')}
+          >
+            {/* Rank & Coin Logo & Symbol */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', width: '12px' }}>
+                {index + 1}
+              </span>
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: getAvatarColor(item.symbol),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                }}
+              >
+                {item.symbol.slice(0, 2)}
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '13px' }}>{item.symbol}</div>
+                <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
+                  {item.signal === 'STRONG_BUY' ? 'Breakout + Volume สูง' : 'แนวโน้มขาขึ้นชัดเจน'}
+                </div>
+              </div>
+            </div>
+
+            {/* Signal Badge & Change % */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className={`badge ${getBadgeClass(item.signal)}`}>
+                {item.signal === 'STRONG_BUY' ? 'Strong Buy' : 'Buy'}
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: item.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                  minWidth: '48px',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <ArrowUpRight size={13} />
+                <span>+{Math.abs(item.change24h).toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

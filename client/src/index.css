@@ -1,0 +1,371 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette - Dark Navy Crypto Terminal */
+  --bg-app: #080C15;
+  --bg-sidebar: #0B101D;
+  --bg-header: #0C1222;
+  --bg-card: #10182B;
+  --bg-card-hover: #152038;
+  --bg-card-inner: #0B101E;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(59, 130, 246, 0.35);
+  --border-active: #3B82F6;
+
+  /* Neon Accents */
+  --neon-blue: #3B82F6;
+  --neon-blue-light: #60A5FA;
+  --neon-cyan: #06B6D4;
+  --neon-cyan-glow: rgba(6, 182, 212, 0.4);
+  --neon-green: #10B981;
+  --neon-green-light: #34D399;
+  --neon-green-glow: rgba(16, 185, 129, 0.3);
+  --neon-amber: #F59E0B;
+  --neon-purple: #8B5CF6;
+  --neon-red: #EF4444;
+  --neon-red-glow: rgba(239, 68, 68, 0.3);
+
+  /* Typography */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow-blue: 0 0 16px rgba(59, 130, 246, 0.3);
+  --shadow-glow-cyan: 0 0 16px rgba(6, 182, 212, 0.35);
+  --shadow-glow-green: 0 0 16px rgba(16, 185, 129, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Base Utility Classes */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.glow-blue {
+  box-shadow: var(--shadow-glow-blue);
+}
+
+.glow-cyan {
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+.glow-green {
+  box-shadow: var(--shadow-glow-green);
+}
+
+/* Layout Containers */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content-body {
+  padding: 20px 24px 40px;
+  overflow-y: auto;
+}
+
+/* Card Styling */
+.crypto-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.crypto-card:hover {
+  border-color: var(--border-hover);
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.card-action-link {
+  font-size: 12px;
+  color: var(--neon-cyan);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.card-action-link:hover {
+  color: var(--neon-blue-light);
+}
+
+/* Badges */
+.badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-strong-buy {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge-buy {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-watch {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-retest {
+  background: rgba(6, 182, 212, 0.15);
+  color: #22D3EE;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-neutral {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.badge-sell {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Percentage Colors */
+.text-up {
+  color: var(--neon-green-light);
+}
+
+.text-down {
+  color: var(--neon-red);
+}
+
+.bg-up-light {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.bg-down-light {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #1D4ED8, #2563EB);
+  color: #FFFFFF;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Table Design */
+.crypto-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.crypto-table th {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.crypto-table td {
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.crypto-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--neon-green);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px var(--neon-green);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Responsive Trading Main Grid (Section 33) */
+.trading-main-grid {
+  display: grid;
+  grid-template-columns: 270px minmax(420px, 1fr) 290px;
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1350px) {
+  .trading-main-grid {
+    grid-template-columns: 270px 1fr;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-column: span 2;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 960px) {
+  .trading-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .trading-main-grid > .right-signals-column {
+    grid-column: span 1;
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Price Flash Animation */
+@keyframes flashGreen {
+  0% { background-color: rgba(16, 185, 129, 0.4); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flashRed {
+  0% { background-color: rgba(239, 68, 68, 0.4); }
+  100% { background-color: transparent; }
+}
+
+.flash-up {
+  animation: flashGreen 1.2s ease-out;
+}
+
+.flash-down {
+  animation: flashRed 1.2s ease-out;
+}

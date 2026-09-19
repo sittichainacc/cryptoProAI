@@ -1,0 +1,619 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Wrench, 
+  TrendingUp, 
+  Calculator, 
+  PieChart, 
+  Sparkles, 
+  ShieldAlert, 
+  ArrowRight, 
+  ChevronRight, 
+  CheckCircle2, 
+  DollarSign, 
+  Percent, 
+  Clock,
+  Layers,
+  BarChart3
+} from 'lucide-react';
+import { TickerData } from '../types/index.js';
+import { api } from '../services/api.js';
+
+interface StrategyPageProps {
+  onSelectCoin: (symbol: string) => void;
+  currency: 'THB' | 'USDT';
+}
+
+export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, currency }) => {
+  const [activeTab, setActiveTab] = useState<'dca' | 'strategies' | 'expectancy' | 'correlation'>('dca');
+  
+  // DCA Calculator State
+  const [dcaSymbol, setDcaSymbol] = useState('BTC');
+  const [dcaAmount, setDcaAmount] = useState(1000);
+  const [dcaFreq, setDcaFreq] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+  const [dcaDuration, setDcaDuration] = useState(12);
+  const [dcaResult, setDcaResult] = useState<any>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  // Expectancy Calculator State
+  const [winRate, setWinRate] = useState(55);
+  const [avgWinPercent, setAvgWinPercent] = useState(6);
+  const [avgLossPercent, setAvgLossPercent] = useState(2.5);
+
+  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const prefix = currency === 'THB' ? '฿' : '$';
+
+  // Run initial DCA Calculation
+  const runDcaCalculation = async () => {
+    setIsCalculating(true);
+    try {
+      const res = await api.calculateDCA({
+        symbol: dcaSymbol,
+        amount: dcaAmount,
+        frequency: dcaFreq,
+        durationMonths: dcaDuration,
+      });
+      setDcaResult(res);
+    } catch (e) {
+      console.error('Failed to calculate DCA:', e);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  useEffect(() => {
+    runDcaCalculation();
+  }, [dcaSymbol, dcaFreq, dcaDuration]);
+
+  // Calculate Expectancy
+  const winFraction = winRate / 100;
+  const lossFraction = 1 - winFraction;
+  const expectancy = (winFraction * avgWinPercent) - (lossFraction * avgLossPercent);
+  const profitFactor = (lossFraction * avgLossPercent) === 0 ? 99 : (winFraction * avgWinPercent) / (lossFraction * avgLossPercent);
+  const rrRatio = (avgWinPercent / avgLossPercent).toFixed(1);
+
+  // Correlation Matrix Data
+  const correlationCoins = ['BTC', 'ETH', 'SOL', 'BNB', 'DOGE', 'AVAX'];
+  const correlationMatrix: Record<string, Record<string, number>> = {
+    BTC: { BTC: 1.0, ETH: 0.88, SOL: 0.76, BNB: 0.79, DOGE: 0.62, AVAX: 0.74 },
+    ETH: { BTC: 0.88, ETH: 1.0, SOL: 0.81, BNB: 0.82, DOGE: 0.65, AVAX: 0.78 },
+    SOL: { BTC: 0.76, ETH: 0.81, SOL: 1.0, BNB: 0.71, DOGE: 0.68, AVAX: 0.85 },
+    BNB: { BTC: 0.79, ETH: 0.82, SOL: 0.71, BNB: 1.0, DOGE: 0.58, AVAX: 0.70 },
+    DOGE: { BTC: 0.62, ETH: 0.65, SOL: 0.68, BNB: 0.58, DOGE: 1.0, AVAX: 0.66 },
+    AVAX: { BTC: 0.74, ETH: 0.78, SOL: 0.85, BNB: 0.70, DOGE: 0.66, AVAX: 1.0 },
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Page Header */}
+      <div className="card-header-row" style={{ marginBottom: 0 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Wrench size={22} color="var(--neon-cyan)" />
+            <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
+              เครื่องมือ &amp; กลยุทธ์การลงทุน (Strategy &amp; Quant Workstation)
+            </h2>
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            เครื่องมือวางแผนการลงทุนเชิงปริมาณ, แบบจำลอง DCA ย้อนหลัง, กลยุทธ์ AI 3 รูปแบบ และเมทริกซ์สถิติ
+          </p>
+        </div>
+      </div>
+
+      {/* Strategy Navigation Tabs */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {[
+          { id: 'dca', label: 'แบบจำลองการออมเหรียญ (DCA Simulator)', icon: Calculator },
+          { id: 'strategies', label: 'กลยุทธ์เทรด AI (3 Core Strategies)', icon: Sparkles },
+          { id: 'expectancy', label: 'คำนวณสถิติความได้เปรียบ (Expectancy & R:R)', icon: Percent },
+          { id: 'correlation', label: 'เมทริกซ์สหสัมพันธ์ (Correlation Matrix)', icon: Layers },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: isActive ? 'var(--neon-blue)' : 'var(--bg-card)',
+                color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Icon size={15} color={isActive ? '#FFFFFF' : 'var(--neon-cyan)'} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab 1: DCA Simulator */}
+      {activeTab === 'dca' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="crypto-card" style={{ padding: '20px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Calculator size={18} color="var(--neon-cyan)" />
+              ตั้งค่าพารามิเตอร์จำลองการออม (DCA Inputs)
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              {/* Coin Select */}
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  เหรียญที่ต้องการออม
+                </label>
+                <select
+                  value={dcaSymbol}
+                  onChange={(e) => setDcaSymbol(e.target.value)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--border-color)',
+                    color: '#FFF',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    fontWeight: 700,
+                  }}
+                >
+                  {['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP', 'DOGE', 'AVAX', 'NEAR', 'SUI'].map((sym) => (
+                    <option key={sym} value={sym} style={{ backgroundColor: '#0B0F19' }}>
+                      {sym}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Amount per period */}
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  เงินลงทุนต่อรอบ ({currency})
+                </label>
+                <input
+                  type="number"
+                  value={dcaAmount}
+                  onChange={(e) => setDcaAmount(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--border-color)',
+                    color: '#FFF',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    fontWeight: 700,
+                  }}
+                />
+              </div>
+
+              {/* Frequency */}
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  ความถี่ในการซื้อ
+                </label>
+                <select
+                  value={dcaFreq}
+                  onChange={(e) => setDcaFreq(e.target.value as any)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--border-color)',
+                    color: '#FFF',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    fontWeight: 700,
+                  }}
+                >
+                  <option value="daily" style={{ backgroundColor: '#0B0F19' }}>ทุกวัน (Daily)</option>
+                  <option value="weekly" style={{ backgroundColor: '#0B0F19' }}>ทุกสัปดาห์ (Weekly)</option>
+                  <option value="monthly" style={{ backgroundColor: '#0B0F19' }}>ทุกเดือน (Monthly)</option>
+                </select>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  ระยะเวลาสะสม
+                </label>
+                <select
+                  value={dcaDuration}
+                  onChange={(e) => setDcaDuration(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--border-color)',
+                    color: '#FFF',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    fontWeight: 700,
+                  }}
+                >
+                  <option value={3} style={{ backgroundColor: '#0B0F19' }}>3 เดือน</option>
+                  <option value={6} style={{ backgroundColor: '#0B0F19' }}>6 เดือน</option>
+                  <option value={12} style={{ backgroundColor: '#0B0F19' }}>1 ปี (12 เดือน)</option>
+                  <option value={24} style={{ backgroundColor: '#0B0F19' }}>2 ปี (24 เดือน)</option>
+                  <option value={36} style={{ backgroundColor: '#0B0F19' }}>3 ปี (36 เดือน)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={runDcaCalculation}
+                disabled={isCalculating}
+                className="btn-primary"
+                style={{ padding: '8px 20px', fontSize: '13px' }}
+              >
+                {isCalculating ? 'กำลังประมวลผล...' : 'คำนวณผลลัพธ์ DCA'}
+              </button>
+            </div>
+          </div>
+
+          {/* DCA Result Cards */}
+          {dcaResult && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+              <div className="crypto-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>เงินต้นสะสมรวม (Total Invested)</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px' }}>
+                  {prefix}{dcaResult.totalInvested.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  จำนวน {dcaResult.periods} รอบการซื้อ
+                </div>
+              </div>
+
+              <div className="crypto-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>มูลค่าพอร์ตปัจจุบัน (Portfolio Value)</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#60A5FA', marginTop: '4px' }}>
+                  {prefix}{dcaResult.finalValue.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--neon-green-light)', marginTop: '2px' }}>
+                  สะสมได้ {dcaResult.accumulatedCoins} {dcaSymbol}
+                </div>
+              </div>
+
+              <div className="crypto-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กำไรสุทธิ (Net Profit)</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: dcaResult.netProfit >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)', marginTop: '4px' }}>
+                  {dcaResult.netProfit >= 0 ? `+${prefix}` : `-${prefix}`}
+                  {Math.abs(dcaResult.netProfit).toLocaleString()}
+                </div>
+                <div style={{ fontSize: '11px', color: dcaResult.netProfit >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)', marginTop: '2px' }}>
+                  ผลตอบแทน {dcaResult.roi > 0 ? `+${dcaResult.roi}%` : `${dcaResult.roi}%`}
+                </div>
+              </div>
+
+              <div className="crypto-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ต้นทุนเฉลี่ย (Avg Cost) vs ตลาด</div>
+                <div style={{ fontSize: '18px', fontWeight: 800, marginTop: '4px' }}>
+                  ${dcaResult.averageCost.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', marginTop: '2px' }}>
+                  ราคาตลาด: ${dcaResult.currentPrice.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DCA Timeline Progress */}
+          {dcaResult && dcaResult.history && (
+            <div className="crypto-card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <BarChart3 size={16} color="var(--neon-cyan)" />
+                ตารางบันทึกการเติบโตตามช่วงเวลา (Milestone Progression)
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                      <th style={{ textAlign: 'left', padding: '8px' }}>รอบที่ (Period)</th>
+                      <th style={{ textAlign: 'right', padding: '8px' }}>เงินต้นสะสม</th>
+                      <th style={{ textAlign: 'right', padding: '8px' }}>มูลค่าพอร์ต</th>
+                      <th style={{ textAlign: 'right', padding: '8px' }}>กำไร / ขาดทุน</th>
+                      <th style={{ textAlign: 'right', padding: '8px' }}>สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dcaResult.history.map((step: any, idx: number) => {
+                      const profit = step.value - step.invested;
+                      return (
+                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          <td style={{ padding: '10px 8px', fontWeight: 600 }}>รอบที่ {step.period}</td>
+                          <td style={{ textAlign: 'right', padding: '10px 8px' }}>{prefix}{step.invested.toLocaleString()}</td>
+                          <td style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 700, color: '#60A5FA' }}>
+                            {prefix}{step.value.toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 8px', color: profit >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)', fontWeight: 700 }}>
+                            {profit >= 0 ? `+${prefix}` : `-${prefix}`}{Math.abs(profit).toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 8px' }}>
+                            <span className="badge badge-strong-buy" style={{ fontSize: '10px' }}>สะสมต่อเนื่อง</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: 3 Core AI Strategies */}
+      {activeTab === 'strategies' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+          {/* Strategy 1 */}
+          <div className="crypto-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-strong-buy">Trend Following</span>
+              <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontWeight: 700 }}>Win Rate: ~74% | R:R 1:2.8</span>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '17px', fontWeight: 800 }}>1. เล่นตามแนวโน้มใหญ่ (Follow Trend)</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                กลยุทธ์หลักสำหรับ Run Trend ยาวในรอบ Bull Market เข้าซื้อเมื่อโครงสร้างราคายืนยันขาขึ้นสมบูรณ์แบบ
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', fontSize: '11.5px', lineHeight: 1.6 }}>
+              <div><strong>เงื่อนไขการเข้า (Entry):</strong> EMA 20 &gt; EMA 50 &gt; EMA 200, MACD &gt; 0, ADX &gt; 25</div>
+              <div><strong>จุดตัดขาดทุน (SL):</strong> ปิดแท่ง 4H หลุดต่ำกว่าเส้น EMA 50 หรือ 2 ATR</div>
+              <div><strong>เป้าหมายกำไร (TP):</strong> Trailing Stop ตามเส้น EMA 20 ไปเรื่อยๆ จนกว่าโครงสร้างจะเสีย</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>เหรียญที่ตรงเกณฑ์: <strong>BTC, ETH, SOL</strong></span>
+              <button onClick={() => onSelectCoin('SOL')} className="btn-secondary" style={{ fontSize: '11px' }}>
+                ดูกราฟ SOL <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Strategy 2 */}
+          <div className="crypto-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-buy">Swing Trading</span>
+              <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontWeight: 700 }}>Win Rate: ~68% | R:R 1:2.2</span>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '17px', fontWeight: 800 }}>2. ซื้อแนวรับ ขายแนวต้าน (Swing Trade)</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                ดักซื้อจังหวะย่อตัวในกรอบแนวรับสำคัญ (Buy the Dips) เมื่อราคาเหรียญคุณภาพดีมีการ Pullback ชั่วคราว
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', fontSize: '11.5px', lineHeight: 1.6 }}>
+              <div><strong>เงื่อนไขการเข้า (Entry):</strong> ราคา Pullback แตะแนวรับ S1 หรือ Fibonacci 0.618, RSI 35-45</div>
+              <div><strong>จุดตัดขาดทุน (SL):</strong> หลุดแนวรับ S2 (ต่ำกว่าจุดกลับตัว 1.5%)</div>
+              <div><strong>เป้าหมายกำไร (TP):</strong> แนวต้าน R1 และ R2 โดยแบ่งไม้ Take Profit 50/50</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>เหรียญที่ตรงเกณฑ์: <strong>SUI, AVAX, NEAR</strong></span>
+              <button onClick={() => onSelectCoin('SUI')} className="btn-secondary" style={{ fontSize: '11px' }}>
+                ดูกราฟ SUI <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Strategy 3 */}
+          <div className="crypto-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-retest">Breakout Momentum</span>
+              <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontWeight: 700 }}>Win Rate: ~61% | R:R 1:3.5</span>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '17px', fontWeight: 800 }}>3. เก็งกำไรจังหวะทะลุ (Breakout)</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                เข้าซื้อทันทีที่ราคาเบรกทะลุกรอบสะสมพลัง (Consolidation) พร้อมกับ Volume พุ่งกระฉูดกว่าปกติ
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', fontSize: '11.5px', lineHeight: 1.6 }}>
+              <div><strong>เงื่อนไขการเข้า (Entry):</strong> ทะลุ Resistance สูงสุด 20 วัน + Volume พุ่งเกิน 200%</div>
+              <div><strong>จุดตัดขาดทุน (SL):</strong> วกกลับเข้ามาปิดแท่งใต้กรอบแนวต้านเดิม (Fakeout Stop)</div>
+              <div><strong>เป้าหมายกำไร (TP):</strong> วัดระยะความสูงของกรอบสะสมเดิมขยายตัวขึ้นไป 100%-161.8%</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>เหรียญที่ตรงเกณฑ์: <strong>DOGE, PEPE, FET</strong></span>
+              <button onClick={() => onSelectCoin('DOGE')} className="btn-secondary" style={{ fontSize: '11px' }}>
+                ดูกราฟ DOGE <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Statistical Expectancy & R:R Matrix */}
+      {activeTab === 'expectancy' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="crypto-card" style={{ padding: '20px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Percent size={18} color="var(--neon-cyan)" />
+              เครื่องมือคำนวณความได้เปรียบทางสถิติ (Expectancy Engine)
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  อัตราความแม่นยำ (Win Rate): <strong>{winRate}%</strong>
+                </label>
+                <input
+                  type="range"
+                  min={25}
+                  max={85}
+                  value={winRate}
+                  onChange={(e) => setWinRate(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#3B82F6' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  กำไรเฉลี่ยต่อไม้ที่ชนะ (Avg Win %): <strong>+{avgWinPercent}%</strong>
+                </label>
+                <input
+                  type="range"
+                  min={2}
+                  max={20}
+                  step={0.5}
+                  value={avgWinPercent}
+                  onChange={(e) => setAvgWinPercent(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#10B981' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  ขาดทุนเฉลี่ยต่อไม้ที่แพ้ (Avg Loss %): <strong>-{avgLossPercent}%</strong>
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={0.5}
+                  value={avgLossPercent}
+                  onChange={(e) => setAvgLossPercent(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#EF4444' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '18px' }}>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '8px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Risk : Reward Ratio</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--neon-cyan)', marginTop: '2px' }}>
+                  1 : {rrRatio}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>ความคุ้มค่าของการเสี่ยง</div>
+              </div>
+
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '8px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Profit Factor</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: profitFactor >= 1.5 ? 'var(--neon-green-light)' : 'var(--neon-red)', marginTop: '2px' }}>
+                  {profitFactor.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '11px', color: profitFactor >= 1.5 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+                  {profitFactor >= 2.0 ? 'ยอดเยี่ยมมาก' : profitFactor >= 1.5 ? 'ได้เปรียบตลาด' : 'ความเสี่ยงสูง'}
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '8px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Expectancy per Trade</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: expectancy > 0 ? 'var(--neon-green-light)' : 'var(--neon-red)', marginTop: '2px' }}>
+                  {expectancy > 0 ? `+${expectancy.toFixed(2)}%` : `${expectancy.toFixed(2)}%`}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>ผลตอบแทนที่คาดหวังต่อ 1 ไม้</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Benchmark Table */}
+          <div className="crypto-card" style={{ padding: '20px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '10px' }}>
+              เปรียบเทียบสถิติผลตอบแทน 100 ไม้ (Why R:R beats Win Rate)
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+              ความลับของนักลงทุนเชิงปริมาณ: Win Rate ต่ำแต่ R:R สูง ให้ผลลัพธ์พอร์ตเติบโตเร็วกว่าการเน้น Win Rate สูงแต่เสียคำโต
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>รูปแบบระบบ</th>
+                  <th style={{ textAlign: 'center', padding: '8px' }}>Win Rate</th>
+                  <th style={{ textAlign: 'center', padding: '8px' }}>Risk : Reward</th>
+                  <th style={{ textAlign: 'right', padding: '8px' }}>Expectancy/ไม้</th>
+                  <th style={{ textAlign: 'right', padding: '8px' }}>กำไรสุทธิ 100 ไม้</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <td style={{ padding: '10px 8px', fontWeight: 700 }}>เทรดตามอารมณ์ (Win บ่อยแต่แพ้หนัก)</td>
+                  <td style={{ textAlign: 'center', color: '#60A5FA' }}>75%</td>
+                  <td style={{ textAlign: 'center', color: '#EF4444' }}>1 : 0.4</td>
+                  <td style={{ textAlign: 'right', color: '#EF4444' }}>-0.50%</td>
+                  <td style={{ textAlign: 'right', color: '#EF4444', fontWeight: 800 }}>-50.0% (ล้างพอร์ต)</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <td style={{ padding: '10px 8px', fontWeight: 700 }}>CryptoPro AI Swing Trader</td>
+                  <td style={{ textAlign: 'center', color: '#60A5FA' }}>55%</td>
+                  <td style={{ textAlign: 'center', color: '#10B981' }}>1 : 2.0</td>
+                  <td style={{ textAlign: 'right', color: '#10B981' }}>+0.65%</td>
+                  <td style={{ textAlign: 'right', color: '#10B981', fontWeight: 800 }}>+65.0% (เติบโตดี)</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <td style={{ padding: '10px 8px', fontWeight: 700 }}>CryptoPro AI Trend Runner</td>
+                  <td style={{ textAlign: 'center', color: '#60A5FA' }}>45%</td>
+                  <td style={{ textAlign: 'center', color: '#10B981' }}>1 : 3.0</td>
+                  <td style={{ textAlign: 'right', color: '#10B981' }}>+0.80%</td>
+                  <td style={{ textAlign: 'right', color: '#10B981', fontWeight: 800 }}>+80.0% (ผลตอบแทนสูงสุด)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Correlation Matrix */}
+      {activeTab === 'correlation' && (
+        <div className="crypto-card" style={{ padding: '20px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Layers size={18} color="var(--neon-cyan)" />
+            เมทริกซ์สหสัมพันธ์ระหว่างเหรียญหลัก (Crypto Correlation Matrix 30D)
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+            ค่าความสัมพันธ์ระหว่าง -1.0 ถึง +1.0 (ค่าใกล้ 1.0 คือวิ่งตามกัน, ค่าต่ำกว่า 0.6 ช่วยกระจายความเสี่ยงพอร์ตได้ดีขึ้น)
+          </p>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '12.5px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                  <th style={{ padding: '10px', textAlign: 'left' }}>เหรียญ</th>
+                  {correlationCoins.map((c) => (
+                    <th key={c} style={{ padding: '10px' }}>{c}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {correlationCoins.map((rowCoin) => (
+                  <tr key={rowCoin} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                    <td style={{ padding: '10px', textAlign: 'left', fontWeight: 800, color: '#FFF' }}>{rowCoin}</td>
+                    {correlationCoins.map((colCoin) => {
+                      const val = correlationMatrix[rowCoin][colCoin];
+                      const isSelf = rowCoin === colCoin;
+                      const bg = isSelf 
+                        ? 'rgba(59, 130, 246, 0.3)' 
+                        : val >= 0.8 
+                        ? 'rgba(59, 130, 246, 0.18)' 
+                        : val >= 0.7 
+                        ? 'rgba(6, 182, 212, 0.15)' 
+                        : 'rgba(16, 185, 129, 0.12)';
+                      return (
+                        <td key={colCoin} style={{ padding: '10px', backgroundColor: bg, fontWeight: 700, color: isSelf ? '#FFF' : '#E2E8F0' }}>
+                          {val.toFixed(2)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '12px', color: '#CBD5E1' }}>
+            💡 <strong>คำแนะนำเชิงปริมาณ:</strong> การถือครอง Bitcoin (BTC) คู่กับ Ethereum (ETH) มีค่า Correlation สูงถึง 0.88 ทำให้การกระจายความเสี่ยงต่ำ หากต้องการกระจายความเสี่ยงที่แท้จริง ควรแบ่งสัดส่วนไปยังกลุ่มเหรียญที่มีสหสัมพันธ์ต่ำกว่า เช่น DePIN หรือ Meme (Correlation ~0.58 - 0.62) ควบคู่กับการคุม Position Sizing เสมอ
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
