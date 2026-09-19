@@ -281,3 +281,57 @@ export interface PositionSizingResult {
   isSafeRisk: boolean;
   recommendationTh: string;
 }
+
+export interface PaperTrade {
+  id: string;
+  symbol: string;
+  type: 'BUY' | 'SELL';
+  entryPrice: number;
+  currentPrice: number;
+  qty: number;
+  totalCost: number;
+  currentValue: number;
+  sl: number;
+  tp: number;
+  unrealizedPnl: number;
+  unrealizedPnlPct: number;
+  status: 'OPEN' | 'CLOSED';
+  closePrice?: number;
+  realizedPnl?: number;
+  realizedPnlPct?: number;
+  openedAt: string;
+  closedAt?: string;
+  notes?: string;
+  signalOrigin?: string;
+}
+
+export interface WhaleTransaction {
+  id: string;
+  timeAgo: string;
+  timestamp: string;
+  symbol: string;
+  amount: number;
+  amountFormatted: string;
+  valueUsd: number;
+  valueUsdFormatted: string;
+  from: string;
+  fromType: 'exchange' | 'whale' | 'cold_wallet' | 'institution';
+  to: string;
+  toType: 'exchange' | 'whale' | 'cold_wallet' | 'institution';
+  action: 'ACCUMULATION' | 'DISTRIBUTION' | 'TRANSFER';
+  actionTh: string;
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  txHash: string;
+}
+
+export interface WhaleRadarSummary {
+  totalWhaleVolume24h: number;
+  totalWhaleVolumeFormatted: string;
+  netExchangeFlowUsd: number;
+  netExchangeFlowFormatted: string;
+  flowDirection: 'OUTFLOW_ACCUMULATION' | 'INFLOW_DISTRIBUTION';
+  whaleSentimentPct: number;
+  whaleSentimentLabelTh: string;
+  transactions: WhaleTransaction[];
+}
+

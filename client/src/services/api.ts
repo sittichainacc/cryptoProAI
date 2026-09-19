@@ -5,12 +5,14 @@ import {
   DeepAnalysisData, 
   HeatmapItem, 
   MarketOverviewKPIs, 
+  PaperTrade,
   PortfolioSummary, 
   PositionSizingResult, 
   SectorStatItem, 
   SectorTopItem, 
   TickerData, 
-  Top3OverallItem 
+  Top3OverallItem,
+  WhaleRadarSummary
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -175,5 +177,60 @@ export const api = {
     const res = await fetch(`${API_BASE}/system/sync`, { method: 'POST' });
     const json = await res.json();
     return json;
+  },
+
+  async getPaperTrades(): Promise<{
+    trades: PaperTrade[];
+    stats: {
+      totalTrades: number;
+      openTradesCount: number;
+      closedTradesCount: number;
+      winRatePct: number;
+      totalRealizedPnl: number;
+      totalUnrealizedPnl: number;
+      totalPnlCombined: number;
+      profitFactor: number;
+    };
+  }> {
+    const res = await fetch(`${API_BASE}/paper-trading`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async openPaperTrade(order: {
+    symbol: string;
+    type: 'BUY' | 'SELL';
+    entryPrice: number;
+    qty: number;
+    sl: number;
+    tp: number;
+    notes?: string;
+    signalOrigin?: string;
+  }): Promise<PaperTrade> {
+    const res = await fetch(`${API_BASE}/paper-trading/order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  async closePaperTrade(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/paper-trading/close/${id}`, { method: 'POST' });
+    const json = await res.json();
+    return json.success;
+  },
+
+  async deletePaperTrade(id: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE}/paper-trading/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    return json.success;
+  },
+
+  async getWhaleRadar(): Promise<WhaleRadarSummary> {
+    const res = await fetch(`${API_BASE}/market/whale-radar`);
+    const json = await res.json();
+    return json.data;
   },
 };

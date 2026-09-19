@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { HeatmapItem, SectorStatItem, TickerData } from '../types/index.js';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Compass, Shield, Activity } from 'lucide-react';
+import { WhaleRadarWidget } from '../components/WhaleRadarWidget.js';
 
 interface MarketOverviewPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -279,6 +280,9 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
           </div>
         </div>
       </div>
+
+      {/* Whale Alert & On-Chain Flow Radar */}
+      <WhaleRadarWidget currency={currency} onSelectCoin={onSelectCoin} />
 
       {/* Row 3: AI Strategy Suggestions (Image 3) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>

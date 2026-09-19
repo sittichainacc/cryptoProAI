@@ -4,11 +4,14 @@ import {
   Coin, 
   CryptoNewsItem, 
   MarketOverviewKPIs, 
+  PaperTrade,
   SectorCategory, 
   SectorInfo, 
   SectorTopItem, 
   TickerData, 
-  Top3OverallItem 
+  Top3OverallItem,
+  WhaleRadarSummary,
+  WhaleTransaction
 } from '../types/index.js';
 import { INITIAL_COINS, SECTORS } from '../config/sectors.js';
 import { TechnicalScoringEngine } from '../engines/scoring.engine.js';
@@ -22,6 +25,7 @@ export class MarketStore {
   private watchlist: Set<string> = new Set(['BTC', 'ETH', 'SOL', 'LINK', 'AAVE']);
   private alerts: AlertItem[] = [];
   private news: CryptoNewsItem[] = [];
+  private paperTrades: PaperTrade[] = [];
 
   constructor() {
     // Seed Coins
@@ -31,6 +35,7 @@ export class MarketStore {
     this.seedInitialTickers();
     this.seedInitialAlerts();
     this.seedInitialNews();
+    this.seedInitialPaperTrades();
   }
 
   private seedInitialTickers() {
@@ -417,6 +422,354 @@ export class MarketStore {
     const enriched = IndicatorsEngine.enrichCandlesWithEMAs(candles);
     this.candlesCache.set(symbol.toUpperCase(), enriched);
   }
+
+  private seedInitialPaperTrades() {
+    this.paperTrades = [
+      {
+        id: 'PT-1001',
+        symbol: 'BTC',
+        type: 'BUY',
+        entryPrice: 98500.00,
+        currentPrice: 108432.50,
+        qty: 0.15,
+        totalCost: 14775.00,
+        currentValue: 16264.88,
+        sl: 94000.00,
+        tp: 115000.00,
+        unrealizedPnl: 1489.88,
+        unrealizedPnlPct: 10.08,
+        status: 'OPEN',
+        openedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+        notes: 'Follow Trend: เข้าตาม EMA Golden Cross และ Multi-Timeframe Consensus Bullish',
+        signalOrigin: 'Trend Consensus (AI Score 94)',
+      },
+      {
+        id: 'PT-1002',
+        symbol: 'SOL',
+        type: 'BUY',
+        entryPrice: 168.20,
+        currentPrice: 185.45,
+        qty: 12.0,
+        totalCost: 2018.40,
+        currentValue: 2225.40,
+        sl: 158.00,
+        tp: 210.00,
+        unrealizedPnl: 207.00,
+        unrealizedPnlPct: 10.26,
+        status: 'OPEN',
+        openedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+        notes: 'Breakout Momentum: ทะลุแนวต้าน $165 พร้อม Volume Spike +185%',
+        signalOrigin: 'AI Breakout (AI Score 91)',
+      },
+      {
+        id: 'PT-1003',
+        symbol: 'SUI',
+        type: 'BUY',
+        entryPrice: 2.85,
+        currentPrice: 3.42,
+        qty: 800,
+        totalCost: 2280.00,
+        currentValue: 2736.00,
+        sl: 2.60,
+        tp: 3.80,
+        unrealizedPnl: 456.00,
+        unrealizedPnlPct: 20.00,
+        status: 'OPEN',
+        openedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+        notes: 'Pullback Retest: ย่อทดสอบแนวรับ EMA 20 เด้งตัวพร้อม RSI Bullish',
+        signalOrigin: 'Swing Trade (AI Score 89)',
+      },
+      {
+        id: 'PT-1004',
+        symbol: 'ETH',
+        type: 'BUY',
+        entryPrice: 3100.00,
+        currentPrice: 3842.00,
+        qty: 0.8,
+        totalCost: 2480.00,
+        currentValue: 2920.00,
+        sl: 2950.00,
+        tp: 3650.00,
+        unrealizedPnl: 0,
+        unrealizedPnlPct: 0,
+        status: 'CLOSED',
+        closePrice: 3650.00,
+        realizedPnl: 440.00,
+        realizedPnlPct: 17.74,
+        openedAt: new Date(Date.now() - 7 * 86400000).toISOString(),
+        closedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+        notes: 'Take Profit ตามแผนจุดทดสอบแนวต้าน $3,650 ได้กำไรตามเป้า',
+        signalOrigin: 'AI Swing Trade',
+      },
+      {
+        id: 'PT-1005',
+        symbol: 'NEAR',
+        type: 'BUY',
+        entryPrice: 4.20,
+        currentPrice: 5.48,
+        qty: 400,
+        totalCost: 1680.00,
+        currentValue: 2120.00,
+        sl: 3.90,
+        tp: 5.30,
+        unrealizedPnl: 0,
+        unrealizedPnlPct: 0,
+        status: 'CLOSED',
+        closePrice: 5.30,
+        realizedPnl: 440.00,
+        realizedPnlPct: 26.19,
+        openedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+        closedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+        notes: 'ปิดทำกำไรอัตโนมัติที่เป้า TP1 (+26.2%)',
+        signalOrigin: 'AI Oversold Bounce',
+      },
+    ];
+  }
+
+  getPaperTrades(): {
+    trades: PaperTrade[];
+    stats: {
+      totalTrades: number;
+      openTradesCount: number;
+      closedTradesCount: number;
+      winRatePct: number;
+      totalRealizedPnl: number;
+      totalUnrealizedPnl: number;
+      totalPnlCombined: number;
+      profitFactor: number;
+    };
+  } {
+    // Recalculate live open trades with latest ticker prices
+    for (const trade of this.paperTrades) {
+      if (trade.status === 'OPEN') {
+        const ticker = this.tickers.get(trade.symbol);
+        if (ticker) {
+          trade.currentPrice = ticker.price;
+          trade.currentValue = Number((trade.currentPrice * trade.qty).toFixed(2));
+          if (trade.type === 'BUY') {
+            trade.unrealizedPnl = Number((trade.currentValue - trade.totalCost).toFixed(2));
+            trade.unrealizedPnlPct = Number(((trade.unrealizedPnl / trade.totalCost) * 100).toFixed(2));
+          } else {
+            trade.unrealizedPnl = Number((trade.totalCost - trade.currentValue).toFixed(2));
+            trade.unrealizedPnlPct = Number(((trade.unrealizedPnl / trade.totalCost) * 100).toFixed(2));
+          }
+        }
+      }
+    }
+
+    const openTrades = this.paperTrades.filter(t => t.status === 'OPEN');
+    const closedTrades = this.paperTrades.filter(t => t.status === 'CLOSED');
+    const winningClosed = closedTrades.filter(t => (t.realizedPnl ?? 0) > 0);
+    const winRatePct = closedTrades.length > 0 ? Number(((winningClosed.length / closedTrades.length) * 100).toFixed(1)) : 100;
+    const totalRealizedPnl = closedTrades.reduce((sum, t) => sum + (t.realizedPnl ?? 0), 0);
+    const totalUnrealizedPnl = openTrades.reduce((sum, t) => sum + t.unrealizedPnl, 0);
+
+    const grossProfit = closedTrades.filter(t => (t.realizedPnl ?? 0) > 0).reduce((sum, t) => sum + (t.realizedPnl ?? 0), 0);
+    const grossLoss = Math.abs(closedTrades.filter(t => (t.realizedPnl ?? 0) < 0).reduce((sum, t) => sum + (t.realizedPnl ?? 0), 0));
+    const profitFactor = grossLoss > 0 ? Number((grossProfit / grossLoss).toFixed(2)) : 3.85;
+
+    return {
+      trades: this.paperTrades,
+      stats: {
+        totalTrades: this.paperTrades.length,
+        openTradesCount: openTrades.length,
+        closedTradesCount: closedTrades.length,
+        winRatePct,
+        totalRealizedPnl: Number(totalRealizedPnl.toFixed(2)),
+        totalUnrealizedPnl: Number(totalUnrealizedPnl.toFixed(2)),
+        totalPnlCombined: Number((totalRealizedPnl + totalUnrealizedPnl).toFixed(2)),
+        profitFactor,
+      },
+    };
+  }
+
+  openPaperTrade(data: {
+    symbol: string;
+    type: 'BUY' | 'SELL';
+    entryPrice: number;
+    qty: number;
+    sl: number;
+    tp: number;
+    notes?: string;
+    signalOrigin?: string;
+  }): PaperTrade {
+    const totalCost = Number((data.entryPrice * data.qty).toFixed(2));
+    const newTrade: PaperTrade = {
+      id: `PT-${Date.now().toString().slice(-4)}`,
+      symbol: data.symbol.toUpperCase(),
+      type: data.type,
+      entryPrice: data.entryPrice,
+      currentPrice: data.entryPrice,
+      qty: data.qty,
+      totalCost,
+      currentValue: totalCost,
+      sl: data.sl,
+      tp: data.tp,
+      unrealizedPnl: 0,
+      unrealizedPnlPct: 0,
+      status: 'OPEN',
+      openedAt: new Date().toISOString(),
+      notes: data.notes || '',
+      signalOrigin: data.signalOrigin || 'AI Decision Support',
+    };
+
+    this.paperTrades = [newTrade, ...this.paperTrades];
+    return newTrade;
+  }
+
+  closePaperTrade(id: string): boolean {
+    const trade = this.paperTrades.find(t => t.id === id);
+    if (!trade || trade.status !== 'OPEN') return false;
+
+    const ticker = this.tickers.get(trade.symbol);
+    const closePrice = ticker ? ticker.price : trade.currentPrice;
+    trade.status = 'CLOSED';
+    trade.closedAt = new Date().toISOString();
+    trade.closePrice = closePrice;
+
+    if (trade.type === 'BUY') {
+      trade.realizedPnl = Number(((closePrice - trade.entryPrice) * trade.qty).toFixed(2));
+      trade.realizedPnlPct = Number((((closePrice - trade.entryPrice) / trade.entryPrice) * 100).toFixed(2));
+    } else {
+      trade.realizedPnl = Number(((trade.entryPrice - closePrice) * trade.qty).toFixed(2));
+      trade.realizedPnlPct = Number((((trade.entryPrice - closePrice) / trade.entryPrice) * 100).toFixed(2));
+    }
+    trade.unrealizedPnl = 0;
+    trade.unrealizedPnlPct = 0;
+    return true;
+  }
+
+  deletePaperTrade(id: string): boolean {
+    const initialLen = this.paperTrades.length;
+    this.paperTrades = this.paperTrades.filter(t => t.id !== id);
+    return this.paperTrades.length < initialLen;
+  }
+
+  getWhaleRadarSummary(): WhaleRadarSummary {
+    const now = Date.now();
+    const transactions: WhaleTransaction[] = [
+      {
+        id: 'WH-01',
+        timeAgo: '4 นาทีที่แล้ว',
+        timestamp: new Date(now - 4 * 60000).toISOString(),
+        symbol: 'BTC',
+        amount: 2850,
+        amountFormatted: '2,850 BTC',
+        valueUsd: 309032625,
+        valueUsdFormatted: '$309.0M',
+        from: 'Binance Hot Wallet',
+        fromType: 'exchange',
+        to: 'Cold Storage (Whale)',
+        toType: 'cold_wallet',
+        action: 'ACCUMULATION',
+        actionTh: 'ถอนเหรียญออกกระดานเทรด (สะสมเข้ากระเป๋าเย็น)',
+        sentiment: 'BULLISH',
+        txHash: '0x3a9b...f82e',
+      },
+      {
+        id: 'WH-02',
+        timeAgo: '18 นาทีที่แล้ว',
+        timestamp: new Date(now - 18 * 60000).toISOString(),
+        symbol: 'SOL',
+        amount: 420000,
+        amountFormatted: '420,000 SOL',
+        valueUsd: 77889000,
+        valueUsdFormatted: '$77.8M',
+        from: 'Coinbase Prime Custody',
+        fromType: 'institution',
+        to: 'Staking Validator',
+        toType: 'whale',
+        action: 'ACCUMULATION',
+        actionTh: 'สถาบันโอนเหรียญเข้าสู่ระบบ Staking',
+        sentiment: 'BULLISH',
+        txHash: '0x7e2a...c31b',
+      },
+      {
+        id: 'WH-03',
+        timeAgo: '32 นาทีที่แล้ว',
+        timestamp: new Date(now - 32 * 60000).toISOString(),
+        symbol: 'ETH',
+        amount: 24500,
+        amountFormatted: '24,500 ETH',
+        valueUsd: 94129000,
+        valueUsdFormatted: '$94.1M',
+        from: 'Unknown Whale Wallet',
+        fromType: 'whale',
+        to: 'Bitkub & Binance Inflow',
+        toType: 'exchange',
+        action: 'DISTRIBUTION',
+        actionTh: 'โอนเข้า Exchange (เฝ้าระวังแรงขายระยะสั้น)',
+        sentiment: 'BEARISH',
+        txHash: '0x1c8d...9a4f',
+      },
+      {
+        id: 'WH-04',
+        timeAgo: '48 นาทีที่แล้ว',
+        timestamp: new Date(now - 48 * 60000).toISOString(),
+        symbol: 'DOGE',
+        amount: 185000000,
+        amountFormatted: '185,000,000 DOGE',
+        valueUsd: 71225000,
+        valueUsdFormatted: '$71.2M',
+        from: 'Robinhood Internal',
+        fromType: 'exchange',
+        to: 'Unknown Whale',
+        toType: 'whale',
+        action: 'TRANSFER',
+        actionTh: 'โอนย้ายเหรียญระหว่างกระเป๋าเจ้ามือรายใหญ่',
+        sentiment: 'NEUTRAL',
+        txHash: '0x99ea...e102',
+      },
+      {
+        id: 'WH-05',
+        timeAgo: '1 ชม. ที่แล้ว',
+        timestamp: new Date(now - 65 * 60000).toISOString(),
+        symbol: 'PEPE',
+        amount: 1850000000000,
+        amountFormatted: '1.85T PEPE',
+        valueUsd: 22755000,
+        valueUsdFormatted: '$22.7M',
+        from: 'Binance Hot Wallet',
+        fromType: 'exchange',
+        to: 'Private Whale Vault',
+        toType: 'cold_wallet',
+        action: 'ACCUMULATION',
+        actionTh: 'กวาดซื้อและถอนเหรียญมีมเก็บเข้ากระเป๋าส่วนตัว',
+        sentiment: 'BULLISH',
+        txHash: '0x45bb...87ce',
+      },
+      {
+        id: 'WH-06',
+        timeAgo: '1.5 ชม. ที่แล้ว',
+        timestamp: new Date(now - 90 * 60000).toISOString(),
+        symbol: 'SUI',
+        amount: 12500000,
+        amountFormatted: '12,500,000 SUI',
+        valueUsd: 42750000,
+        valueUsdFormatted: '$42.7M',
+        from: 'Institutional Fund',
+        fromType: 'institution',
+        to: 'Multi-Sig Custody',
+        toType: 'cold_wallet',
+        action: 'ACCUMULATION',
+        actionTh: 'กองทุนเข้าเก็บสะสมระยะยาว (Long-Term Vault)',
+        sentiment: 'BULLISH',
+        txHash: '0x88fc...41aa',
+      },
+    ];
+
+    return {
+      totalWhaleVolume24h: 4820000000,
+      totalWhaleVolumeFormatted: '$4.82B',
+      netExchangeFlowUsd: -348500000,
+      netExchangeFlowFormatted: '-$348.5M (Outflow)',
+      flowDirection: 'OUTFLOW_ACCUMULATION',
+      whaleSentimentPct: 78,
+      whaleSentimentLabelTh: 'เจ้ามือสะสมเหรียญสุทธิ (Bullish Accumulation 78%)',
+      transactions,
+    };
+  }
 }
 
 export const marketStore = new MarketStore();
+

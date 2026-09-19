@@ -385,3 +385,62 @@ apiRouter.post('/system/sync', async (_req, res) => {
   await marketService.syncMarketData();
   res.json({ success: true, message: 'Market data synchronized with Bitkub and Binance' });
 });
+
+/**
+ * Paper Trading: Get All Trades & Performance Stats
+ */
+apiRouter.get('/paper-trading', (_req, res) => {
+  const data = marketStore.getPaperTrades();
+  res.json({ success: true, data });
+});
+
+/**
+ * Paper Trading: Open New Simulated Position
+ */
+apiRouter.post('/paper-trading/order', (req, res) => {
+  const { symbol, type = 'BUY', entryPrice, qty, sl, tp, notes, signalOrigin } = req.body;
+  if (!symbol || !entryPrice || !qty) {
+    return res.status(400).json({ success: false, message: 'symbol, entryPrice, and qty are required' });
+  }
+
+  const trade = marketStore.openPaperTrade({
+    symbol,
+    type,
+    entryPrice: Number(entryPrice),
+    qty: Number(qty),
+    sl: Number(sl || 0),
+    tp: Number(tp || 0),
+    notes,
+    signalOrigin,
+  });
+
+  res.json({ success: true, data: trade });
+});
+
+/**
+ * Paper Trading: Close Open Trade
+ */
+apiRouter.post('/paper-trading/close/:id', (req, res) => {
+  const success = marketStore.closePaperTrade(req.params.id);
+  if (!success) {
+    return res.status(404).json({ success: false, message: 'Trade not found or already closed' });
+  }
+  res.json({ success: true, message: 'Trade closed at current market price' });
+});
+
+/**
+ * Paper Trading: Delete Trade
+ */
+apiRouter.delete('/paper-trading/:id', (req, res) => {
+  const success = marketStore.deletePaperTrade(req.params.id);
+  res.json({ success });
+});
+
+/**
+ * Whale Radar: Large Transfers & Sentiment
+ */
+apiRouter.get('/market/whale-radar', (_req, res) => {
+  const summary = marketStore.getWhaleRadarSummary();
+  res.json({ success: true, data: summary });
+});
+
