@@ -26,6 +26,11 @@ export class MarketStore {
   private alerts: AlertItem[] = [];
   private news: CryptoNewsItem[] = [];
   private paperTrades: PaperTrade[] = [];
+  private fearAndGreed = {
+    index: 71,
+    sentiment: 'Greed' as 'Extreme Fear' | 'Fear' | 'Neutral' | 'Greed' | 'Extreme Greed',
+    sentimentTh: 'Greed (ความโลภ)',
+  };
 
   constructor() {
     // Seed Coins
@@ -224,9 +229,9 @@ export class MarketStore {
       btcDominanceChange24h: -0.3,
       btcDominanceSparkline: [55.1, 55.0, 54.8, 54.9, 54.6, 54.5, 54.4, 54.3, 54.2],
 
-      fearAndGreedIndex: 72,
-      fearAndGreedSentiment: 'Greed',
-      fearAndGreedSentimentTh: 'Greed (ความโลภ)',
+      fearAndGreedIndex: this.fearAndGreed.index,
+      fearAndGreedSentiment: this.fearAndGreed.sentiment,
+      fearAndGreedSentimentTh: this.fearAndGreed.sentimentTh,
 
       marketAITrend: {
         status: 'bull',
@@ -241,6 +246,30 @@ export class MarketStore {
       bullishCoinCount: 31,
       breakoutCoinCount: 9,
       timestamp: new Date().toISOString(),
+    };
+  }
+
+  updateFearAndGreed(val: number, classification: string) {
+    let sentiment: 'Extreme Fear' | 'Fear' | 'Neutral' | 'Greed' | 'Extreme Greed' = 'Neutral';
+    let sentimentTh = 'Neutral (ปกติ)';
+    const lower = classification.toLowerCase();
+    if (lower.includes('extreme greed') || val >= 75) {
+      sentiment = 'Extreme Greed';
+      sentimentTh = 'Extreme Greed (โลภจัด)';
+    } else if (lower.includes('greed') || val >= 55) {
+      sentiment = 'Greed';
+      sentimentTh = 'Greed (ความโลภ)';
+    } else if (lower.includes('extreme fear') || val <= 25) {
+      sentiment = 'Extreme Fear';
+      sentimentTh = 'Extreme Fear (กลัวจัด)';
+    } else if (lower.includes('fear') || val <= 45) {
+      sentiment = 'Fear';
+      sentimentTh = 'Fear (ความกลัว)';
+    }
+    this.fearAndGreed = {
+      index: val,
+      sentiment,
+      sentimentTh,
     };
   }
 

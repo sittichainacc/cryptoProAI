@@ -82,6 +82,23 @@ export class MarketService {
         }
       }
 
+      // 3. Fetch Live Fear & Greed Index from Alternative.me (Zero auth required)
+      try {
+        const fngRes = await fetch('https://api.alternative.me/fng/?limit=1');
+        if (fngRes.ok) {
+          const fngData = await fngRes.json() as { data: Array<{ value: string; value_classification: string }> };
+          if (fngData?.data?.[0]) {
+            const val = parseInt(fngData.data[0].value, 10);
+            const sentiment = fngData.data[0].value_classification;
+            if (!isNaN(val)) {
+              marketStore.updateFearAndGreed(val, sentiment);
+            }
+          }
+        }
+      } catch {
+        // keep current value
+      }
+
       this.lastFetchStatus = 'Live';
       // console.log(`[MarketService] Market data synced: ${updatedCount} coins updated.`);
     } catch (err) {

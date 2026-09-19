@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { Candle, DeepAnalysisData, TickerData } from '../types/index.js';
 import { MainChartWidget } from '../components/MainChartWidget.js';
-import { Sparkles, Layers, Target, AlertTriangle, CheckCircle2, Shield, Activity } from 'lucide-react';
+import { TradingViewTechnicalGauge } from '../components/TradingViewTechnicalGauge.js';
+import { Sparkles, Layers, Target, AlertTriangle, CheckCircle2, Shield, Activity, Compass } from 'lucide-react';
 
 interface CoinAnalysisPageProps {
   selectedSymbol: string;
@@ -92,8 +93,8 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
         currency={currency}
       />
 
-      {/* Row 2: Multi-Timeframe Matrix (Section 18) & Market Structure */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px' }}>
+      {/* Row 2: Multi-Timeframe Matrix, Market Structure & TradingView Consensus Gauge */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
         {/* Multi-Timeframe Analysis Table */}
         <div className="crypto-card">
           <div className="card-header-row">
@@ -185,6 +186,23 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
           <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', marginTop: '10px', fontStyle: 'italic' }}>
             {structure.summaryTh}
           </p>
+        </div>
+
+        {/* TradingView Live Technical Consensus Gauge (Real-Time Internet Feed) */}
+        <div className="crypto-card">
+          <div className="card-header-row" style={{ marginBottom: '8px' }}>
+            <div className="card-title" style={{ fontSize: '14.5px' }}>
+              <Target size={16} color="var(--neon-blue-light)" />
+              TradingView Consensus Meter
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--neon-green-light)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+              Live Feed
+            </span>
+          </div>
+          <div style={{ height: '320px', width: '100%', overflow: 'hidden' }}>
+            <TradingViewTechnicalGauge symbol={selectedSymbol} height={320} />
+          </div>
         </div>
       </div>
 

@@ -27,6 +27,7 @@ import { Sector24Grid } from './components/Sector24Grid.js';
 import { Top3OverallCard } from './components/Top3OverallCard.js';
 import { CoinRankingTable } from './components/CoinRankingTable.js';
 import { CoinAnalysisModal } from './components/CoinAnalysisModal.js';
+import { TradingViewTickerTape } from './components/TradingViewTickerTape.js';
 
 // Dedicated Subpages
 import { MarketOverviewPage } from './pages/MarketOverviewPage.js';
@@ -365,6 +366,9 @@ export const App: React.FC = () => {
         />
 
         <div className="content-body">
+          {/* Live Real-Time Internet Ticker Tape (Binance / Bitkub stream via TradingView) */}
+          <TradingViewTickerTape theme="dark" />
+
           {/* Investor Mode Notice Banner */}
           {userRole === 'investor' && (
             <div
