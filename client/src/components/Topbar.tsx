@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Moon, Sun, Bell, User, Shield, ChevronDown, Check, Sparkles, Volume2, VolumeX, Radio, Keyboard, X } from 'lucide-react';
 import { TickerData } from '../types/index.js';
+import { realtimeService } from '../services/realtime.js';
 
 interface TopbarProps {
   currency: 'THB' | 'USDT';
@@ -30,7 +31,13 @@ export const Topbar: React.FC<TopbarProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [wsStatus, setWsStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const unsub = realtimeService.subscribeStatus(setWsStatus);
+    return unsub;
+  }, []);
 
   // Global Keyboard Shortcuts for Pro Traders
   useEffect(() => {
@@ -108,8 +115,8 @@ export const Topbar: React.FC<TopbarProps> = ({
     { id: 'overview', label: 'ภาพรวม' },
     { id: 'screener', label: 'คัดเลือกเหรียญ' },
     { id: 'chart', label: 'วิเคราะห์กราฟ' },
-    { id: 'signals', label: 'สัญญาณซื้อขาย' },
-    { id: 'portfolio', label: 'พอร์ตการลงทุน' },
+    { id: 'signals', label: 'สัญญาณวิเคราะห์ AI' },
+    { id: 'portfolio', label: 'วิเคราะห์พอร์ต' },
     { id: 'alerts', label: 'ตั้งค่าแจ้งเตือน' },
     { id: 'reports', label: 'รายงานตลาด' },
   ];
@@ -191,7 +198,37 @@ export const Topbar: React.FC<TopbarProps> = ({
       </nav>
 
       {/* Right Controls: Search, Currency, Notifications, Profile */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Real-time WebSocket Live Telemetry Indicator */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: wsStatus === 'connected' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+            border: wsStatus === 'connected' ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)',
+            borderRadius: '20px',
+            padding: '5px 12px',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: wsStatus === 'connected' ? '#34D399' : '#FBBF24',
+            letterSpacing: '0.4px',
+            flexShrink: 0,
+          }}
+          title={wsStatus === 'connected' ? 'เชื่อมต่อสตรีมมิ่งสด Binance WebSocket (Tick-by-Tick)' : 'กำลังเชื่อมต่อสตรีมสด...'}
+        >
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: wsStatus === 'connected' ? '#10B981' : '#F59E0B',
+              boxShadow: wsStatus === 'connected' ? '0 0 8px #10B981' : 'none',
+            }}
+          />
+          <span>{wsStatus === 'connected' ? 'REAL-TIME LIVE' : 'CONNECTING...'}</span>
+        </div>
+
         {/* Global Search with Autocomplete Dropdown */}
         <div style={{ position: 'relative' }}>
           <div

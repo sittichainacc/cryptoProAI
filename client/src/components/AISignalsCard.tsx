@@ -39,7 +39,7 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
     <div className="crypto-card" style={{ marginBottom: '14px' }}>
       <div className="card-header-row">
         <div className="card-title" style={{ fontSize: '14px' }}>
-          <span>สัญญาณเด่นวันนี้ (AI)</span>
+          <span>สัญญาณวิเคราะห์โอกาส (AI Signals)</span>
         </div>
         <div className="card-action-link" onClick={onViewAll}>
           <span>ดูทั้งหมด</span>

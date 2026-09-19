@@ -40,19 +40,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'technical', label: 'วิเคราะห์กราฟ', icon: BarChart2 },
     { id: 'signals', label: 'สัญญาณ AI', icon: Sparkles },
     { id: 'watchlist', label: 'รายการเฝ้าดู', icon: Eye },
-    { id: 'portfolio', label: 'พอร์ตการลงทุน', icon: PieChart },
+    { id: 'portfolio', label: 'วิเคราะห์พอร์ต & เสี่ยง', icon: PieChart },
     { id: 'alerts', label: 'การแจ้งเตือน', icon: Bell },
     { id: 'reports', label: 'รายงาน & สถิติ', icon: FileSpreadsheet },
     { id: 'strategy', label: 'เครื่องมือ & กลยุทธ์', icon: Wrench },
     { id: 'settings', label: 'ตั้งค่าระบบ', icon: Settings },
   ];
 
-  const exchanges = [
-    { name: 'Binance', connected: true, color: '#F0B90B' },
-    { name: 'Bitkub', connected: true, isPrimary: true, color: '#00D084' },
-    { name: 'Bybit', connected: false, color: '#F7A600' },
-    { name: 'OKX', connected: false, color: '#FFFFFF' },
-    { name: 'KuCoin', connected: false, color: '#24AE8F' },
+  const dataStreams = [
+    { name: 'Binance Stream', status: 'Tick-by-Tick', connected: true, color: '#F0B90B' },
+    { name: 'Bitkub Ticker', status: 'Live THB Feed', connected: true, isPrimary: true, color: '#00D084' },
+    { name: 'TradingView CDN', status: 'Real-Time Chart', connected: true, color: '#2962FF' },
+    { name: 'Alternative.me', status: 'Live Daily FNG', connected: true, color: '#10B981' },
   ];
 
   return (
@@ -211,55 +210,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 gap: '6px',
               }}
             >
-              <ShieldCheck size={14} color="var(--neon-cyan)" />
-              เชื่อมต่อ API (ไม่บังคับ)
+              <Activity size={14} color="var(--neon-green)" />
+              สตรีมข้อมูลสด Real-Time
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {exchanges.map((ex) => (
+              {dataStreams.map((st) => (
                 <div
-                  key={ex.name}
+                  key={st.name}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    fontSize: '12px',
+                    fontSize: '11.5px',
                     padding: '4px 6px',
                     borderRadius: '6px',
-                    background: ex.isPrimary ? 'rgba(0, 208, 132, 0.06)' : 'transparent',
+                    background: st.isPrimary ? 'rgba(0, 208, 132, 0.06)' : 'transparent',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div
                       style={{
-                        width: '7px',
-                        height: '7px',
+                        width: '6px',
+                        height: '6px',
                         borderRadius: '50%',
-                        backgroundColor: ex.connected ? '#10B981' : '#64748B',
+                        backgroundColor: '#10B981',
+                        boxShadow: '0 0 6px #10B981',
                       }}
                     />
-                    <span style={{ color: ex.connected ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                      {ex.name}
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                      {st.name}
                     </span>
                   </div>
 
                   <span
                     style={{
-                      fontSize: '10.5px',
-                      color: ex.connected ? '#10B981' : 'var(--text-muted)',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
+                      fontSize: '10px',
+                      color: 'var(--neon-cyan)',
+                      fontWeight: 700,
                     }}
                   >
-                    {ex.connected ? (
-                      <>
-                        <CheckCircle2 size={11} /> เชื่อมต่อแล้ว
-                      </>
-                    ) : (
-                      'เชื่อมต่อ'
-                    )}
+                    {st.status}
                   </span>
                 </div>
               ))}

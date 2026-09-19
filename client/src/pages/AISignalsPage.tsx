@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
+import { realtimeService } from '../services/realtime.js';
 import { SignalType, TickerData } from '../types/index.js';
-import { Sparkles, ArrowUpRight, ArrowDownRight, Target, AlertTriangle, ShieldCheck, Filter } from 'lucide-react';
+import { Sparkles, ArrowUpRight, ArrowDownRight, Target, AlertTriangle, ShieldCheck, Filter, Activity } from 'lucide-react';
 
 interface AISignalsPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -16,6 +17,27 @@ export const AISignalsPage: React.FC<AISignalsPageProps> = ({ onSelectCoin, curr
     api.getCoins().then((data) => {
       setSignals(data);
     });
+
+    // Real-time sub-second price streaming
+    const unsub = realtimeService.subscribeTicks((ticks) => {
+      setSignals((prev) =>
+        prev.map((c) => {
+          const t = ticks[c.symbol];
+          return t
+            ? {
+                ...c,
+                price: t.price,
+                change24h: t.change24h,
+                high24h: t.high24h,
+                low24h: t.low24h,
+                volume24h: t.quoteVolume24h,
+              }
+            : c;
+        })
+      );
+    });
+
+    return unsub;
   }, []);
 
   const multiplier = currency === 'THB' ? 34.5 : 1;
@@ -40,16 +62,23 @@ export const AISignalsPage: React.FC<AISignalsPageProps> = ({ onSelectCoin, curr
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={20} color="var(--neon-cyan)" />
-          <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
-            AI Signals Hub (ศูนย์รวมสัญญาณซื้อขาย)
-          </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={20} color="var(--neon-cyan)" />
+            <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
+              AI Quantitative Signals (ศูนย์วิเคราะห์สัญญาณเชิงปริมาณ)
+            </h2>
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            ประเมินตาม 11 สถานะสัญญาณ พร้อมบทวิเคราะห์เชิงเทคนิค กรอบแนวรับ-แนวต้าน และระดับ Invalidation ทางสถิติ
+          </p>
         </div>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-          ประเมินตาม 11 สถานะสัญญาณ พร้อมบทวิเคราะห์เหตุผลภาษาไทย จุดเข้าซื้อ และระดับตัดขาดทุน
-        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--neon-green-light)', fontWeight: 700, backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '5px 10px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+          <span>Binance Stream Live Feed</span>
+        </div>
       </div>
 
       {/* Filter Tabs */}

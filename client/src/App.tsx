@@ -28,6 +28,7 @@ import { Top3OverallCard } from './components/Top3OverallCard.js';
 import { CoinRankingTable } from './components/CoinRankingTable.js';
 import { CoinAnalysisModal } from './components/CoinAnalysisModal.js';
 import { TradingViewTickerTape } from './components/TradingViewTickerTape.js';
+import { realtimeService } from './services/realtime.js';
 
 // Dedicated Subpages
 import { MarketOverviewPage } from './pages/MarketOverviewPage.js';
@@ -151,12 +152,76 @@ export const App: React.FC = () => {
     loadMarketData();
     loadChart(selectedSymbol);
 
-    // Refresh every 20 seconds
+    // Refresh background data every 20 seconds
     const interval = setInterval(() => {
       loadMarketData();
     }, 20000);
 
-    return () => clearInterval(interval);
+    // Real-time sub-second price streaming from Binance Public WebSocket!
+    const unsubTicks = realtimeService.subscribeTicks((ticks) => {
+      setAllCoins((prev) => {
+        if (!prev || prev.length === 0) return prev;
+        let changed = false;
+        const next = prev.map((c) => {
+          const t = ticks[c.symbol];
+          if (t && t.price !== c.price) {
+            changed = true;
+            return {
+              ...c,
+              price: t.price,
+              change24h: t.change24h,
+              high24h: t.high24h,
+              low24h: t.low24h,
+              volume24h: t.quoteVolume24h,
+            };
+          }
+          return c;
+        });
+        return changed ? next : prev;
+      });
+
+      setSelectedCoinData((prev) => {
+        if (!prev) return prev;
+        const t = ticks[prev.symbol];
+        if (t && t.price !== prev.price) {
+          return {
+            ...prev,
+            price: t.price,
+            change24h: t.change24h,
+            high24h: t.high24h,
+            low24h: t.low24h,
+            volume24h: t.quoteVolume24h,
+          };
+        }
+        return prev;
+      });
+
+      setMovers((prev) => {
+        if (!prev) return prev;
+        const updateMovers = (list: TickerData[]) =>
+          list.map((c) => {
+            const t = ticks[c.symbol];
+            return t ? { ...c, price: t.price, change24h: t.change24h } : c;
+          });
+        return {
+          gainers: updateMovers(prev.gainers),
+          losers: updateMovers(prev.losers),
+          volume: updateMovers(prev.volume),
+        };
+      });
+
+      setWatchlist((prev) =>
+        prev.map((c) => {
+          const t = ticks[c.symbol];
+          return t ? { ...c, price: t.price, change24h: t.change24h } : c;
+        })
+      );
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubTicks();
+    };
   }, []);
 
   const handleSelectCoin = (symbol: string) => {
