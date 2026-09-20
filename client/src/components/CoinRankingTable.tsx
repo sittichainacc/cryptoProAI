@@ -262,8 +262,8 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
                   >
                     {coin.change7d > 0 ? `+${coin.change7d.toFixed(1)}%` : `${coin.change7d.toFixed(1)}%`}
                   </td>
-                  <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
-                    ${(coin.volume24h / 1e6).toFixed(1)}M
+                  <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                    {prefix}{((coin.volume24h * multiplier) / 1e6).toFixed(1)}M
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>{coin.rsi}</td>
                   <td style={{ textAlign: 'center' }}>

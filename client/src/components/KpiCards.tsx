@@ -4,9 +4,10 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight } from 'lucide-r
 
 interface KpiCardsProps {
   kpis: MarketOverviewKPIs | null;
+  currency?: 'THB' | 'USDT';
 }
 
-export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
+export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, currency = 'THB' }) => {
   if (!kpis) {
     return (
       <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
@@ -16,6 +17,35 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
       </div>
     );
   }
+
+  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const prefix = currency === 'THB' ? '฿' : '$';
+
+  // Format Market Cap
+  const formatCap = (capUsd: number) => {
+    const val = capUsd * multiplier;
+    if (currency === 'THB') {
+      if (val >= 1e12) return `฿${(val / 1e12).toFixed(2)} ล้านล้าน`;
+      if (val >= 1e9) return `฿${(val / 1e9).toFixed(1)} พันล้าน`;
+      return `฿${val.toLocaleString()}`;
+    }
+    if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
+    if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
+    return `$${val.toLocaleString()}`;
+  };
+
+  // Format Volume
+  const formatVol = (volUsd: number) => {
+    const val = volUsd * multiplier;
+    if (currency === 'THB') {
+      if (val >= 1e12) return `฿${(val / 1e12).toFixed(2)} ล้านล้าน`;
+      if (val >= 1e9) return `฿${(val / 1e9).toFixed(1)} พันล้าน`;
+      return `฿${val.toLocaleString()}`;
+    }
+    if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
+    if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
+    return `$${val.toLocaleString()}`;
+  };
 
   const renderMiniSparkline = (points: number[], color: string) => {
     if (!points || points.length < 2) return null;
@@ -60,12 +90,12 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
       {/* 1. Total Market Cap */}
       <div className="crypto-card" style={{ padding: '16px 18px' }}>
         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-          มูลค่าตลาดรวม (Crypto)
+          มูลค่าตลาดรวม ({currency})
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-              {kpis.totalMarketCapFormatted}
+            <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+              {formatCap(kpis.totalMarketCap)}
             </div>
             <div
               style={{
@@ -90,12 +120,12 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis }) => {
       {/* 2. 24H Volume */}
       <div className="crypto-card" style={{ padding: '16px 18px' }}>
         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-          ปริมาณการซื้อขาย (24h)
+          ปริมาณการซื้อขาย ({currency})
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-              {kpis.volume24hFormatted}
+            <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+              {formatVol(kpis.volume24h)}
             </div>
             <div
               style={{

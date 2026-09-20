@@ -1,18 +1,24 @@
 import React from 'react';
 import { TickerData } from '../types/index.js';
 import { ChevronRight, ArrowUpRight } from 'lucide-react';
+import { PriceCell } from './PriceCell.js';
 
 interface AISignalsCardProps {
   signals: TickerData[];
   onSelectCoin: (symbol: string) => void;
   onViewAll?: () => void;
+  currency?: 'THB' | 'USDT';
 }
 
 export const AISignalsCard: React.FC<AISignalsCardProps> = ({
   signals,
   onSelectCoin,
   onViewAll,
+  currency = 'THB',
 }) => {
+  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const prefix = currency === 'THB' ? '฿' : '$';
+
   const getBadgeClass = (signal: string) => {
     switch (signal) {
       case 'STRONG_BUY':
@@ -25,6 +31,21 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
         return 'badge-watch';
       default:
         return 'badge-neutral';
+    }
+  };
+
+  const getBadgeLabel = (signal: string) => {
+    switch (signal) {
+      case 'STRONG_BUY':
+        return 'แนวโน้มแกร่ง';
+      case 'BUY':
+        return 'สัญญาณบวก';
+      case 'WAIT_FOR_RETEST':
+        return 'ทดสอบรับ';
+      case 'WAIT_FOR_PULLBACK':
+        return 'รอจังหวะย่อ';
+      default:
+        return 'เฝ้าระวัง';
     }
   };
 
@@ -94,23 +115,30 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
               </div>
             </div>
 
-            {/* Signal Badge & Change % */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className={`badge ${getBadgeClass(item.signal)}`}>
-                {item.signal === 'STRONG_BUY' ? 'Strong Buy' : 'Buy'}
+            {/* Price, Badge & Change % */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <PriceCell
+                price={item.price * multiplier}
+                prefix={prefix}
+                style={{ fontSize: '12px', fontWeight: 700 }}
+              />
+
+              <span className={`badge ${getBadgeClass(item.signal)}`} style={{ fontSize: '10px' }}>
+                {getBadgeLabel(item.signal)}
               </span>
+
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  fontSize: '12px',
+                  fontSize: '11.5px',
                   fontWeight: 700,
                   color: item.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
-                  minWidth: '48px',
+                  minWidth: '46px',
                   justifyContent: 'flex-end',
                 }}
               >
-                <ArrowUpRight size={13} />
+                <ArrowUpRight size={12} />
                 <span>+{Math.abs(item.change24h).toFixed(1)}%</span>
               </div>
             </div>

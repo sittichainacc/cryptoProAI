@@ -1,6 +1,7 @@
 import React from 'react';
 import { TickerData } from '../types/index.js';
 import { ChevronRight, Star } from 'lucide-react';
+import { PriceCell } from './PriceCell.js';
 
 interface WatchlistMiniCardProps {
   watchlist: TickerData[];
@@ -26,6 +27,17 @@ export const WatchlistMiniCard: React.FC<WatchlistMiniCardProps> = ({
     }
   };
 
+  const getBadgeLabel = (signal: string) => {
+    switch (signal) {
+      case 'STRONG_BUY':
+        return 'แนวโน้มแกร่ง';
+      case 'BUY':
+        return 'สัญญาณบวก';
+      default:
+        return 'เฝ้าดู';
+    }
+  };
+
   const multiplier = currency === 'THB' ? 34.5 : 1;
   const prefix = currency === 'THB' ? '฿' : '$';
 
@@ -43,11 +55,6 @@ export const WatchlistMiniCard: React.FC<WatchlistMiniCardProps> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {watchlist.slice(0, 5).map((coin) => {
-          const displayPrice = (coin.price * multiplier).toLocaleString(undefined, {
-            minimumFractionDigits: coin.price < 1 ? 4 : 2,
-            maximumFractionDigits: coin.price < 1 ? 4 : 2,
-          });
-
           return (
             <div
               key={coin.symbol}
@@ -70,9 +77,9 @@ export const WatchlistMiniCard: React.FC<WatchlistMiniCardProps> = ({
                 <span style={{ fontWeight: 800, fontSize: '13px' }}>{coin.symbol}</span>
               </div>
 
-              {/* Price */}
+              {/* Real-time Flash Price */}
               <span style={{ fontWeight: 600, fontSize: '12px' }}>
-                {prefix}{displayPrice}
+                <PriceCell price={coin.price * multiplier} prefix={prefix} />
               </span>
 
               {/* 24h% */}
@@ -88,7 +95,7 @@ export const WatchlistMiniCard: React.FC<WatchlistMiniCardProps> = ({
 
               {/* Signal Badge */}
               <span className={`badge ${getBadgeClass(coin.signal)}`} style={{ fontSize: '10px' }}>
-                {coin.signal === 'STRONG_BUY' ? 'Strong Buy' : 'Buy'}
+                {getBadgeLabel(coin.signal)}
               </span>
             </div>
           );

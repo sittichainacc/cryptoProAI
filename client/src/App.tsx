@@ -47,7 +47,7 @@ export const App: React.FC = () => {
   const [activeTopTab, setActiveTopTab] = useState('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [currency, setCurrency] = useState<'THB' | 'USDT'>('USDT');
+  const [currency, setCurrency] = useState<'THB' | 'USDT'>('THB');
   const [userRole, setUserRole] = useState<'admin' | 'analyst' | 'investor'>('analyst');
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -337,7 +337,7 @@ export const App: React.FC = () => {
         return (
           <>
             {/* Row 1: KPI Cards */}
-            <KpiCards kpis={kpis} />
+            <KpiCards kpis={kpis} currency={currency} />
 
             {/* Row 2: Main Trading Section (Top Movers + Main Chart + AI Signals & Watchlist) */}
             <div className="trading-main-grid">
@@ -346,8 +346,10 @@ export const App: React.FC = () => {
                 gainers={movers.gainers}
                 losers={movers.losers}
                 volume={movers.volume}
+                watchlist={watchlist}
                 selectedSymbol={selectedSymbol}
                 onSelectCoin={handleSelectCoin}
+                onToggleWatchlist={handleToggleWatchlist}
                 currency={currency}
               />
 
@@ -367,6 +369,7 @@ export const App: React.FC = () => {
                   signals={signals}
                   onSelectCoin={handleSelectCoin}
                   onViewAll={() => handleOpenAnalysis(signals[0]?.symbol || 'SOL')}
+                  currency={currency}
                 />
                 <WatchlistMiniCard
                   watchlist={watchlist}
@@ -388,7 +391,7 @@ export const App: React.FC = () => {
             >
               <PortfolioWidgets portfolio={portfolio} currency={currency} />
               <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
-              <AIScannerQuickCard onRunScanner={handleRunScanner} />
+              <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
               <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
               <QuoteBannerCard />
             </div>

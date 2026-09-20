@@ -3,13 +3,14 @@ import { Sparkles, Filter, RotateCcw, Zap } from 'lucide-react';
 
 interface AIScannerQuickCardProps {
   onRunScanner: (mode: string) => void;
+  currency?: 'THB' | 'USDT';
 }
 
-export const AIScannerQuickCard: React.FC<AIScannerQuickCardProps> = ({ onRunScanner }) => {
+export const AIScannerQuickCard: React.FC<AIScannerQuickCardProps> = ({ onRunScanner, currency = 'THB' }) => {
   const [selectedChip, setSelectedChip] = useState('breakout');
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [selectedMinChange, setSelectedMinChange] = useState('+5%');
-  const [selectedMinVol, setSelectedMinVol] = useState('$10M');
+  const [selectedMinVol, setSelectedMinVol] = useState(currency === 'THB' ? '฿300M' : '$10M');
 
   const chips = [
     { id: 'breakout', label: 'Breakout', icon: Zap },
@@ -21,7 +22,7 @@ export const AIScannerQuickCard: React.FC<AIScannerQuickCardProps> = ({ onRunSca
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
       {/* Left: AI Scanner Quick Bar */}
       <div className="crypto-card">
         <div className="card-title" style={{ fontSize: '13.5px', marginBottom: '2px' }}>
@@ -153,9 +154,19 @@ export const AIScannerQuickCard: React.FC<AIScannerQuickCardProps> = ({ onRunSca
               }}
             >
               <option value="all">ทั้งหมด</option>
-              <option value="$10M">มากกว่า $10M</option>
-              <option value="$50M">มากกว่า $50M</option>
-              <option value="$100M">มากกว่า $100M</option>
+              {currency === 'THB' ? (
+                <>
+                  <option value="฿300M">มากกว่า ฿300M</option>
+                  <option value="฿1500M">มากกว่า ฿1,500M</option>
+                  <option value="฿3000M">มากกว่า ฿3,000M</option>
+                </>
+              ) : (
+                <>
+                  <option value="$10M">มากกว่า $10M</option>
+                  <option value="$50M">มากกว่า $50M</option>
+                  <option value="$100M">มากกว่า $100M</option>
+                </>
+              )}
             </select>
           </div>
 

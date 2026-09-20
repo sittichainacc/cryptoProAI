@@ -1,6 +1,7 @@
 import React from 'react';
 import { Top3OverallItem } from '../types/index.js';
-import { Award, ChevronRight, TrendingUp } from 'lucide-react';
+import { Award, ChevronRight } from 'lucide-react';
+import { PriceCell } from './PriceCell.js';
 
 interface Top3OverallCardProps {
   items: Top3OverallItem[];
@@ -58,13 +59,15 @@ export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '14px',
+        }}
+      >
         {items.map((item) => {
           const theme = getColorTheme(item.colorType);
-          const displayPrice = (item.price * multiplier).toLocaleString(undefined, {
-            minimumFractionDigits: item.price < 1 ? 4 : 2,
-            maximumFractionDigits: item.price < 1 ? 4 : 2,
-          });
 
           return (
             <div
@@ -114,9 +117,11 @@ export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '17px', fontWeight: 800 }}>{item.symbol}</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textColor }}>
-                    {prefix}{displayPrice}
-                  </span>
+                  <PriceCell
+                    price={item.price * multiplier}
+                    prefix={prefix}
+                    style={{ fontSize: '13px', fontWeight: 700, color: theme.textColor }}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>

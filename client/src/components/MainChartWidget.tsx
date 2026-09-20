@@ -3,6 +3,7 @@ import { createChart, IChartApi, ISeriesApi, CandlestickSeries, HistogramSeries,
 import { Candle, TickerData } from '../types/index.js';
 import { Star, Sliders, Maximize2, Activity } from 'lucide-react';
 import { TradingViewWidget } from './TradingViewWidget.js';
+import { PriceCell } from './PriceCell.js';
 
 interface MainChartWidgetProps {
   symbol: string;
@@ -42,6 +43,16 @@ export const MainChartWidget: React.FC<MainChartWidgetProps> = ({
   const lastCandle = candles[candles.length - 1];
   const displayPrice = (ticker?.price ?? lastCandle?.close ?? 108432) * multiplier;
   const displayChange24h = ticker?.change24h ?? 1.32;
+  const high24h = (ticker?.high24h ?? lastCandle?.high ?? 0) * multiplier;
+  const low24h = (ticker?.low24h ?? lastCandle?.low ?? 0) * multiplier;
+  const vol24h = (ticker?.volume24h ?? 0) * multiplier;
+
+  const formatVolCompact = (v: number) => {
+    if (v >= 1e9) return `${currencySymbol}${(v / 1e9).toFixed(2)}B`;
+    if (v >= 1e6) return `${currencySymbol}${(v / 1e6).toFixed(2)}M`;
+    if (v >= 1e3) return `${currencySymbol}${(v / 1e3).toFixed(1)}K`;
+    return `${currencySymbol}${v.toFixed(0)}`;
+  };
 
   useEffect(() => {
     if (chartEngine !== 'lightweight') return;
@@ -351,156 +362,194 @@ export const MainChartWidget: React.FC<MainChartWidgetProps> = ({
         </div>
       </div>
 
+      {/* Persistent Real-time Live Price & 24h Stats Bar (Always Visible) */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          padding: '6px 0 10px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+          marginBottom: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          {/* Real-time Flash Price */}
+          <PriceCell
+            price={displayPrice}
+            prefix={currencySymbol}
+            style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px' }}
+          />
+
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: '6px',
+              backgroundColor: displayChange24h >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: displayChange24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2px',
+            }}
+          >
+            {displayChange24h > 0 ? `▲ +${displayChange24h.toFixed(2)}%` : `▼ ${displayChange24h.toFixed(2)}%`}
+          </span>
+
+          {/* 24h High/Low/Vol Badges */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+            {high24h > 0 && (
+              <div>
+                <span style={{ color: 'var(--text-muted)', marginRight: '3px' }}>สูงสุด:</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {currencySymbol}{high24h.toLocaleString(undefined, { maximumFractionDigits: high24h < 1 ? 4 : 2 })}
+                </span>
+              </div>
+            )}
+            {low24h > 0 && (
+              <div>
+                <span style={{ color: 'var(--text-muted)', marginRight: '3px' }}>ต่ำสุด:</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {currencySymbol}{low24h.toLocaleString(undefined, { maximumFractionDigits: low24h < 1 ? 4 : 2 })}
+                </span>
+              </div>
+            )}
+            {vol24h > 0 && (
+              <div>
+                <span style={{ color: 'var(--text-muted)', marginRight: '3px' }}>วอลุ่ม:</span>
+                <span style={{ fontWeight: 600, color: 'var(--neon-cyan)' }}>
+                  {formatVolCompact(vol24h)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lightweight Mode Indicator Toggles */}
+        {chartEngine === 'lightweight' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowEma20(!showEma20)}
+              style={{
+                background: showEma20 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                border: showEma20 ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                color: showEma20 ? '#60A5FA' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle EMA 20"
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3B82F6' }} />
+              EMA 20
+            </button>
+
+            <button
+              onClick={() => setShowEma50(!showEma50)}
+              style={{
+                background: showEma50 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                border: showEma50 ? '1px solid #F59E0B' : '1px solid var(--border-color)',
+                color: showEma50 ? '#FBBF24' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle EMA 50"
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
+              EMA 50
+            </button>
+
+            <button
+              onClick={() => setShowEma200(!showEma200)}
+              style={{
+                background: showEma200 ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                border: showEma200 ? '1px solid #8B5CF6' : '1px solid var(--border-color)',
+                color: showEma200 ? '#A78BFA' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle EMA 200"
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#8B5CF6' }} />
+              EMA 200
+            </button>
+
+            <button
+              onClick={() => setShowBB(!showBB)}
+              style={{
+                background: showBB ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                border: showBB ? '1px solid #06B6D4' : '1px solid var(--border-color)',
+                color: showBB ? 'var(--neon-cyan)' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle Bollinger Bands (20, 2)"
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#06B6D4' }} />
+              BB (20, 2)
+            </button>
+
+            <button
+              onClick={() => setShowVolume(!showVolume)}
+              style={{
+                background: showVolume ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                border: showVolume ? '1px solid #10B981' : '1px solid var(--border-color)',
+                color: showVolume ? 'var(--neon-green-light)' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle Volume Sub-chart"
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+              Volume
+            </button>
+          </div>
+        )}
+      </div>
+
       {chartEngine === 'tradingview' ? (
         <div style={{ width: '100%', minHeight: '450px', marginTop: '6px', borderRadius: '10px', overflow: 'hidden' }}>
           <TradingViewWidget symbol={symbol} interval={activeTf} height={450} />
         </div>
       ) : (
         <>
-          {/* Price & OHLC Bar & EMAs */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              gap: '12px',
-              marginBottom: '8px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                {currencySymbol}
-                {displayPrice.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: displayPrice < 1 ? 4 : 2,
-                })}
-              </span>
-              <span
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: displayChange24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
-                }}
-              >
-                {displayChange24h > 0 ? `+${displayChange24h}%` : `${displayChange24h}%`} (24h)
-              </span>
-            </div>
-
-            {/* Interactive Indicator Toggles & Legend */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowEma20(!showEma20)}
-                style={{
-                  background: showEma20 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                  border: showEma20 ? '1px solid #3B82F6' : '1px solid var(--border-color)',
-                  color: showEma20 ? '#60A5FA' : 'var(--text-muted)',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle EMA 20"
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3B82F6' }} />
-                EMA 20 {showEma20 && `(${(displayPrice * 0.985).toFixed(2)})`}
-              </button>
-
-              <button
-                onClick={() => setShowEma50(!showEma50)}
-                style={{
-                  background: showEma50 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                  border: showEma50 ? '1px solid #F59E0B' : '1px solid var(--border-color)',
-                  color: showEma50 ? '#FBBF24' : 'var(--text-muted)',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle EMA 50"
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-                EMA 50 {showEma50 && `(${(displayPrice * 0.965).toFixed(2)})`}
-              </button>
-
-              <button
-                onClick={() => setShowEma200(!showEma200)}
-                style={{
-                  background: showEma200 ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                  border: showEma200 ? '1px solid #8B5CF6' : '1px solid var(--border-color)',
-                  color: showEma200 ? '#A78BFA' : 'var(--text-muted)',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle EMA 200"
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#8B5CF6' }} />
-                EMA 200 {showEma200 && `(${(displayPrice * 0.88).toFixed(2)})`}
-              </button>
-
-              <button
-                onClick={() => setShowBB(!showBB)}
-                style={{
-                  background: showBB ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                  border: showBB ? '1px solid #06B6D4' : '1px solid var(--border-color)',
-                  color: showBB ? 'var(--neon-cyan)' : 'var(--text-muted)',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle Bollinger Bands (20, 2)"
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#06B6D4' }} />
-                BB (20, 2)
-              </button>
-
-              <button
-                onClick={() => setShowVolume(!showVolume)}
-                style={{
-                  background: showVolume ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                  border: showVolume ? '1px solid #10B981' : '1px solid var(--border-color)',
-                  color: showVolume ? 'var(--neon-green-light)' : 'var(--text-muted)',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle Volume Sub-chart"
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-                Volume
-              </button>
-            </div>
-          </div>
-
           {/* Candlestick Canvas Container */}
           <div ref={chartContainerRef} style={{ width: '100%', minHeight: '380px', position: 'relative' }} />
 
