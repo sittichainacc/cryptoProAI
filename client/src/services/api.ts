@@ -44,8 +44,9 @@ export const api = {
     return json.data;
   },
 
-  async getDeepAnalysis(symbol: string): Promise<DeepAnalysisData> {
-    const res = await fetch(`${API_BASE}/market/analysis/${symbol}`);
+  async getDeepAnalysis(symbol: string, boughtPrice?: number | null): Promise<DeepAnalysisData> {
+    const query = boughtPrice ? `?boughtPrice=${encodeURIComponent(boughtPrice)}` : '';
+    const res = await fetch(`${API_BASE}/market/analysis/${symbol}${query}`);
     const json = await res.json();
     return json.data;
   },

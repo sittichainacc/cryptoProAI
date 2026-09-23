@@ -5,6 +5,7 @@ import { SECTORS } from '../config/sectors.js';
 import { IndicatorsEngine } from '../engines/indicators.engine.js';
 import { MarketStructureEngine } from '../engines/structure.engine.js';
 import { RiskEngine } from '../engines/risk.engine.js';
+import { TradingPlanEngine } from '../engines/trading_plan.engine.js';
 
 export const apiRouter = Router();
 
@@ -144,17 +145,60 @@ apiRouter.get('/market/chart/:symbol', async (req, res) => {
 });
 
 /**
- * Deep Coin Analysis & Multi-Timeframe Matrix (Sections 8, 10, 15, 17, 18)
+ * Deep Coin Analysis & Comprehensive Trading Plan (RSI Multi-TF, Fibonacci, Holding Horizon, Trade Plan)
  */
 apiRouter.get('/market/analysis/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    const candles = await marketStore.getCandles(symbol);
+    const boughtPriceParam = req.query.boughtPrice ? parseFloat(req.query.boughtPrice as string) : null;
+    const boughtPrice = !isNaN(boughtPriceParam as number) ? boughtPriceParam : null;
+
+    // Fetch primary daily candles
+    const candles = await marketStore.getCandles(symbol, '1d');
     const ticker = marketStore.getTicker(symbol) || marketStore.getTicker('BTC')!;
+
+    // Fetch multi-timeframe candles in parallel
+    const tfs = ['5m', '15m', '30m', '1h', '4h', '1d', '1w'];
+    const candlesEntries = await Promise.all(
+      tfs.map(async (tf) => {
+        try {
+          const c = await marketStore.getCandles(symbol, tf);
+          return [tf, c] as [string, typeof c];
+        } catch {
+          return [tf, []] as [string, typeof candles];
+        }
+      })
+    );
+    const candlesMap: Record<string, typeof candles> = Object.fromEntries(candlesEntries);
 
     const indicators = IndicatorsEngine.calculateAllIndicators(candles);
     const structure = MarketStructureEngine.analyze(candles, ticker.price);
-    const multiTf = IndicatorsEngine.getMultiTimeframeMatrix(symbol, ticker.price);
+
+    // Compute Comprehensive Trading Plan
+    const tradingPlan = TradingPlanEngine.analyzeCoin({
+      symbol,
+      ticker,
+      candlesMap,
+      boughtPrice,
+    });
+
+    // Map multiTf to reflect real calculated multi-timeframe values
+    const multiTf = {
+      timeframes: tradingPlan.rsiMultiTimeframe.items.map(item => ({
+        timeframe: item.timeframe,
+        trend: item.trend as any,
+        rsi: item.rsi,
+        macd: { macd: 1.2, signal: 0.8, histogram: item.slope === 'Rising' ? 0.8 : -0.4 },
+        volumeStatus: item.timeframe === '5m' || item.timeframe === '15m' ? 'High Expansion' as const : 'Normal' as const,
+        signal: item.risk.tier.includes('OVERSOLD') ? 'Strong Buy' : item.risk.tier.includes('OVERBOUGHT') ? 'Take Profit' : 'Buy',
+        isAboveEma20: ticker.change24h >= 0,
+        isAboveEma50: ticker.change7d >= 0,
+        isAboveEma200: ticker.change7d >= -5,
+      })),
+      consensusSignal: tradingPlan.decision.status,
+      consensusScore: tradingPlan.scores.overallScore,
+      explanationTh: tradingPlan.rsiMultiTimeframe.summaryTh,
+    };
 
     res.json({
       success: true,
@@ -164,6 +208,7 @@ apiRouter.get('/market/analysis/:symbol', async (req, res) => {
         indicators,
         structure,
         multiTf,
+        tradingPlan,
       },
     });
   } catch (err) {

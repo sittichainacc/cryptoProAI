@@ -97,6 +97,7 @@ export interface TickerData {
   signalReasonTh: string;
   aiScore: number;
   technicalScore: number;
+  fundamentalScore?: number;
   scoreGrade: ScoreGrade;
   riskLevel: RiskLevel;
   sparkline: number[];
@@ -1078,6 +1079,230 @@ export interface FocusResponse {
   averageScore: number;
   marketRegime: string;
   timestamp: string;
+}
+
+// ==========================================
+// Comprehensive Trading Plan & Analysis Types
+// ==========================================
+
+export type RsiRiskTier = 
+  | 'EXTREME_OVERSOLD'      // < 25 (🔴 สูง)
+  | 'OVERSOLD'              // 25-30 (🟠)
+  | 'WEAK_RECOVERY'         // 30-40 (🟡)
+  | 'NEUTRAL_WEAK'          // 40-50 (⚪)
+  | 'HEALTHY_BULLISH'       // 50-60 (🟢)
+  | 'STRONG_MOMENTUM'       // 60-68 (🟢)
+  | 'ELEVATED'              // 68-72 (🟡)
+  | 'OVERBOUGHT'            // 72-80 (🟠)
+  | 'EXTREME_OVERBOUGHT';   // > 80 (🔴)
+
+export interface RsiRiskInfo {
+  tier: RsiRiskTier;
+  labelTh: string;
+  badgeEmoji: '🔴' | '🟠' | '🟡' | '⚪' | '🟢';
+  badgeColor: string;
+  riskSeverity: 'Extreme' | 'High' | 'Elevated' | 'Normal' | 'Low';
+}
+
+export interface RsiMultiTimeframeItem {
+  timeframe: '5m' | '15m' | '30m' | '1H' | '4H' | '1D' | '1W';
+  rsi: number;
+  weightPct: number; // 5, 10, 10, 20, 25, 25, 5
+  risk: RsiRiskInfo;
+  trend: 'Strong Bullish' | 'Bullish' | 'Neutral-Bullish' | 'Neutral' | 'Weak / Pullback' | 'Bearish' | 'Strong Bearish';
+  slope: 'Rising' | 'Falling' | 'Flat';
+  divergence?: {
+    type: 'Bullish Divergence' | 'Hidden Bullish Divergence' | 'Bearish Divergence' | 'Hidden Bearish Divergence';
+    severity: 'High' | 'Medium' | 'Low';
+    description: string;
+  };
+}
+
+export interface HoldingHorizonItem {
+  horizon: 'SHORT' | 'SWING' | 'LONG';
+  titleTh: string;
+  durationTh: string;
+  stars: number; // 1 to 5
+  starDisplay: string; // e.g. "★★★★★"
+  isSuitable: boolean;
+  score: number; // 0-100
+  rationaleTh: string;
+  keyFactors: string[];
+}
+
+export interface HoldingHorizonAnalysis {
+  primarySuitable: 'SHORT' | 'SWING' | 'LONG' | 'SHORT_AND_SWING' | 'SWING_AND_LONG' | 'NONE';
+  suitableTitleTh: string;
+  horizons: {
+    short: HoldingHorizonItem;
+    swing: HoldingHorizonItem;
+    long: HoldingHorizonItem;
+  };
+}
+
+export interface FibonacciLevelItem {
+  ratio: number;
+  label: string; // "0.000", "0.236", "0.382", "0.500", "0.618 ⭐", "0.786", "1.000", "1.272", etc.
+  price: number;
+  isGoldenZone?: boolean;
+  isExtension?: boolean;
+  confluencePoints?: string[];
+  isHighConfluence?: boolean;
+}
+
+export interface FibonacciAnalysis {
+  swingHigh: number;
+  swingLow: number;
+  diff: number;
+  retracements: FibonacciLevelItem[];
+  extensions: FibonacciLevelItem[];
+  confluenceSupport: {
+    priceMin: number;
+    priceMax: number;
+    text: string;
+    confluenceFactors: string[];
+    entryQualityScore: number;
+    isHighConfluence: boolean;
+  };
+}
+
+export interface EntryZoneItem {
+  type: 'Aggressive' | 'Preferred' | 'Deep Pullback';
+  titleTh: string;
+  isPreferred?: boolean;
+  priceMin: number;
+  priceMax: number;
+  text: string;
+  distancePct: number;
+  reasons: string[];
+}
+
+export interface StopLossPlan {
+  technicalSl: number;
+  hardStop: number;
+  riskPct: number;
+  invalidationTextTh: string;
+  recommendedRiskPct: number;
+}
+
+export interface TakeProfitTargetItem {
+  level: 'TP1' | 'TP2' | 'TP3' | 'TP4';
+  targetPrice: number;
+  gainPct: number;
+  rrRatio: number;
+  rationaleTh: string;
+}
+
+export type TradingDecisionStatus = 
+  | 'BUY NOW'
+  | 'ENTER PARTIAL'
+  | 'WAIT FOR PULLBACK'
+  | 'WAIT FOR BREAKOUT'
+  | 'WAIT FOR RETEST'
+  | 'WATCH'
+  | 'HOLD'
+  | 'PROTECT PROFIT'
+  | 'TAKE PARTIAL PROFIT'
+  | 'EXIT'
+  | 'AVOID';
+
+export interface ExitScoreAnalysis {
+  exitScore: number;
+  status: 'HOLD' | 'HOLD STRONG' | 'PROTECT PROFIT' | 'TAKE PARTIAL PROFIT' | 'EXIT' | 'AVOID';
+  reasons: string[];
+  statusTh: string;
+}
+
+export interface ProfitProtectionPlan {
+  isSimulatedOrHolding: boolean;
+  boughtPrice: number;
+  currentPrice: number;
+  profitPct: number;
+  recommendedActionTh: string;
+  takeProfitRuleTh: string;
+  moveStopLevel: number;
+  trailingStopPct: number;
+  nextTargetPrice: number;
+}
+
+export interface ComprehensiveTradingPlan {
+  symbol: string;
+  currentPrice: number;
+  change24h: number;
+  change7d: number;
+  
+  // 1 & 2 & 3. RSI Multi-Timeframe & Risk & Divergence
+  rsiMultiTimeframe: {
+    items: RsiMultiTimeframeItem[];
+    shortTermRisk: 'LOW' | 'NORMAL' | 'ELEVATED' | 'HIGH';
+    swingRisk: 'LOW' | 'NORMAL' | 'ELEVATED' | 'HIGH';
+    longTermRisk: 'LOW' | 'NORMAL' | 'ELEVATED' | 'HIGH';
+    weightedRsi: number;
+    summaryTh: string;
+    divergenceAlerts: string[];
+  };
+
+  // 4. Holding Horizon
+  holdingHorizon: HoldingHorizonAnalysis;
+
+  // 5 & 6. Fibonacci & Confluence
+  fibonacci: FibonacciAnalysis;
+
+  // 7. Entry Plan (Zones)
+  entryPlan: {
+    zones: EntryZoneItem[];
+    preferredZone: EntryZoneItem;
+    entryScore: number;
+  };
+
+  // 8. Stop Loss & Invalidation
+  stopLoss: StopLossPlan;
+
+  // 9 & 10. Multi-level Take Profit & R:R
+  takeProfits: {
+    targets: TakeProfitTargetItem[];
+    acceptableRrFound: boolean;
+    bestRr: number;
+    minAcceptableRr: number;
+    chaseWarning: string | null;
+  };
+
+  // 11. Entry Status & Overall Decision
+  decision: {
+    status: TradingDecisionStatus;
+    badgeColor: string;
+    verdictTh: string;
+    preferredEntryTextTh: string;
+    invalidationTextTh: string;
+    suitableStyleTh: string;
+    fullSummaryTh: string;
+  };
+
+  // 12. Exit Score
+  exitIntelligence: ExitScoreAnalysis;
+
+  // 13. Profit Protection
+  profitProtection: ProfitProtectionPlan;
+
+  // Decision Scores (0-100)
+  scores: {
+    entryScore: number;
+    technicalScore: number;
+    fundamentalScore: number;
+    momentumScore: number;
+    riskScore: number;
+    exitScore: number;
+    overallScore: number;
+  };
+}
+
+export interface DeepAnalysisData {
+  symbol: string;
+  ticker: TickerData;
+  indicators: any;
+  structure: any;
+  multiTf: any;
+  tradingPlan: ComprehensiveTradingPlan;
 }
 
 

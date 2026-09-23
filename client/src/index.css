@@ -451,6 +451,11 @@ select optgroup {
   overflow: hidden;
 }
 
+.crypto-card.card-overflow-visible,
+.card-overflow-visible {
+  overflow: visible !important;
+}
+
 .crypto-card:hover {
   border-color: var(--border-hover);
 }
