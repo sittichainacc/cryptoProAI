@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Moon, Sun, Bell, User, Shield, ChevronDown, Check, Sparkles, Volume2, VolumeX, Radio, Keyboard, X, Menu } from 'lucide-react';
 import { TickerData } from '../types/index.js';
 import { realtimeService } from '../services/realtime.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoAnalystProfile } from './CryptoAnalystProfile.js';
 
 interface TopbarProps {
   currency: 'THB' | 'USDT';
@@ -27,7 +29,10 @@ export const Topbar: React.FC<TopbarProps> = ({
   onMobileMenuToggle,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('cryptopro-theme');
+    return saved ? saved !== 'light' : true;
+  });
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -40,6 +45,15 @@ export const Topbar: React.FC<TopbarProps> = ({
     const unsub = realtimeService.subscribeStatus(setWsStatus);
     return unsub;
   }, []);
+
+  // Sync theme class to <html> element
+  useEffect(() => {
+    if (!isDark) {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [isDark]);
 
   // Global Keyboard Shortcuts for Pro Traders
   useEffect(() => {
@@ -168,49 +182,54 @@ export const Topbar: React.FC<TopbarProps> = ({
         >
           <Menu size={18} />
         </button>
-        {topTabs.map((tab) => {
-          const isActive = activeTopTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTopTab(tab.id)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                fontSize: '13.5px',
-                fontWeight: isActive ? 700 : 500,
-                padding: '8px 14px',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                position: 'relative',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {tab.label}
-              {isActive && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '-12px',
-                    left: '15%',
-                    right: '15%',
-                    height: '2.5px',
-                    backgroundColor: 'var(--neon-cyan)',
-                    borderRadius: '4px',
-                    boxShadow: '0 0 8px var(--neon-cyan)',
-                  }}
-                />
-              )}
-            </button>
-          );
-        })}
+        <div className="topbar-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {topTabs.map((tab) => {
+            const isActive = activeTopTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTopTab(tab.id)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                  fontSize: '12.5px',
+                  fontWeight: isActive ? 700 : 500,
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {tab.label}
+                {isActive && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-12px',
+                      left: '15%',
+                      right: '15%',
+                      height: '2.5px',
+                      backgroundColor: 'var(--neon-cyan)',
+                      borderRadius: '4px',
+                      boxShadow: '0 0 8px var(--neon-cyan)',
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Right Controls: Search, Currency, Notifications, Profile */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="topbar-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+
         {/* Real-time WebSocket Live Telemetry Indicator */}
         <div
+          className="topbar-live-badge"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -218,7 +237,7 @@ export const Topbar: React.FC<TopbarProps> = ({
             backgroundColor: wsStatus === 'connected' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
             border: wsStatus === 'connected' ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)',
             borderRadius: '20px',
-            padding: '5px 12px',
+            padding: '5px 10px',
             fontSize: '11px',
             fontWeight: 700,
             color: wsStatus === 'connected' ? '#34D399' : '#FBBF24',
@@ -242,6 +261,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* Global Search with Autocomplete Dropdown */}
         <div style={{ position: 'relative' }}>
           <div
+            className="topbar-search-box"
             style={{
               position: 'relative',
               display: 'flex',
@@ -249,11 +269,13 @@ export const Topbar: React.FC<TopbarProps> = ({
               backgroundColor: 'rgba(255, 255, 255, 0.04)',
               border: isSearchFocused ? '1px solid var(--neon-cyan)' : '1px solid var(--border-color)',
               borderRadius: '20px',
-              padding: '7px 14px',
-              width: '260px',
+              padding: '6px 12px',
+              width: '200px',
               transition: 'all 0.2s ease',
             }}
           >
+
+
             <Search size={16} color="var(--text-muted)" style={{ marginRight: '8px', flexShrink: 0 }} />
             <input
               ref={searchInputRef}
@@ -370,8 +392,8 @@ export const Topbar: React.FC<TopbarProps> = ({
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '12.5px', fontWeight: 700 }}>
                         {currency === 'THB' ? '฿' : '$'}
-                        {(coin.price * (currency === 'THB' ? 34.5 : 1)).toLocaleString(undefined, {
-                          maximumFractionDigits: coin.price * (currency === 'THB' ? 34.5 : 1) < 1 ? 4 : 2,
+                        {(coin.price * getCurrencyMultiplier(currency)).toLocaleString(undefined, {
+                          maximumFractionDigits: coin.price * getCurrencyMultiplier(currency) < 1 ? 4 : 2,
                         })}
                       </div>
                       <div
@@ -438,6 +460,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
         {/* Exchange Connection Latency Pill */}
         <div
+          className="topbar-latency-pill"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -466,6 +489,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
         {/* Keyboard Shortcuts Trigger Button */}
         <button
+          className="topbar-shortcuts-btn"
           onClick={() => setShowShortcutsModal(true)}
           style={{
             background: 'rgba(255, 255, 255, 0.04)',
@@ -485,11 +509,21 @@ export const Topbar: React.FC<TopbarProps> = ({
           <Keyboard size={17} />
         </button>
 
+
         {/* Dark/Light Mode toggle */}
         <button
-          onClick={() => setIsDark(!isDark)}
+          onClick={() => {
+            const next = !isDark;
+            setIsDark(next);
+            localStorage.setItem('cryptopro-theme', next ? 'dark' : 'light');
+            if (next) {
+              document.documentElement.classList.remove('light');
+            } else {
+              document.documentElement.classList.add('light');
+            }
+          }}
           style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
             width: '36px',
@@ -497,10 +531,11 @@ export const Topbar: React.FC<TopbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--text-secondary)',
+            color: isDark ? 'var(--text-secondary)' : '#D97706',
             cursor: 'pointer',
+            transition: 'all 0.2s',
           }}
-          title="Toggle Theme"
+          title={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
         >
           {isDark ? <Moon size={17} /> : <Sun size={17} />}
         </button>
@@ -743,109 +778,23 @@ export const Topbar: React.FC<TopbarProps> = ({
           )}
         </div>
 
-        {/* Role Switcher Pill & Dropdown (Section 40) */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            style={{
-              background: 'rgba(59, 130, 246, 0.14)',
-              border: '1px solid rgba(59, 130, 246, 0.35)',
-              color: '#60A5FA',
-              borderRadius: '8px',
-              padding: '6px 10px',
-              fontSize: '11.5px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-            }}
-          >
-            <Shield size={13} color="var(--neon-cyan)" />
-            <span>{userRole === 'admin' ? 'Admin' : userRole === 'analyst' ? 'Analyst' : 'Investor'}</span>
-            <ChevronDown size={13} />
-          </button>
-
-          {showRoleMenu && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                width: '260px',
-                backgroundColor: '#0F172A',
-                border: '1px solid rgba(59, 130, 246, 0.35)',
-                borderRadius: '12px',
-                padding: '10px',
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.6)',
-                zIndex: 100,
-              }}
-            >
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', padding: '0 4px' }}>
-                เลือกโหมดผู้ใช้งาน (Role Permission)
-              </div>
-              {[
-                { id: 'investor', title: 'Investor (นักลงทุน)', desc: 'สัญญาณชัดเจน เน้น Risk/Reward และ TP' },
-                { id: 'analyst', title: 'Analyst (นักวิเคราะห์)', desc: '17 Indicators, MTF Matrix และ Thai Rationale' },
-                { id: 'admin', title: 'Admin (ผู้ดูแลระบบ)', desc: 'จัดการ Exchange API Keys และ System Config' },
-              ].map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => {
-                    if (setUserRole) setUserRole(r.id as any);
-                    setShowRoleMenu(false);
-                  }}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    backgroundColor: userRole === r.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                    marginBottom: '4px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
-                    transition: 'background 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (userRole !== r.id) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (userRole !== r.id) e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: userRole === r.id ? '#60A5FA' : '#FFF' }}>
-                      {r.title}
-                    </span>
-                    {userRole === r.id && <Check size={14} color="var(--neon-cyan)" />}
-                  </div>
-                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{r.desc}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Avatar */}
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #1E40AF, #3B82F6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            border: '2px solid rgba(59, 130, 246, 0.5)',
-            cursor: 'pointer',
-            boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)',
-          }}
-          title="Crypto Analyst Profile"
-        >
-          <User size={18} />
-        </div>
+        {/* Unified Crypto Analyst Profile Hub & Role Switcher */}
+        <CryptoAnalystProfile
+          userRole={userRole}
+          setUserRole={setUserRole}
+          currency={currency}
+          setCurrency={setCurrency}
+          isDark={isDark}
+          setIsDark={setIsDark}
+          soundEnabled={soundEnabled}
+          setSoundEnabled={setSoundEnabled}
+          onTestChime={playNotificationChime}
+          wsStatus={wsStatus}
+          onOpenShortcuts={() => setShowShortcutsModal(true)}
+          onNavigateTab={(tab) => setActiveTopTab(tab)}
+        />
       </div>
+
 
       {/* Keyboard Shortcuts Modal */}
       {showShortcutsModal && (

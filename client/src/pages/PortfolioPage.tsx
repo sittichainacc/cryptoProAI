@@ -3,6 +3,7 @@ import { api } from '../services/api.js';
 import { realtimeService } from '../services/realtime.js';
 import { PortfolioPosition, PortfolioSummary, PositionSizingResult } from '../types/index.js';
 import { Calculator, PieChart, ShieldAlert, ArrowUpRight, ArrowDownRight, CheckCircle2, AlertTriangle, RefreshCw, Layers, Activity, TrendingUp, BarChart3, Compass, Info } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface PortfolioPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -64,7 +65,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onSelectCoin, curr
     handleCalculate();
   }, [calcCapital, calcRiskPct, calcEntry, calcStopLoss, calcTarget]);
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   if (!portfolio) {

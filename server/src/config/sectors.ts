@@ -91,11 +91,12 @@ export const INITIAL_COINS: Coin[] = [
   { id: 'crv', symbol: 'CRV', name: 'Curve DAO', primarySector: 'defi', baseAsset: 'CRV', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_CRV', binanceSymbol: 'CRVUSDT' },
 
   // Group 4: AI / Data / DePIN
-  { id: 'flock', symbol: 'FLOCK', name: 'FLock.io', primarySector: 'ai_depin', baseAsset: 'FLOCK', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'FLOCKUSDT' },
+  { id: 'render', symbol: 'RENDER', name: 'Render', primarySector: 'ai_depin', baseAsset: 'RENDER', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'RENDERUSDT' },
   { id: 'fet', symbol: 'FET', name: 'Artificial Superintelligence', primarySector: 'ai_depin', baseAsset: 'FET', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_FET', binanceSymbol: 'FETUSDT' },
   { id: 'tao', symbol: 'TAO', name: 'Bittensor', primarySector: 'ai_depin', baseAsset: 'TAO', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'TAOUSDT' },
   { id: 'grt', symbol: 'GRT', name: 'The Graph', primarySector: 'ai_depin', baseAsset: 'GRT', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_GRT', binanceSymbol: 'GRTUSDT' },
   { id: 'io', symbol: 'IO', name: 'io.net', primarySector: 'ai_depin', baseAsset: 'IO', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_IO', binanceSymbol: 'IOUSDT' },
+  { id: 'flock', symbol: 'FLOCK', name: 'FLock.io', primarySector: 'ai_depin', baseAsset: 'FLOCK', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_FLOCK', binanceSymbol: 'FLOCKUSDT' },
 
   // Group 5: RWA / Payment / Oracle
   { id: 'link', symbol: 'LINK', name: 'Chainlink', primarySector: 'rwa_oracle', baseAsset: 'LINK', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_LINK', binanceSymbol: 'LINKUSDT' },
@@ -106,6 +107,7 @@ export const INITIAL_COINS: Coin[] = [
   // Group 6: Meme / Community
   { id: 'pepe', symbol: 'PEPE', name: 'Pepe', primarySector: 'meme', baseAsset: 'PEPE', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'PEPEUSDT' },
   { id: 'doge', symbol: 'DOGE', name: 'Dogecoin', primarySector: 'meme', baseAsset: 'DOGE', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_DOGE', binanceSymbol: 'DOGEUSDT' },
+  { id: 'shib', symbol: 'SHIB', name: 'Shiba Inu', primarySector: 'meme', baseAsset: 'SHIB', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_SHIB', binanceSymbol: 'SHIBUSDT' },
   { id: 'bonk', symbol: 'BONK', name: 'Bonk', primarySector: 'meme', baseAsset: 'BONK', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'BONKUSDT' },
   { id: 'floki', symbol: 'FLOKI', name: 'Floki', primarySector: 'meme', baseAsset: 'FLOKI', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'FLOKIUSDT' },
 
@@ -116,9 +118,9 @@ export const INITIAL_COINS: Coin[] = [
   { id: 'gala', symbol: 'GALA', name: 'Gala Games', primarySector: 'gamefi', baseAsset: 'GALA', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_GALA', binanceSymbol: 'GALAUSDT' },
   { id: 'sand', symbol: 'SAND', name: 'The Sandbox', primarySector: 'gamefi', baseAsset: 'SAND', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_SAND', binanceSymbol: 'SANDUSDT' },
 
-  // Group 8: Emerging / New Listing
-  { id: 'edge', symbol: 'EDGE', name: 'Edge AI', primarySector: 'emerging', baseAsset: 'EDGE', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'EDGEUSDT' },
-  { id: 'pieverse', symbol: 'PIEVERSE', name: 'PieVerse', primarySector: 'emerging', baseAsset: 'PIEVERSE', quoteAsset: 'USDT', isBitkubPair: false },
-  { id: 'skr', symbol: 'SKR', name: 'Seeker', primarySector: 'emerging', baseAsset: 'SKR', quoteAsset: 'USDT', isBitkubPair: false },
-  { id: 'aster', symbol: 'ASTER', name: 'Aster Network', primarySector: 'emerging', baseAsset: 'ASTER', quoteAsset: 'USDT', isBitkubPair: false },
+  // Group 8: Emerging / High Growth
+  { id: 'near', symbol: 'NEAR', name: 'NEAR Protocol', primarySector: 'emerging', baseAsset: 'NEAR', quoteAsset: 'THB', isBitkubPair: true, bitkubSymbol: 'THB_NEAR', binanceSymbol: 'NEARUSDT' },
+  { id: 'ton', symbol: 'TON', name: 'Toncoin', primarySector: 'emerging', baseAsset: 'TON', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'TONUSDT' },
+  { id: 'apt', symbol: 'APT', name: 'Aptos', primarySector: 'emerging', baseAsset: 'APT', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'APTUSDT' },
+  { id: 'wld', symbol: 'WLD', name: 'Worldcoin', primarySector: 'emerging', baseAsset: 'WLD', quoteAsset: 'USDT', isBitkubPair: false, binanceSymbol: 'WLDUSDT' },
 ];

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
+  color-scheme: dark;
   /* Color Palette - Dark Navy Crypto Terminal */
   --bg-app: #080C15;
   --bg-sidebar: #0B101D;
@@ -41,6 +42,85 @@
   --shadow-glow-green: 0 0 16px rgba(16, 185, 129, 0.3);
 }
 
+/* ─────────────── Light Mode Theme ─────────────── */
+.light {
+  color-scheme: light;
+  --bg-app: #F0F4F8;
+  --bg-sidebar: #FFFFFF;
+  --bg-header: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8FAFC;
+  --bg-card-inner: #F1F5F9;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(59, 130, 246, 0.4);
+  --border-active: #3B82F6;
+
+  --neon-blue: #2563EB;
+  --neon-blue-light: #3B82F6;
+  --neon-cyan: #0891B2;
+  --neon-cyan-glow: rgba(8, 145, 178, 0.25);
+  --neon-green: #059669;
+  --neon-green-light: #10B981;
+  --neon-green-glow: rgba(5, 150, 105, 0.2);
+  --neon-amber: #D97706;
+  --neon-purple: #7C3AED;
+  --neon-red: #DC2626;
+  --neon-red-glow: rgba(220, 38, 38, 0.2);
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-glow-blue: 0 0 12px rgba(37, 99, 235, 0.2);
+  --shadow-glow-cyan: 0 0 12px rgba(8, 145, 178, 0.2);
+  --shadow-glow-green: 0 0 12px rgba(5, 150, 105, 0.15);
+}
+
+.light body,
+.light .app-container,
+.light .content-body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.light .crypto-table th,
+.light .crypto-table td {
+  border-color: var(--border-color);
+}
+
+.light .crypto-table tr:hover td {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.light .btn-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-primary);
+}
+
+.light .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #EEF2F7;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.light .docked-splitter {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.light .docked-splitter:hover,
+.light .docked-splitter.is-dragging {
+  background-color: rgba(37, 99, 235, 0.1) !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -70,6 +150,43 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* Form Elements & Native Select Controls */
+select {
+  color-scheme: dark;
+  background-color: #0F182B;
+  color: #F8FAFC;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+}
+
+select:focus {
+  border-color: var(--neon-blue);
+  outline: none;
+}
+
+select option,
+select optgroup {
+  background-color: #0B101E !important;
+  color: #F8FAFC !important;
+}
+
+.light select {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.light select:focus {
+  border-color: var(--neon-blue);
+}
+
+.light select option,
+.light select optgroup {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
 }
 
 /* Base Utility Classes */
@@ -130,6 +247,78 @@ body {
   gap: 14px;
   align-items: stretch;
   margin-bottom: 20px;
+}
+
+/* ────────────────── Docked Seamless Workspace (แบบชิดกัน ปรับสัดส่วนด้วยเมาส์) ────────── */
+.docked-workspace-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.docked-pane .crypto-card {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.docked-pane-left {
+  border-right: none;
+}
+
+.docked-pane-center {
+  border-left: none;
+  border-right: none;
+}
+
+.docked-pane-right {
+  border-left: none;
+}
+
+.docked-splitter {
+  position: relative;
+  width: 8px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background-color 0.15s ease;
+  z-index: 10;
+}
+
+.docked-splitter:hover,
+.docked-splitter.is-dragging {
+  background-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+.docked-splitter:hover > div:first-child,
+.docked-splitter.is-dragging > div:first-child {
+  background-color: #38BDF8 !important;
+  box-shadow: 0 0 12px #38BDF8, 0 0 6px #0284C7 !important;
+  width: 2px !important;
+}
+
+@media (max-width: 960px) {
+  .docked-panes-wrapper {
+    flex-direction: column !important;
+    min-height: auto !important;
+  }
+  .docked-pane-left,
+  .docked-pane-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+  }
+  .docked-splitter {
+    display: none !important;
+  }
 }
 
 /* ────────────────── 1600px and below ────────────────── */
@@ -494,4 +683,312 @@ body {
 
 .flash-down {
   animation: flashRed 1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* ─────────────── TradingView Technical Gauge (Consensus Meter) Theme Styling ─────────────── */
+.tradingview-gauge-container {
+  background-color: var(--bg-card-inner, #0B101E) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  width: 100% !important;
+}
+
+.tradingview-gauge-container iframe {
+  border-radius: 12px !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.light .tradingview-gauge-container {
+  background-color: #FFFFFF !important;
+}
+
+/* ─────────────── Crypto Analyst Profile & Topbar Responsive Styling ─────────────── */
+.analyst-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 58, 138, 0.22);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 24px;
+  padding: 4px 12px 4px 5px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.analyst-profile-chip:hover {
+  background: rgba(30, 58, 138, 0.38);
+  border-color: rgba(96, 165, 250, 0.65);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.analyst-profile-chip:active {
+  transform: translateY(0);
+}
+
+.light .analyst-profile-chip {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.light .analyst-profile-chip:hover {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.45);
+}
+
+.analyst-info-desktop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  line-height: 1.25;
+}
+
+.crypto-analyst-popover {
+  animation: analystPopoverIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes analystPopoverIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.light .crypto-analyst-popover {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15), 0 0 15px rgba(37, 99, 235, 0.1) !important;
+}
+
+.light .crypto-analyst-popover h4 {
+  color: #0F172A !important;
+}
+
+header nav {
+  flex-shrink: 1 !important;
+  min-width: 0 !important;
+}
+
+.topbar-right-controls {
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+
+/* Responsive Topbar Rules */
+@media (max-width: 1600px) {
+  .topbar-latency-pill {
+    display: none !important;
+  }
+}
+
+
+@media (max-width: 1380px) {
+  .topbar-shortcuts-btn {
+    display: none !important;
+  }
+  .topbar-live-badge {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .topbar-desktop-nav {
+    display: none !important;
+  }
+  .topbar-search-box {
+    width: 180px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-right-controls {
+    gap: 6px !important;
+  }
+  .analyst-profile-chip {
+    padding: 2px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  .analyst-info-desktop {
+    display: none !important;
+  }
+  .analyst-chip-chevron {
+    display: none !important;
+  }
+  .topbar-search-box {
+    width: 120px !important;
+  }
+}
+
+/* ─────────────── Real-time Focus Animations ─────────────── */
+@keyframes softGreenPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.live-green-pulse {
+  animation: softGreenPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes softYellowPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+.delayed-yellow-pulse {
+  animation: softYellowPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes priceFlashUp {
+  0% {
+    background-color: rgba(16, 185, 129, 0.35);
+    color: #34D399;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes priceFlashDown {
+  0% {
+    background-color: rgba(239, 68, 68, 0.35);
+    color: #F87171;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.price-flash-up {
+  animation: priceFlashUp 0.8s ease-out;
+}
+
+.price-flash-down {
+  animation: priceFlashDown 0.8s ease-out;
+}
+
+@keyframes rankSlideUp {
+  0% {
+    transform: translateY(6px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.rank-slide {
+  animation: rankSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes candidateGlowGreen {
+  0% {
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.card-glow-green {
+  animation: candidateGlowGreen 1.2s ease-in-out;
+}
+
+@keyframes candidateGlowOrange {
+  0% {
+    box-shadow: 0 0 0 rgba(249, 115, 22, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(249, 115, 22, 0);
+  }
+}
+
+.card-glow-orange {
+  animation: candidateGlowOrange 1.2s ease-in-out;
+}
+
+/* ─────────────── Collapsible Section Utilities ─────────────── */
+.collapse-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #CBD5E1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.collapse-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.collapse-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.collapsible-header-clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.18s ease;
+}
+
+.collapsible-header-clickable:hover {
+  opacity: 0.95;
+}
+
+.collapsible-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
 }

@@ -44,24 +44,41 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
     api.getCoins().then(setCoins);
   }, []);
 
-  const handleCreateAlert = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  const handleCreateAlert = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newAlert: AlertItem = {
-      id: String(Date.now()),
-      time: 'เมื่อสักครู่',
-      symbol: selectedCoin,
-      alertType,
-      descriptionTh: `${selectedCoin} ${note}`,
-      currentValue: threshold,
-      severity,
-      status: 'active',
-    };
-    setAlerts([newAlert, ...alerts]);
-    playNotificationChime();
+    setIsSubmitting(true);
+    try {
+      const created = await api.createAlert({
+        symbol: selectedCoin,
+        alertType,
+        descriptionTh: `${selectedCoin} ${note}`,
+        currentValue: threshold,
+        severity,
+        status: 'active',
+      });
+      setAlerts((prev) => [created, ...prev]);
+      playNotificationChime();
+      setSuccessToast(`บันทึกการแจ้งเตือนสำหรับ ${selectedCoin} สำเร็จแล้ว`);
+      setTimeout(() => setSuccessToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to create alert:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteAlert = (id: string) => {
-    setAlerts(alerts.filter(a => a.id !== id));
+  const handleDeleteAlert = async (id: string) => {
+    try {
+      await api.deleteAlert(id);
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
+      setSuccessToast('ลบการแจ้งเตือนเรียบร้อยแล้ว');
+      setTimeout(() => setSuccessToast(null), 2500);
+    } catch (err) {
+      console.error('Failed to delete alert:', err);
+    }
   };
 
   const getSeverityBadge = (sev: string) => {
@@ -100,6 +117,27 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
         </button>
       </div>
 
+      {/* Success Notification Banner */}
+      {successToast && (
+        <div
+          style={{
+            padding: '10px 16px',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: 'var(--neon-green-light)',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <CheckCircle size={16} color="#10B981" />
+          <span>{successToast}</span>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '16px' }}>
         {/* Create Alert Form */}
         <div className="crypto-card">
@@ -116,10 +154,10 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
               <select
                 value={selectedCoin}
                 onChange={(e) => setSelectedCoin(e.target.value)}
-                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', colorScheme: 'dark', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', outline: 'none', cursor: 'pointer' }}
               >
                 {coins.map((c) => (
-                  <option key={c.symbol} value={c.symbol}>
+                  <option key={c.symbol} value={c.symbol} style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>
                     {c.symbol} - {c.name}
                   </option>
                 ))}
@@ -133,15 +171,15 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
               <select
                 value={alertType}
                 onChange={(e) => setAlertType(e.target.value)}
-                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', colorScheme: 'dark', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', outline: 'none', cursor: 'pointer' }}
               >
-                <option value="Price Above">ราคามากกว่า (Price &gt;)</option>
-                <option value="Price Below">ราคาต่ำกว่า (Price &lt;)</option>
-                <option value="Breakout">Breakout ทะลุแนวต้าน</option>
-                <option value="Volume Spike">Volume พุ่งเกิน 200%</option>
-                <option value="RSI Overbought">RSI Overbought (&gt; 70)</option>
-                <option value="EMA Cross">EMA Golden Cross (20/50)</option>
-                <option value="Technical Score">Technical Score &gt; 85</option>
+                <option value="Price Above" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>ราคามากกว่า (Price &gt;)</option>
+                <option value="Price Below" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>ราคาต่ำกว่า (Price &lt;)</option>
+                <option value="Breakout" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Breakout ทะลุแนวต้าน</option>
+                <option value="Volume Spike" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Volume พุ่งเกิน 200%</option>
+                <option value="RSI Overbought" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>RSI Overbought (&gt; 70)</option>
+                <option value="EMA Cross" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>EMA Golden Cross (20/50)</option>
+                <option value="Technical Score" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Technical Score &gt; 85</option>
               </select>
             </div>
 
@@ -154,7 +192,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 placeholder="เช่น 185.00"
-                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', outline: 'none' }}
               />
             </div>
 
@@ -165,12 +203,12 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value as any)}
-                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', colorScheme: 'dark', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', outline: 'none', cursor: 'pointer' }}
               >
-                <option value="info">Info (ข้อมูลทั่วไป)</option>
-                <option value="watch">Watch (เฝ้าระวัง)</option>
-                <option value="important">Important (สำคัญ)</option>
-                <option value="critical">Critical (จุดตัดสินใจวิกฤต)</option>
+                <option value="info" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Info (ข้อมูลทั่วไป)</option>
+                <option value="watch" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Watch (เฝ้าระวัง)</option>
+                <option value="important" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Important (สำคัญ)</option>
+                <option value="critical" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Critical (จุดตัดสินใจวิกฤต)</option>
               </select>
             </div>
 

@@ -4,6 +4,7 @@ import { HeatmapItem, SectorStatItem, TickerData } from '../types/index.js';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Compass, Shield, Activity } from 'lucide-react';
 import { WhaleRadarWidget } from '../components/WhaleRadarWidget.js';
 import { realtimeService } from '../services/realtime.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface MarketOverviewPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -31,7 +32,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
     return unsub;
   }, []);
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   // Sector Donut Distribution (Image 2)
@@ -46,6 +47,76 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
     { name: 'GameFi', share: 2.8, color: '#F97316' },
     { name: 'RWA & Oracle', share: 2.7, color: '#0284C7' },
   ];
+
+  const TIMEFRAME_DATA: Record<string, {
+    capUsd: number;
+    changePct: number;
+    periodLabel: string;
+    isPositive: boolean;
+    areaD: string;
+    lineD: string;
+    timeline: string[];
+  }> = {
+    '1D': {
+      capUsd: 3.62e12,
+      changePct: 2.48,
+      periodLabel: '(24h)',
+      isPositive: true,
+      areaD: 'M 0 170 Q 60 160, 120 145 T 240 120 T 360 85 T 480 95 T 600 40 L 600 220 L 0 220 Z',
+      lineD: 'M 0 170 Q 60 160, 120 145 T 240 120 T 360 85 T 480 95 T 600 40',
+      timeline: ['00:00', '04:00', '08:00', '12:00', '16:00', 'Live'],
+    },
+    '1W': {
+      capUsd: 3.54e12,
+      changePct: 4.15,
+      periodLabel: '(7d)',
+      isPositive: true,
+      areaD: 'M 0 180 Q 80 190, 160 150 T 320 110 T 480 70 T 600 50 L 600 220 L 0 220 Z',
+      lineD: 'M 0 180 Q 80 190, 160 150 T 320 110 T 480 70 T 600 50',
+      timeline: ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสฯ', 'ศุกร์', 'เสาร์', 'อาทิตย์'],
+    },
+    '1M': {
+      capUsd: 3.38e12,
+      changePct: 9.82,
+      periodLabel: '(30d)',
+      isPositive: true,
+      areaD: 'M 0 195 Q 100 170, 200 140 T 400 90 T 500 65 T 600 35 L 600 220 L 0 220 Z',
+      lineD: 'M 0 195 Q 100 170, 200 140 T 400 90 T 500 65 T 600 35',
+      timeline: ['สัปดาห์ 1', 'สัปดาห์ 2', 'สัปดาห์ 3', 'สัปดาห์ 4', 'Live'],
+    },
+    '3M': {
+      capUsd: 2.95e12,
+      changePct: 22.71,
+      periodLabel: '(3M)',
+      isPositive: true,
+      areaD: 'M 0 205 Q 120 180, 250 150 T 420 100 T 520 60 T 600 30 L 600 220 L 0 220 Z',
+      lineD: 'M 0 205 Q 120 180, 250 150 T 420 100 T 520 60 T 600 30',
+      timeline: ['3 เดือนก่อน', '2 เดือนก่อน', 'เดือนก่อน', 'ปัจจุบัน'],
+    },
+    '1Y': {
+      capUsd: 2.14e12,
+      changePct: 69.15,
+      periodLabel: '(1Y)',
+      isPositive: true,
+      areaD: 'M 0 210 Q 100 195, 200 160 T 360 130 T 480 80 T 600 25 L 600 220 L 0 220 Z',
+      lineD: 'M 0 210 Q 100 195, 200 160 T 360 130 T 480 80 T 600 25',
+      timeline: ['ก.ย. 2025', 'ธ.ค. 2025', 'มี.ค. 2026', 'มิ.ย. 2026', 'สด Live'],
+    },
+    'ALL': {
+      capUsd: 1.10e12,
+      changePct: 229.09,
+      periodLabel: '(All Time)',
+      isPositive: true,
+      areaD: 'M 0 215 Q 150 205, 300 150 T 450 90 T 550 50 T 600 20 L 600 220 L 0 220 Z',
+      lineD: 'M 0 215 Q 150 205, 300 150 T 450 90 T 550 50 T 600 20',
+      timeline: ['2022', '2023', '2024', '2025', '2026 Live'],
+    },
+  };
+
+  const currentTfData = TIMEFRAME_DATA[activeTimeframe] || TIMEFRAME_DATA['1D'];
+  const formattedCap = currency === 'THB'
+    ? `฿${((currentTfData.capUsd * multiplier) / 1e12).toFixed(2)}T`
+    : `$${(currentTfData.capUsd / 1e12).toFixed(2)}T`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -74,6 +145,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
                 fontSize: '11.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
+                transition: 'all 0.15s',
               }}
             >
               {tf}
@@ -89,12 +161,18 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
           <div className="card-header-row">
             <div>
               <div className="card-title" style={{ fontSize: '15px' }}>
-                กราฟตลาดรวม (Total Market Cap)
+                กราฟตลาดรวม (Total Market Cap - {activeTimeframe})
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-                <span style={{ fontSize: '24px', fontWeight: 900 }}>$3.62T</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neon-green-light)' }}>
-                  +2.48% (24h)
+                <span style={{ fontSize: '24px', fontWeight: 900 }}>{formattedCap}</span>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: currentTfData.changePct >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                  }}
+                >
+                  {currentTfData.changePct >= 0 ? `+${currentTfData.changePct.toFixed(2)}%` : `${currentTfData.changePct.toFixed(2)}%`} {currentTfData.periodLabel}
                 </span>
               </div>
             </div>
@@ -110,27 +188,27 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
                 </linearGradient>
               </defs>
               <path
-                d="M 0 170 Q 60 160, 120 145 T 240 120 T 360 85 T 480 95 T 600 40 L 600 220 L 0 220 Z"
+                d={currentTfData.areaD}
                 fill="url(#marketCapGrad)"
+                style={{ transition: 'all 0.3s ease' }}
               />
               <path
-                d="M 0 170 Q 60 160, 120 145 T 240 120 T 360 85 T 480 95 T 600 40"
+                d={currentTfData.lineD}
                 fill="none"
                 stroke="#10B981"
                 strokeWidth="2.5"
+                style={{ transition: 'all 0.3s ease' }}
               />
             </svg>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
-            <span>Sep 2025</span>
-            <span>Nov 2025</span>
-            <span>Jan 2026</span>
-            <span>Mar 2026</span>
-            <span>Jun 2026</span>
-            <span>Live</span>
+            {currentTfData.timeline.map((label, idx) => (
+              <span key={idx}>{label}</span>
+            ))}
           </div>
         </div>
+
 
         {/* Sector Breakdown Donut (Image 2) */}
         <div className="crypto-card">

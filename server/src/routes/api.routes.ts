@@ -122,43 +122,53 @@ apiRouter.post('/market/watchlist/toggle', (req, res) => {
 /**
  * Candlestick OHLCV Data for Chart
  */
-apiRouter.get('/market/chart/:symbol', (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  const candles = marketStore.getCandles(symbol);
-  const ticker = marketStore.getTicker(symbol);
+apiRouter.get('/market/chart/:symbol', async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const interval = (req.query.interval as string) || (req.query.timeframe as string) || '1d';
+    const candles = await marketStore.getCandles(symbol, interval);
+    const ticker = marketStore.getTicker(symbol);
 
-  res.json({
-    success: true,
-    data: {
-      symbol,
-      ticker,
-      candles,
-    },
-  });
+    res.json({
+      success: true,
+      data: {
+        symbol,
+        interval,
+        ticker,
+        candles,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: (err as Error).message });
+  }
 });
 
 /**
  * Deep Coin Analysis & Multi-Timeframe Matrix (Sections 8, 10, 15, 17, 18)
  */
-apiRouter.get('/market/analysis/:symbol', (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  const candles = marketStore.getCandles(symbol);
-  const ticker = marketStore.getTicker(symbol) || marketStore.getTicker('BTC')!;
+apiRouter.get('/market/analysis/:symbol', async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const candles = await marketStore.getCandles(symbol);
+    const ticker = marketStore.getTicker(symbol) || marketStore.getTicker('BTC')!;
 
-  const indicators = IndicatorsEngine.calculateAllIndicators(candles);
-  const structure = MarketStructureEngine.analyze(candles, ticker.price);
-  const multiTf = IndicatorsEngine.getMultiTimeframeMatrix(symbol, ticker.price);
+    const indicators = IndicatorsEngine.calculateAllIndicators(candles);
+    const structure = MarketStructureEngine.analyze(candles, ticker.price);
+    const multiTf = IndicatorsEngine.getMultiTimeframeMatrix(symbol, ticker.price);
 
-  res.json({
-    success: true,
-    data: {
-      symbol,
-      ticker,
-      indicators,
-      structure,
-      multiTf,
-    },
-  });
+    res.json({
+      success: true,
+      data: {
+        symbol,
+        ticker,
+        indicators,
+        structure,
+        multiTf,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: (err as Error).message });
+  }
 });
 
 /**
@@ -204,6 +214,27 @@ apiRouter.get('/market/portfolio', (_req, res) => {
 apiRouter.get('/market/alerts', (_req, res) => {
   const alerts = marketStore.getAlerts();
   res.json({ success: true, data: alerts });
+});
+
+apiRouter.post('/market/alerts', (req, res) => {
+  const { symbol, alertType, descriptionTh, currentValue, severity } = req.body;
+  if (!symbol || !alertType || !currentValue) {
+    return res.status(400).json({ success: false, error: 'symbol, alertType, and currentValue are required' });
+  }
+  const newAlert = marketStore.addAlert({
+    symbol: String(symbol).toUpperCase(),
+    alertType: String(alertType),
+    descriptionTh: descriptionTh || `${symbol} ${alertType} ${currentValue}`,
+    currentValue: String(currentValue),
+    severity: severity || 'important',
+    status: 'active',
+  });
+  res.json({ success: true, data: newAlert });
+});
+
+apiRouter.delete('/market/alerts/:id', (req, res) => {
+  const success = marketStore.deleteAlert(req.params.id);
+  res.json({ success, message: success ? 'Alert deleted' : 'Alert not found' });
 });
 
 /**
@@ -379,6 +410,14 @@ apiRouter.get('/system/status', (_req, res) => {
 });
 
 /**
+ * Live Bitkub Symbol List (all coins currently on Bitkub platform)
+ */
+apiRouter.get('/market/bitkub-symbols', (_req, res) => {
+  const symbols = marketService.getBitkubSymbols();
+  res.json({ success: true, data: symbols, count: symbols.length });
+});
+
+/**
  * Trigger Instant Market Synchronization
  */
 apiRouter.post('/system/sync', async (_req, res) => {
@@ -443,4 +482,227 @@ apiRouter.get('/market/whale-radar', (_req, res) => {
   const summary = marketStore.getWhaleRadarSummary();
   res.json({ success: true, data: summary });
 });
+
+/**
+ * Top 5 Investment Intelligence & Ranking System
+ */
+apiRouter.get('/market/top5', (_req, res) => {
+  const data = marketStore.getTop5();
+  res.json({ success: true, data });
+});
+
+apiRouter.get('/market/top5/history', (_req, res) => {
+  const history = marketStore.getTop5History();
+  res.json({ success: true, data: history });
+});
+
+apiRouter.post('/market/top5/recalculate', (_req, res) => {
+  marketStore.calculateTop5(true);
+  const data = marketStore.getTop5();
+  res.json({ success: true, data });
+});
+
+/**
+ * Top 5 Buy Now (เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ - Quant V3 Hard Gates)
+ * Filters strictly for immediate entry setups with R:R >= 1:2, 0 to 5 coins (never force 5)
+ */
+apiRouter.get('/market/buynow', (_req, res) => {
+  const data = marketStore.getBuyNow();
+  res.json({ success: true, data });
+});
+
+apiRouter.post('/market/buynow/recalculate', (_req, res) => {
+  const data = marketStore.calculateBuyNow(true);
+  res.json({ success: true, data });
+});
+
+/**
+ * Top Opportunities ("เหรียญไหนกำลังมา?" - Section 31)
+ */
+apiRouter.get('/market/opportunities', (_req, res) => {
+  const data = marketStore.getOpportunities();
+  res.json({ success: true, data });
+});
+
+apiRouter.post('/market/opportunities/recalculate', (_req, res) => {
+  marketStore.calculateTop5(true);
+  const data = marketStore.getOpportunities();
+  res.json({ success: true, data });
+});
+
+/**
+ * Section 56: Quant V3 Decoupled Intelligence API
+ */
+apiRouter.get('/market/quant-v3/:symbol', (req, res) => {
+  const detail = marketStore.getQuantV3Detail(req.params.symbol);
+  if (!detail) {
+    return res.status(404).json({ success: false, error: `Quant V3 evaluation not found for ${req.params.symbol}` });
+  }
+  res.json({ success: true, data: detail });
+});
+
+apiRouter.get('/market/quant-v3-overview', (_req, res) => {
+  const top5 = marketStore.getTop5();
+  const opportunities = marketStore.getOpportunities();
+  const buyNow = marketStore.getBuyNow();
+  res.json({
+    success: true,
+    data: {
+      marketContext: top5.marketContext,
+      topOverall: top5.top5,
+      topOpportunities: opportunities.opportunities,
+      topBuyNow: buyNow.candidates,
+      marketStatus: buyNow.marketStatus,
+      marketMessage: buyNow.marketMessage,
+    }
+  });
+});
+
+/**
+ * ==========================================
+ * FOCUS MODULE API ENDPOINTS
+ * ==========================================
+ */
+
+// 1. Get all Focus items with live intelligence
+apiRouter.get('/focus', (_req, res) => {
+  const data = marketStore.getFocusList();
+  res.json({ success: true, data });
+});
+
+// 2. Get single Focus coin deep detail
+apiRouter.get('/focus/:symbol/detail', (req, res) => {
+  const data = marketStore.getFocusDetail(req.params.symbol);
+  if (!data) {
+    return res.status(404).json({ success: false, error: 'Focus coin not found' });
+  }
+  res.json({ success: true, data });
+});
+
+// 3. Add coin to Focus
+apiRouter.post('/focus', (req, res) => {
+  const { symbol, priority, mode, positionStatus, position, customTrailingStop, userNotes } = req.body;
+  if (!symbol) {
+    return res.status(400).json({ success: false, error: 'symbol is required' });
+  }
+  const item = marketStore.addFocusItem(symbol, {
+    priority,
+    mode,
+    positionStatus,
+    position,
+    customTrailingStop,
+    userNotes,
+  });
+  res.json({ success: true, data: item });
+});
+
+// 4. Update Focus item
+apiRouter.put('/focus/:id', (req, res) => {
+  const updated = marketStore.updateFocusItem(req.params.id, req.body);
+  if (!updated) {
+    return res.status(404).json({ success: false, error: 'Focus item not found' });
+  }
+  res.json({ success: true, data: updated });
+});
+
+// 5. Remove coin from Focus
+apiRouter.delete('/focus/:symbol', (req, res) => {
+  const success = marketStore.removeFocusItem(req.params.symbol);
+  res.json({ success, message: success ? 'Removed from focus' : 'Focus item not found' });
+});
+
+// 6. Reorder Focus items (Drag & Drop ranking)
+apiRouter.post('/focus/reorder', (req, res) => {
+  const { symbols } = req.body;
+  if (!Array.isArray(symbols)) {
+    return res.status(400).json({ success: false, error: 'symbols array is required' });
+  }
+  const success = marketStore.reorderFocusItems(symbols);
+  const data = marketStore.getFocusList();
+  res.json({ success, data });
+});
+
+// 7. Force immediate recalculation of all Focus coins
+apiRouter.post('/focus/recalculate', (_req, res) => {
+  const data = marketStore.calculateFocusScores(true);
+  res.json({ success: true, data });
+});
+
+/**
+ * Test Exchange API Connection (Bitkub / Binance)
+ */
+apiRouter.post('/settings/test-connection', async (req, res) => {
+  const { exchange } = req.body;
+  const start = Date.now();
+  try {
+    if (exchange === 'bitkub') {
+      const resp = await fetch('https://api.bitkub.com/api/servertime', { signal: AbortSignal.timeout(6000) });
+      const latency = Date.now() - start;
+      if (resp.ok) {
+        return res.json({
+          success: true,
+          data: {
+            exchange: 'bitkub',
+            status: 'online',
+            latencyMs: latency,
+            message: `เชื่อมต่อกับ Bitkub API สำเร็จ (${latency} ms)`,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } else {
+        return res.json({
+          success: false,
+          data: {
+            exchange: 'bitkub',
+            status: 'error',
+            latencyMs: latency,
+            message: `Bitkub API ตอบสนองด้วยสถานะ HTTP ${resp.status}`,
+          },
+        });
+      }
+    } else if (exchange === 'binance') {
+      const resp = await fetch('https://api.binance.com/api/v3/ping', { signal: AbortSignal.timeout(6000) });
+      const latency = Date.now() - start;
+      if (resp.ok) {
+        return res.json({
+          success: true,
+          data: {
+            exchange: 'binance',
+            status: 'online',
+            latencyMs: latency,
+            message: `เชื่อมต่อกับ Binance API สำเร็จ (${latency} ms)`,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } else {
+        return res.json({
+          success: false,
+          data: {
+            exchange: 'binance',
+            status: 'error',
+            latencyMs: latency,
+            message: `Binance API ตอบสนองด้วยสถานะ HTTP ${resp.status}`,
+          },
+        });
+      }
+    } else {
+      return res.status(400).json({ success: false, error: 'Unknown exchange' });
+    }
+  } catch (err: any) {
+    const latency = Date.now() - start;
+    return res.json({
+      success: false,
+      data: {
+        exchange,
+        status: 'timeout',
+        latencyMs: latency,
+        message: `ไม่สามารถเชื่อมต่อได้: ${err.message || 'Timeout / Network Error'}`,
+      },
+    });
+  }
+});
+
+
+
+
 

@@ -3,6 +3,7 @@ import { api } from '../services/api.js';
 import { realtimeService } from '../services/realtime.js';
 import { SignalType, TickerData } from '../types/index.js';
 import { Sparkles, ArrowUpRight, ArrowDownRight, Target, AlertTriangle, ShieldCheck, Filter, Activity } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface AISignalsPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -40,7 +41,7 @@ export const AISignalsPage: React.FC<AISignalsPageProps> = ({ onSelectCoin, curr
     return unsub;
   }, []);
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const filterTabs = [

@@ -18,7 +18,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, currency = 'THB' }) =>
     );
   }
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = currency === 'THB' ? (kpis.usdThbRate ?? 33.24) : 1;
   const prefix = currency === 'THB' ? '฿' : '$';
 
   // Format Market Cap

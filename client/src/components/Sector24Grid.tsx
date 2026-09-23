@@ -6,9 +6,10 @@ interface Sector24GridProps {
   items: SectorTopItem[];
   onSelectCoin: (symbol: string) => void;
   onViewAll?: () => void;
+  hideHeader?: boolean;
 }
 
-export const Sector24Grid: React.FC<Sector24GridProps> = ({ items, onSelectCoin, onViewAll }) => {
+export const Sector24Grid: React.FC<Sector24GridProps> = ({ items, onSelectCoin, onViewAll, hideHeader }) => {
   const getSectorIcon = (sector: string) => {
     switch (sector) {
       case 'core':
@@ -39,21 +40,23 @@ export const Sector24Grid: React.FC<Sector24GridProps> = ({ items, onSelectCoin,
   };
 
   return (
-    <div style={{ marginTop: '24px' }}>
-      <div className="card-header-row" style={{ marginBottom: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="card-title" style={{ fontSize: '15px' }}>
-            24 เหรียญแนะนำ (8 สาย สายละ 3 ตัว)
+    <div style={{ marginTop: hideHeader ? '0' : '24px' }}>
+      {!hideHeader && (
+        <div className="card-header-row" style={{ marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="card-title" style={{ fontSize: '15px' }}>
+              24 เหรียญแนะนำ (8 สาย สายละ 3 ตัว)
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              คัดกรองตามคะแนน AI และโครงสร้างทางเทคนิค
+            </span>
           </div>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            คัดกรองตามคะแนน AI และโครงสร้างทางเทคนิค
-          </span>
+          <div className="card-action-link" onClick={onViewAll}>
+            <span>ดูทั้งหมด 24 เหรียญ</span>
+            <ChevronRight size={14} />
+          </div>
         </div>
-        <div className="card-action-link" onClick={onViewAll}>
-          <span>ดูทั้งหมด 24 เหรียญ</span>
-          <ChevronRight size={14} />
-        </div>
-      </div>
+      )}
 
       <div
         style={{

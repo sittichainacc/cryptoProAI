@@ -16,7 +16,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   FileSpreadsheet,
-  Activity
+  Activity,
+  Award,
+  Target
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -36,6 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
+    { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE' },
+    { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI' },
     { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
     { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity },
@@ -188,7 +192,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
               )}
               <Icon size={18} color={isActive ? 'var(--neon-cyan)' : 'currentColor'} />
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                  <span>{item.label}</span>
+                  {'badge' in item && item.badge && (
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        background: item.id === 'focus' ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
+                        color: item.id === 'focus' ? '#34D399' : '#FBBF24',
+                        border: item.id === 'focus' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                        letterSpacing: '0.4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      {item.id === 'focus' && (
+                        <span
+                          className="live-green-pulse"
+                          style={{
+                            width: '5.5px',
+                            height: '5.5px',
+                            borderRadius: '50%',
+                            backgroundColor: '#10B981',
+                            display: 'inline-block',
+                          }}
+                        />
+                      )}
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+              )}
+              {isCollapsed && item.id === 'focus' && (
+                <span
+                  className="live-green-pulse"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#10B981',
+                  }}
+                />
+              )}
             </button>
           );
         })}

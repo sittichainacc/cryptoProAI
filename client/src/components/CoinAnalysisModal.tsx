@@ -1,6 +1,7 @@
 import React from 'react';
 import { TickerData } from '../types/index.js';
 import { X, Sparkles, AlertTriangle, CheckCircle, TrendingUp, Shield, Target } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface CoinAnalysisModalProps {
   coin: TickerData | null;
@@ -11,7 +12,7 @@ interface CoinAnalysisModalProps {
 export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({ coin, onClose, currency }) => {
   if (!coin) return null;
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const displayPrice = (coin.price * multiplier).toLocaleString(undefined, {

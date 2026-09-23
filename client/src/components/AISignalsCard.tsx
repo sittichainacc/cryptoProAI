@@ -2,6 +2,7 @@ import React from 'react';
 import { TickerData } from '../types/index.js';
 import { ChevronRight, ArrowUpRight } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface AISignalsCardProps {
   signals: TickerData[];
@@ -16,7 +17,7 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
   onViewAll,
   currency = 'THB',
 }) => {
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const getBadgeClass = (signal: string) => {

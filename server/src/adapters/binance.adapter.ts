@@ -44,18 +44,36 @@ export class BinanceAdapter implements IExchangeAdapter {
     }
   }
 
-  async fetchOHLCV(symbol: string, interval: string, fromSec: number, toSec: number): Promise<Candle[]> {
+  async fetchOHLCV(symbol: string, interval: string = '1d', fromSec?: number, toSec?: number): Promise<Candle[]> {
     try {
-      let intParam = interval;
-      if (interval === '1h' || interval === '60') intParam = '1h';
-      if (interval === '4h' || interval === '240') intParam = '4h';
-      if (interval === '15m' || interval === '15') intParam = '15m';
-      if (interval === '5m' || interval === '5') intParam = '5m';
-      if (interval === '1D' || interval === '1d') intParam = '1d';
+      const norm = (interval || '1d').toLowerCase().trim();
+      let intParam = '1d';
+      if (norm === '1m' || norm === '1') intParam = '1m';
+      else if (norm === '3m' || norm === '3') intParam = '3m';
+      else if (norm === '5m' || norm === '5') intParam = '5m';
+      else if (norm === '15m' || norm === '15') intParam = '15m';
+      else if (norm === '30m' || norm === '30') intParam = '30m';
+      else if (norm === '1h' || norm === '60') intParam = '1h';
+      else if (norm === '2h' || norm === '120') intParam = '2h';
+      else if (norm === '4h' || norm === '240') intParam = '4h';
+      else if (norm === '1d' || norm === 'd') intParam = '1d';
+      else if (norm === '1w' || norm === 'w') intParam = '1w';
+      else if (norm === '1mth' || norm === 'm') intParam = '1M';
 
-      const url = `${this.baseUrl}/api/v3/klines?symbol=${symbol}&interval=${intParam}&startTime=${fromSec * 1000}&endTime=${toSec * 1000}&limit=500`;
+      // Clean symbol and ensure USDT pair
+      const cleanSym = symbol.replace(/_THB|THB_|_USDT|USDT/g, '').toUpperCase();
+      const bnSymbol = `${cleanSym}USDT`;
+
+      let url = `${this.baseUrl}/api/v3/klines?symbol=${bnSymbol}&interval=${intParam}&limit=120`;
+      if (fromSec && toSec && fromSec > 0 && toSec > 0) {
+        url += `&startTime=${fromSec * 1000}&endTime=${toSec * 1000}`;
+      }
+
       const response = await fetch(url);
-      if (!response.ok) return [];
+      if (!response.ok) {
+        console.warn(`[BinanceAdapter] klines failed for ${bnSymbol} with status ${response.status}`);
+        return [];
+      }
 
       const raw = await response.json() as any[];
       if (!Array.isArray(raw)) return [];

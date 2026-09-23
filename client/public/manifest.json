@@ -10,8 +10,11 @@
     }
   ],
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "categories": ["finance", "productivity"],
   "background_color": "#080C15",
   "theme_color": "#080C15",
   "display": "standalone",
-  "orientation": "landscape-primary"
+  "orientation": "any"
 }

@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { TickerData } from '../types/index.js';
+import { TickerData, BuyNowCandidateItem } from '../types/index.js';
 import { PriceCell } from './PriceCell.js';
-import { Star, TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
+import { Star, TrendingUp, TrendingDown, BarChart2, Zap } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
-type TabId = 'watchlist' | 'volume' | 'gainers' | 'losers';
+type TabId = 'watchlist' | 'buynow' | 'volume' | 'gainers' | 'losers';
 
 interface TopMoversCardProps {
   gainers: TickerData[];
   losers: TickerData[];
   volume: TickerData[];
   watchlist?: TickerData[];
+  buyNowCandidates?: BuyNowCandidateItem[];
   selectedSymbol: string;
   onSelectCoin: (symbol: string) => void;
   onToggleWatchlist?: (symbol: string) => void;
@@ -18,6 +20,7 @@ interface TopMoversCardProps {
 
 const TABS = [
   { id: 'watchlist' as TabId, label: 'รายการโปรด', labelShort: 'โปรด', icon: Star,        color: '#F59E0B' },
+  { id: 'buynow'    as TabId, label: 'Top 5 Buy Now',labelShort: 'Buy Now', icon: Zap,    color: '#10B981' },
   { id: 'volume'   as TabId, label: 'ปริมาณ 24h',  labelShort: 'Volume',  icon: BarChart2,  color: '#06B6D4' },
   { id: 'gainers'  as TabId, label: '% เพิ่มสูงสุด',labelShort: 'Gainers', icon: TrendingUp, color: '#10B981' },
   { id: 'losers'   as TabId, label: '% ลดสูงสุด',   labelShort: 'Losers',  icon: TrendingDown, color: '#EF4444' },
@@ -28,6 +31,7 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
   losers,
   volume,
   watchlist = [],
+  buyNowCandidates = [],
   selectedSymbol,
   onSelectCoin,
   onToggleWatchlist,
@@ -35,7 +39,7 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('gainers');
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const currencyPrefix = currency === 'THB' ? '฿' : '$';
 
   const activeTabDef = TABS.find((t) => t.id === activeTab)!;
@@ -195,7 +199,127 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
 
       {/* Coin List */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {list.length === 0 ? (
+        {activeTab === 'buynow' ? (
+          buyNowCandidates.length === 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '140px',
+                gap: '8px',
+                color: 'var(--text-muted)',
+                padding: '16px',
+                textAlign: 'center',
+              }}
+            >
+              <Zap size={26} color="#10B981" />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#34D399' }}>
+                ขณะนี้ยังไม่มีเหรียญที่ผ่านเงื่อนไข Buy Now
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                ระบบคัดกรองเฉพาะเหรียญที่ R:R ≥ 1:2 และไม่ Overextended
+              </span>
+            </div>
+          ) : (
+            buyNowCandidates.map((c, index) => {
+              const isSelected = selectedSymbol === c.symbol;
+              const statusColor = c.status === 'STRONG BUY NOW' ? '#10B981' : '#059669';
+
+              return (
+                <div
+                  key={c.symbol}
+                  onClick={() => onSelectCoin(c.symbol)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '16px 18px 1fr 84px 60px',
+                    alignItems: 'center',
+                    padding: '7px 4px',
+                    borderRadius: '7px',
+                    cursor: 'pointer',
+                    backgroundColor: isSelected ? 'rgba(16,185,129,0.12)' : 'transparent',
+                    borderBottom: '1px solid rgba(255,255,255,0.03)',
+                    transition: 'background 0.12s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(16,185,129,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  }}
+                >
+                  {/* Rank */}
+                  <span style={{ fontSize: '10.5px', color: '#10B981', fontWeight: 700 }}>
+                    {index + 1}
+                  </span>
+
+                  {/* Zap icon */}
+                  <Zap size={11} color="#10B981" />
+
+                  {/* Symbol + sub info */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', paddingLeft: '2px' }}>
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: '#10B98122',
+                        color: '#34D399',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '9.5px',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {c.symbol.slice(0, 2)}
+                    </div>
+                    <div style={{ overflow: 'hidden', minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '12px', color: '#FFF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>{c.symbol}</span>
+                        <span style={{ fontSize: '9px', fontWeight: 800, color: statusColor, background: 'rgba(16,185,129,0.15)', padding: '0 4px', borderRadius: '4px' }}>
+                          {c.buyNowScore}p
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                        {c.setup} • {c.riskReward}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div style={{ textAlign: 'right', paddingRight: '4px' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#FFF' }}>
+                      {currencyPrefix}
+                      {(c.price * multiplier).toLocaleString(undefined, {
+                        maximumFractionDigits: c.price * multiplier < 1 ? 4 : 2,
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 24h change */}
+                  <div style={{ textAlign: 'right' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '2px 5px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        backgroundColor: c.change24h >= 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                        color: c.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                      }}
+                    >
+                      {c.change24h >= 0 ? `+${c.change24h.toFixed(1)}%` : `${c.change24h.toFixed(1)}%`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )
+        ) : list.length === 0 ? (
           <div
             style={{
               display: 'flex',

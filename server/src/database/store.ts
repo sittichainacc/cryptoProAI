@@ -10,13 +10,27 @@ import {
   SectorTopItem, 
   TickerData, 
   Top3OverallItem,
+  Top5CandidateItem,
+  Top5SnapshotHistory,
+  Top5Response,
+  BuyNowCandidateItem,
+  BuyNowResponse,
+  FocusItem,
+  FocusCoinData,
+  FocusResponse,
   WhaleRadarSummary,
-  WhaleTransaction
+  WhaleTransaction,
+  QuantV3OpportunityItem,
+  QuantV3ApiResponse
 } from '../types/index.js';
 import { INITIAL_COINS, SECTORS } from '../config/sectors.js';
 import { TechnicalScoringEngine } from '../engines/scoring.engine.js';
 import { AIEngine } from '../engines/ai.engine.js';
 import { IndicatorsEngine } from '../engines/indicators.engine.js';
+import { RankingEngine, QuantV3Engine } from '../engines/ranking.engine.js';
+import { FocusEngine } from '../engines/focus.engine.js';
+import { BinanceAdapter } from '../adapters/binance.adapter.js';
+import { BitkubAdapter } from '../adapters/bitkub.adapter.js';
 
 export class MarketStore {
   private coins: Map<string, Coin> = new Map();
@@ -26,6 +40,38 @@ export class MarketStore {
   private alerts: AlertItem[] = [];
   private news: CryptoNewsItem[] = [];
   private paperTrades: PaperTrade[] = [];
+  private top5Candidates: Top5CandidateItem[] = [];
+  private top5History: Top5SnapshotHistory[] = [];
+  private lastTop5CalculationTime: number = 0;
+  private lastMarketContext?: Top5Response['marketContext'];
+  private buyNowResponse: BuyNowResponse = {
+    candidates: [],
+    marketStatus: 'NORMAL',
+    evaluatedTotal: 0,
+    timestamp: new Date().toISOString(),
+  };
+  private lastBuyNowCalculationTime: number = 0;
+  private opportunities: QuantV3OpportunityItem[] = [];
+  private lastOpportunitiesCalculationTime: number = 0;
+
+  // Focus Module State
+  private focusItems: Map<string, FocusItem> = new Map();
+  private focusScores: Map<string, FocusCoinData> = new Map();
+  private lastFocusCalculationTime: number = 0;
+
+  private binanceAdapter = new BinanceAdapter();
+  private bitkubAdapter = new BitkubAdapter();
+  private usdThbRate: number = 33.24;
+  private globalKPIs = {
+    totalMarketCap: 2.73e12,
+    totalMarketCapThb: 91.2e12,
+    volume24h: 79.4e9,
+    volume24hThb: 2.65e12,
+    btcDominance: 58.9,
+    marketCapChange24h: -4.58,
+    volumeChange24h: -35.9,
+    lastUpdated: new Date().toISOString(),
+  };
   private fearAndGreed = {
     index: 71,
     sentiment: 'Greed' as 'Extreme Fear' | 'Fear' | 'Neutral' | 'Greed' | 'Extreme Greed',
@@ -41,59 +87,63 @@ export class MarketStore {
     this.seedInitialAlerts();
     this.seedInitialNews();
     this.seedInitialPaperTrades();
+    this.seedInitialTop5();
+    this.seedInitialFocus();
   }
 
   private seedInitialTickers() {
-    // Base realistic market data
+    // Base realistic market data (real current prices from Binance / Bitkub)
     const baselineData: Record<string, { price: number; change24h: number; change7d: number; volume: number; rsi: number }> = {
-      BTC: { price: 108432.50, change24h: 1.32, change7d: 4.56, volume: 45200000000, rsi: 58.4 },
-      ETH: { price: 3842.00, change24h: 2.18, change7d: 6.21, volume: 21400000000, rsi: 62.1 },
-      SOL: { price: 185.45, change24h: 4.32, change7d: 12.40, volume: 7850000000, rsi: 64.8 },
-      BNB: { price: 726.31, change24h: 1.55, change7d: 3.82, volume: 1850000000, rsi: 54.2 },
+      BTC: { price: 80392.00, change24h: -0.88, change7d: 5.50, volume: 45200000000, rsi: 54.2 },
+      ETH: { price: 2580.00, change24h: -1.95, change7d: 1.20, volume: 21400000000, rsi: 51.1 },
+      SOL: { price: 108.80, change24h: -2.83, change7d: -2.40, volume: 7850000000, rsi: 48.8 },
+      BNB: { price: 750.30, change24h: -1.53, change7d: 2.10, volume: 1850000000, rsi: 52.1 },
+      FLOCK: { price: 3.24, change24h: 28.00, change7d: 54.00, volume: 185000000, rsi: 78.5 },
 
-      DOT: { price: 6.28, change24h: 14.70, change7d: 18.50, volume: 680000000, rsi: 67.5 },
-      ADA: { price: 0.71, change24h: 2.65, change7d: 6.14, volume: 920000000, rsi: 56.1 },
-      KAVA: { price: 0.992, change24h: 34.20, change7d: 42.10, volume: 410000000, rsi: 74.2 },
-      AVAX: { price: 37.22, change24h: 4.11, change7d: 11.30, volume: 730000000, rsi: 59.3 },
-      SUI: { price: 3.92, change24h: 5.62, change7d: 15.10, volume: 1120000000, rsi: 68.2 },
-      SEI: { price: 0.54, change24h: 8.40, change7d: 14.20, volume: 380000000, rsi: 63.4 },
-      ARB: { price: 0.88, change24h: 3.10, change7d: 5.40, volume: 420000000, rsi: 51.8 },
+      DOT: { price: 3.75, change24h: 2.35, change7d: 4.50, volume: 380000000, rsi: 53.5 },
+      ADA: { price: 0.22, change24h: -1.13, change7d: -1.80, volume: 520000000, rsi: 49.1 },
+      KAVA: { price: 0.25, change24h: 2.60, change7d: 5.10, volume: 90000000, rsi: 54.2 },
+      AVAX: { price: 10.10, change24h: -1.80, change7d: 3.30, volume: 430000000, rsi: 51.3 },
+      SUI: { price: 0.82, change24h: 0.97, change7d: 8.10, volume: 1120000000, rsi: 58.2 },
+      SEI: { price: 0.18, change24h: 1.40, change7d: 4.20, volume: 180000000, rsi: 53.4 },
+      ARB: { price: 0.28, change24h: -1.10, change7d: 1.40, volume: 220000000, rsi: 48.8 },
 
-      AAVE: { price: 312.40, change24h: 18.60, change7d: 28.50, volume: 890000000, rsi: 71.3 },
-      JUP: { price: 0.731, change24h: 16.80, change7d: 22.40, volume: 350000000, rsi: 69.1 },
-      CAKE: { price: 2.45, change24h: 6.20, change7d: 9.80, volume: 120000000, rsi: 58.0 },
-      UNI: { price: 11.85, change24h: 4.50, change7d: 8.20, volume: 480000000, rsi: 57.4 },
-      CRV: { price: 0.42, change24h: 2.10, change7d: 4.30, volume: 85000000, rsi: 52.1 },
+      AAVE: { price: 142.40, change24h: 1.20, change7d: 6.50, volume: 490000000, rsi: 56.3 },
+      JUP: { price: 0.33, change24h: 1.80, change7d: 3.40, volume: 150000000, rsi: 54.1 },
+      CAKE: { price: 1.45, change24h: 0.80, change7d: 2.80, volume: 80000000, rsi: 52.0 },
+      UNI: { price: 9.08, change24h: -1.50, change7d: 3.20, volume: 280000000, rsi: 52.4 },
+      CRV: { price: 0.32, change24h: 1.10, change7d: 2.30, volume: 65000000, rsi: 51.1 },
 
-      FLOCK: { price: 0.185, change24h: 22.10, change7d: 48.00, volume: 180000000, rsi: 76.5 },
-      FET: { price: 1.18, change24h: 24.90, change7d: 38.20, volume: 950000000, rsi: 75.1 },
-      TAO: { price: 482.00, change24h: 7.80, change7d: 19.50, volume: 290000000, rsi: 65.4 },
-      GRT: { price: 0.24, change24h: 5.40, change7d: 11.20, volume: 210000000, rsi: 59.8 },
-      IO: { price: 2.85, change24h: 12.30, change7d: 24.50, volume: 310000000, rsi: 67.2 },
+      RENDER: { price: 3.20, change24h: 2.10, change7d: 7.00, volume: 280000000, rsi: 56.5 },
+      FET: { price: 0.68, change24h: 1.90, change7d: 4.20, volume: 250000000, rsi: 54.1 },
+      TAO: { price: 282.00, change24h: -0.80, change7d: 3.50, volume: 190000000, rsi: 52.4 },
+      GRT: { price: 0.071, change24h: 1.40, change7d: 3.20, volume: 110000000, rsi: 51.8 },
+      IO: { price: 1.45, change24h: 2.30, change7d: 6.50, volume: 130000000, rsi: 55.2 },
 
-      LINK: { price: 23.41, change24h: 12.40, change7d: 18.76, volume: 1650000000, rsi: 66.8 },
-      XRP: { price: 2.46, change24h: 0.84, change7d: 2.91, volume: 3400000000, rsi: 53.4 },
-      ACH: { price: 0.032, change24h: 8.90, change7d: 14.10, volume: 85000000, rsi: 61.2 },
-      XLM: { price: 0.38, change24h: 1.20, change7d: 3.40, volume: 290000000, rsi: 51.5 },
+      LINK: { price: 12.44, change24h: -2.60, change7d: 4.76, volume: 650000000, rsi: 53.8 },
+      XRP: { price: 1.38, change24h: -2.18, change7d: 1.91, volume: 2400000000, rsi: 50.4 },
+      ACH: { price: 0.016, change24h: 1.90, change7d: 3.10, volume: 45000000, rsi: 52.2 },
+      XLM: { price: 0.19, change24h: -0.47, change7d: 2.40, volume: 190000000, rsi: 50.5 },
 
-      PEPE: { price: 0.0000123, change24h: 14.60, change7d: 24.80, volume: 2200000000, rsi: 72.1 },
-      DOGE: { price: 0.219, change24h: 3.71, change7d: 9.23, volume: 2800000000, rsi: 58.7 },
-      BONK: { price: 0.000021, change24h: 13.60, change7d: 21.40, volume: 760000000, rsi: 69.4 },
-      FLOKI: { price: 0.00018, change24h: 9.40, change7d: 16.20, volume: 430000000, rsi: 64.1 },
+      PEPE: { price: 0.0000041, change24h: 3.60, change7d: 8.80, volume: 1200000000, rsi: 58.1 },
+      DOGE: { price: 0.085, change24h: -2.44, change7d: 2.23, volume: 980000000, rsi: 49.7 },
+      SHIB: { price: 0.000013, change24h: -1.20, change7d: 3.40, volume: 460000000, rsi: 51.4 },
+      BONK: { price: 0.000008, change24h: 1.60, change7d: 5.40, volume: 360000000, rsi: 53.4 },
+      FLOKI: { price: 0.00007, change24h: 0.40, change7d: 3.20, volume: 180000000, rsi: 51.1 },
 
-      IMX: { price: 1.42, change24h: 15.90, change7d: 21.30, volume: 240000000, rsi: 68.9 },
-      AXS: { price: 6.85, change24h: 4.80, change7d: 8.50, volume: 180000000, rsi: 57.2 },
-      MANA: { price: 0.44, change24h: 3.50, change7d: 6.20, volume: 110000000, rsi: 54.8 },
-      GALA: { price: 0.031, change24h: 7.20, change7d: 11.40, volume: 150000000, rsi: 60.1 },
-      SAND: { price: 0.41, change24h: 2.90, change7d: 5.10, volume: 95000000, rsi: 53.0 },
+      IMX: { price: 0.52, change24h: 1.90, change7d: 4.30, volume: 140000000, rsi: 53.9 },
+      AXS: { price: 3.85, change24h: 0.80, change7d: 2.50, volume: 90000000, rsi: 51.2 },
+      MANA: { price: 0.24, change24h: -0.50, change7d: 1.20, volume: 70000000, rsi: 49.8 },
+      GALA: { price: 0.012, change24h: 1.20, change7d: 3.40, volume: 80000000, rsi: 52.1 },
+      SAND: { price: 0.21, change24h: -0.90, change7d: 1.10, volume: 65000000, rsi: 49.0 },
 
-      EDGE: { price: 1.23, change24h: 26.40, change7d: 54.00, volume: 190000000, rsi: 78.4 },
-      PIEVERSE: { price: 0.45, change24h: 18.20, change7d: 36.50, volume: 85000000, rsi: 71.0 },
-      SKR: { price: 0.0841, change24h: 28.70, change7d: 61.20, volume: 95000000, rsi: 81.2 },
-      ASTER: { price: 0.15, change24h: 11.40, change7d: 22.00, volume: 45000000, rsi: 64.5 },
+      NEAR: { price: 3.45, change24h: -6.12, change7d: -2.00, volume: 380000000, rsi: 45.4 },
+      TON: { price: 3.10, change24h: 0.50, change7d: 2.50, volume: 185000000, rsi: 51.0 },
+      APT: { price: 4.80, change24h: 1.70, change7d: 5.20, volume: 220000000, rsi: 54.2 },
+      WLD: { price: 1.10, change24h: 2.40, change7d: 6.00, volume: 145000000, rsi: 55.1 },
     };
 
-    const btc7d = baselineData['BTC']?.change7d ?? 4.56;
+    const btc7d = baselineData['BTC']?.change7d ?? 5.5;
 
     for (const coin of INITIAL_COINS) {
       const data = baselineData[coin.symbol] ?? {
@@ -138,7 +188,7 @@ export class MarketStore {
       const sparkline: number[] = [];
       let current = data.price * (1 - data.change7d / 100);
       for (let i = 0; i < 14; i++) {
-        const step = (data.price - current) / (14 - i) + (Math.random() - 0.45) * (data.price * 0.02);
+        const step = (data.price - current) / (14 - i);
         current += step;
         sparkline.push(Number(current.toFixed(data.price < 1 ? 6 : 2)));
       }
@@ -150,7 +200,7 @@ export class MarketStore {
         sector: coin.primarySector,
         price: data.price,
         currency: 'USDT',
-        change1h: Number(((Math.random() - 0.4) * 1.5).toFixed(2)),
+        change1h: Number((data.change24h / 24).toFixed(2)),
         change24h: data.change24h,
         change7d: data.change7d,
         volume24h: data.volume,
@@ -213,38 +263,195 @@ export class MarketStore {
     }
   }
 
+  /**
+   * Update an existing ticker OR add a new one if it doesn't exist yet.
+   * Used for dynamic Bitkub coin list syncing.
+   */
+  updateOrAddBitkubTicker(symbol: string, name: string, data: {
+    price: number;
+    change24h: number;
+    volume24h?: number;
+    high24h?: number;
+    low24h?: number;
+  }) {
+    const sym = symbol.toUpperCase();
+    const existing = this.tickers.get(sym);
+    
+    if (existing) {
+      // Update existing ticker with live data
+      const updated = {
+        ...existing,
+        price: data.price,
+        change24h: data.change24h,
+        change1h: Number((data.change24h / 24).toFixed(2)),
+        volume24h: data.volume24h ?? existing.volume24h,
+        high24h: data.high24h ?? existing.high24h,
+        low24h: data.low24h ?? existing.low24h,
+        marketCap: data.price * (existing.marketCap / existing.price || 1e9),
+        isWatchlist: this.watchlist.has(sym),
+        lastUpdated: new Date().toISOString(),
+      };
+      this.tickers.set(sym, updated);
+    } else {
+      // Create a new ticker entry for a newly detected Bitkub coin
+      const btcTicker = this.tickers.get('BTC');
+      const btcTrend = btcTicker?.change7d ?? 5.5;
+      
+      const techScore = TechnicalScoringEngine.calculateScore({
+        price: data.price,
+        change24h: data.change24h,
+        change7d: data.change24h * 3.5, // Approximate 7d from 24h
+        volume24h: data.volume24h ?? 1e6,
+        rsi: 50 + data.change24h * 0.5,
+        isAboveEma20: data.change24h > 0,
+        isAboveEma50: data.change24h > -2,
+        isAboveEma200: true,
+        isBreakout: data.change24h > 10,
+        isRetest: data.change24h > 3 && data.change24h < 8,
+        btcChange7d: btcTrend,
+        sectorChange7d: 5.0,
+      });
+
+      const aiEval = AIEngine.evaluate({
+        symbol: sym,
+        name,
+        sector: 'emerging',
+        price: data.price,
+        change24h: data.change24h,
+        change7d: data.change24h * 3.5,
+        technicalScore: techScore.total,
+        rsi: 50 + data.change24h * 0.5,
+        volume24h: data.volume24h ?? 1e6,
+        btcTrend: btcTrend > 0 ? 'bull' : 'bear',
+        fearGreed: this.fearAndGreed.index,
+        newsSentiment: 0.2,
+      });
+
+      this.tickers.set(sym, {
+        symbol: sym,
+        name,
+        sector: 'emerging',
+        price: data.price,
+        currency: 'USDT',
+        change1h: Number((data.change24h / 24).toFixed(2)),
+        change24h: data.change24h,
+        change7d: Number((data.change24h * 3.5).toFixed(2)),
+        volume24h: data.volume24h ?? 1e6,
+        marketCap: data.price * 500000000,
+        high24h: data.high24h ?? data.price * 1.05,
+        low24h: data.low24h ?? data.price * 0.95,
+        rsi: Number(Math.min(Math.max(50 + data.change24h * 0.5, 20), 90).toFixed(1)),
+        trend: data.change24h > 5 ? 'Strong Bullish' : data.change24h > 0 ? 'Bullish' : 'Neutral',
+        signal: aiEval.signal,
+        signalLabelTh: aiEval.signalLabelTh,
+        signalReasonTh: aiEval.explanationTh,
+        aiScore: aiEval.score,
+        technicalScore: techScore.total,
+        scoreGrade: techScore.grade,
+        riskLevel: aiEval.riskRating,
+        sparkline: [data.price],
+        isWatchlist: this.watchlist.has(sym),
+        lastUpdated: new Date().toISOString(),
+      });
+      
+      console.log(`[MarketStore] Added new Bitkub coin: ${sym} (${name}) @ $${data.price.toFixed(4)}`);
+    }
+  }
+
+  /**
+   * Remove a ticker from the store (for delisted coins).
+   */
+  removeTicker(symbol: string) {
+    const sym = symbol.toUpperCase();
+    if (this.tickers.has(sym)) {
+      this.tickers.delete(sym);
+      this.coins.delete(sym);
+      console.log(`[MarketStore] Removed delisted coin: ${sym}`);
+    }
+  }
+
+  setUsdThbRate(rate: number) {
+    if (rate > 0 && !isNaN(rate)) {
+      this.usdThbRate = Number(rate.toFixed(2));
+    }
+  }
+
+  getUsdThbRate(): number {
+    return this.usdThbRate;
+  }
+
+  updateGlobalKPIs(data: Partial<{
+    totalMarketCap: number;
+    totalMarketCapThb: number;
+    volume24h: number;
+    volume24hThb: number;
+    btcDominance: number;
+    marketCapChange24h: number;
+    volumeChange24h: number;
+    lastUpdated: string;
+  }>) {
+    this.globalKPIs = {
+      ...this.globalKPIs,
+      ...data,
+      lastUpdated: new Date().toISOString(),
+    };
+  }
+
   getMarketOverviewKPIs(): MarketOverviewKPIs {
+    const totalCap = this.globalKPIs.totalMarketCap;
+    const vol24h = this.globalKPIs.volume24h;
+    const btcDom = this.globalKPIs.btcDominance;
+    const btcTicker = this.tickers.get('BTC');
+    const ethTicker = this.tickers.get('ETH');
+
+    // Count real bullish & breakout coins
+    let bullishCount = 0;
+    let breakoutCount = 0;
+    for (const t of this.tickers.values()) {
+      if (t.change24h > 0) bullishCount++;
+      if (t.change24h > 5) breakoutCount++;
+    }
+
+    const btcChange = btcTicker?.change24h ?? -0.88;
+    const btcTrendStatus: 'bull' | 'bear' | 'neutral' = 
+      btcChange > 1.5 ? 'bull' : btcChange < -2.0 ? 'bear' : 'neutral';
+
     return {
-      totalMarketCap: 3.21e12,
-      totalMarketCapFormatted: '$3.21T',
-      marketCapChange24h: 2.34,
-      marketCapSparkline: [3.05, 3.08, 3.12, 3.10, 3.14, 3.16, 3.15, 3.18, 3.19, 3.20, 3.21],
+      totalMarketCap: totalCap,
+      totalMarketCapFormatted: `$${(totalCap / 1e12).toFixed(2)}T`,
+      marketCapChange24h: this.globalKPIs.marketCapChange24h,
+      marketCapSparkline: [2.85, 2.82, 2.79, 2.75, 2.73, 2.74, 2.73],
 
-      volume24h: 128.7e9,
-      volume24hFormatted: '$128.7B',
-      volumeChange24h: 18.5,
-      volumeSparkline: [95, 102, 108, 105, 114, 118, 122, 120, 125, 128.7],
+      volume24h: vol24h,
+      volume24hFormatted: `$${(vol24h / 1e9).toFixed(1)}B`,
+      volumeChange24h: this.globalKPIs.volumeChange24h ?? -35.9,
+      volumeSparkline: [95, 90, 85, 82, 79.4],
 
-      btcDominance: 54.2,
-      btcDominanceChange24h: -0.3,
-      btcDominanceSparkline: [55.1, 55.0, 54.8, 54.9, 54.6, 54.5, 54.4, 54.3, 54.2],
+      btcDominance: btcDom,
+      btcDominanceChange24h: 0.15,
+      btcDominanceSparkline: [58.2, 58.5, 58.7, 58.9],
 
       fearAndGreedIndex: this.fearAndGreed.index,
       fearAndGreedSentiment: this.fearAndGreed.sentiment,
       fearAndGreedSentimentTh: this.fearAndGreed.sentimentTh,
 
       marketAITrend: {
-        status: 'bull',
-        statusTh: 'กระทิง (Bullish)',
-        descriptionTh: 'มีโอกาสเป็นขาขึ้นต่อเนื่องในระยะกลาง ตลาดมีแรงซื้อหนุนสม่ำเสมอ',
+        status: btcTrendStatus,
+        statusTh: btcTrendStatus === 'bull' ? 'กระทิง (Bullish)' : btcTrendStatus === 'bear' ? 'หมี (Bearish)' : 'พักตัว (Sideways)',
+        descriptionTh: btcTrendStatus === 'bull' 
+          ? 'มีโอกาสเป็นขาขึ้นต่อเนื่อง ตลาดมีแรงซื้อหนุนสม่ำเสมอ' 
+          : btcTrendStatus === 'bear'
+          ? 'ตลาดกำลังเผชิญแรงขายทำกำไร ควรระมัดระวังการไล่ราคา'
+          : 'ตลาดแกว่งตัวออกข้าง รอความชัดเจนของทิศทางเงินทุน',
       },
 
-      btcPrice: this.tickers.get('BTC')?.price ?? 108432.50,
-      btcChange24h: this.tickers.get('BTC')?.change24h ?? 1.32,
-      ethPrice: this.tickers.get('ETH')?.price ?? 3842.00,
-      ethChange24h: this.tickers.get('ETH')?.change24h ?? 2.18,
-      bullishCoinCount: 31,
-      breakoutCoinCount: 9,
+      btcPrice: btcTicker?.price ?? 80392.00,
+      btcChange24h: btcChange,
+      ethPrice: ethTicker?.price ?? 2580.00,
+      ethChange24h: ethTicker?.change24h ?? -1.95,
+      bullishCoinCount: bullishCount,
+      breakoutCoinCount: breakoutCount,
+      usdThbRate: this.usdThbRate,
       timestamp: new Date().toISOString(),
     };
   }
@@ -288,53 +495,36 @@ export class MarketStore {
     const scoredList = this.getAllTickers().filter(t => t.symbol !== 'BTC');
     scoredList.sort((a, b) => b.aiScore - a.aiScore || b.change7d - a.change7d);
 
-    const top1 = scoredList[0] || this.tickers.get('SOL');
-    const top2 = scoredList[1] || this.tickers.get('LINK');
-    const top3 = scoredList[2] || this.tickers.get('PEPE');
+    const top1 = scoredList[0] || this.tickers.get('SOL') || this.getAllTickers()[0];
+    const top2 = scoredList[1] || this.tickers.get('LINK') || this.getAllTickers()[1];
+    const top3 = scoredList[2] || this.tickers.get('PEPE') || this.getAllTickers()[2];
+
+    const makeItem = (
+      rank: 1 | 2 | 3,
+      coin: TickerData,
+      colorType: 'gold' | 'silver' | 'bronze'
+    ): Top3OverallItem => {
+      const isStrong = coin.signal === 'STRONG_BUY';
+      return {
+        rank,
+        symbol: coin.symbol,
+        name: coin.name,
+        price: coin.price,
+        change7d: coin.change7d,
+        score: coin.aiScore,
+        signal: coin.signal,
+        signalLabelTh: coin.signalLabelTh || (isStrong ? 'Strong Buy' : 'Buy'),
+        reasonTh: coin.signalReasonTh || `AI Score ${coin.aiScore}/100 มี Momentum เชิงบวกสูงในกลุ่ม ${coin.sector}`,
+        trendTh: coin.trend || 'แนวโน้มแข็งแรง',
+        risk: coin.riskLevel || 'Medium',
+        colorType,
+      };
+    };
 
     return [
-      {
-        rank: 1,
-        symbol: top1?.symbol ?? 'SOL',
-        name: top1?.name ?? 'Solana',
-        price: top1?.price ?? 185.45,
-        change7d: top1?.change7d ?? 12.4,
-        score: top1?.aiScore ?? 92,
-        signal: top1?.signal ?? 'STRONG_BUY',
-        signalLabelTh: 'Strong Buy',
-        reasonTh: 'แนวโน้มแข็งแรงมาก ยืนเหนือเส้น EMA หลักทุกเส้น',
-        trendTh: 'แนวโน้มแข็งแรง',
-        risk: top1?.riskLevel ?? 'Medium',
-        colorType: 'gold',
-      },
-      {
-        rank: 2,
-        symbol: top2?.symbol ?? 'LINK',
-        name: top2?.name ?? 'Chainlink',
-        price: top2?.price ?? 23.41,
-        change7d: top2?.change7d ?? 8.76,
-        score: top2?.aiScore ?? 90,
-        signal: top2?.signal ?? 'STRONG_BUY',
-        signalLabelTh: 'Strong Buy',
-        reasonTh: 'โครงสร้างกราฟ 4H สวยงาม ทะลุแนวต้านสำคัญ',
-        trendTh: 'โครงสร้างดีมาก',
-        risk: top2?.riskLevel ?? 'Low',
-        colorType: 'silver',
-      },
-      {
-        rank: 3,
-        symbol: top3?.symbol ?? 'PEPE',
-        name: top3?.name ?? 'Pepe',
-        price: top3?.price ?? 0.0000123,
-        change7d: top3?.change7d ?? 9.23,
-        score: top3?.aiScore ?? 86,
-        signal: top3?.signal ?? 'BUY',
-        signalLabelTh: 'Buy',
-        reasonTh: 'Volume ไหลเข้าต่อเนื่อง Momentum เด่นในกลุ่มมีม',
-        trendTh: 'Momentum เด่น',
-        risk: top3?.riskLevel ?? 'High',
-        colorType: 'bronze',
-      },
+      makeItem(1, top1, 'gold'),
+      makeItem(2, top2, 'silver'),
+      makeItem(3, top3, 'bronze'),
     ];
   }
 
@@ -395,17 +585,83 @@ export class MarketStore {
     return this.alerts;
   }
 
+  addAlert(alertData: Omit<AlertItem, 'id' | 'time'>): AlertItem {
+    const newAlert: AlertItem = {
+      ...alertData,
+      id: `ALT-${Date.now()}`,
+      time: 'เมื่อสักครู่',
+      status: alertData.status || 'active',
+    };
+    this.alerts.unshift(newAlert);
+    return newAlert;
+  }
+
+  deleteAlert(id: string): boolean {
+    const initialLen = this.alerts.length;
+    this.alerts = this.alerts.filter((a) => a.id !== id);
+    return this.alerts.length < initialLen;
+  }
+
+  toggleAlert(id: string): boolean {
+    const alert = this.alerts.find((a) => a.id === id);
+    if (alert) {
+      alert.status = alert.status === 'active' ? 'triggered' : 'active';
+      return true;
+    }
+    return false;
+  }
+
   getNews(): CryptoNewsItem[] {
     return this.news;
   }
 
-  getCandles(symbol: string): Candle[] {
+  async getCandles(symbol: string, interval: string = '1d'): Promise<Candle[]> {
     const sym = symbol.toUpperCase();
-    if (this.candlesCache.has(sym)) {
-      return this.candlesCache.get(sym)!;
+    const normInterval = (interval || '1d').toLowerCase();
+    const cacheKey = `${sym}_${normInterval}`;
+
+    if (this.candlesCache.has(cacheKey)) {
+      const cached = this.candlesCache.get(cacheKey)!;
+      if (cached && cached.length > 0) {
+        return cached;
+      }
     }
 
-    // Generate realistic historical daily candles for symbol
+    // 1. Fetch real historical candles from Binance
+    try {
+      const realCandles = await this.binanceAdapter.fetchOHLCV(sym, normInterval);
+      if (realCandles && realCandles.length > 0) {
+        // Sync the latest candle close with real live ticker price if available
+        const ticker = this.tickers.get(sym);
+        if (ticker) {
+          const lastCandle = realCandles[realCandles.length - 1];
+          lastCandle.close = ticker.price;
+          lastCandle.high = Math.max(lastCandle.high, ticker.price);
+          lastCandle.low = Math.min(lastCandle.low, ticker.price);
+        }
+        const enriched = IndicatorsEngine.enrichCandlesWithEMAs(realCandles);
+        this.candlesCache.set(cacheKey, enriched);
+        return enriched;
+      }
+    } catch (err) {
+      console.warn(`[MarketStore] Failed to fetch Binance candles for ${sym} (${normInterval}):`, (err as Error).message);
+    }
+
+    // 2. Try Bitkub if available
+    try {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const fromSec = nowSec - 120 * 86400;
+      const bitkubCandles = await this.bitkubAdapter.fetchOHLCV(sym, '1D', fromSec, nowSec);
+      if (bitkubCandles && bitkubCandles.length > 0) {
+        const enriched = IndicatorsEngine.enrichCandlesWithEMAs(bitkubCandles);
+        this.candlesCache.set(cacheKey, enriched);
+        return enriched;
+      }
+    } catch (err) {
+      console.warn(`[MarketStore] Failed to fetch Bitkub candles for ${sym}:`, (err as Error).message);
+    }
+
+    // Fallback: Generate candles based on real ticker data (No Math.random fake randomness)
     const ticker = this.tickers.get(sym) || this.tickers.get('BTC')!;
     const basePrice = ticker.price;
     const count = 120;
@@ -413,43 +669,35 @@ export class MarketStore {
     const daySec = 86400;
     const candles: Candle[] = [];
 
-    let currentClose = basePrice * 0.70;
     for (let i = count; i >= 0; i--) {
       const time = now - i * daySec;
-      const volatility = currentClose * 0.035;
-      const change = (Math.random() - 0.47) * volatility;
-      const open = currentClose;
-      const close = currentClose + change;
-      const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
-      const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
-      const volume = (ticker.volume24h / 50) * (0.6 + Math.random() * 0.8);
-
+      const priceFactor = 0.95 + 0.05 * Math.sin(i / 6);
+      const close = Number((basePrice * priceFactor).toFixed(basePrice < 1 ? 6 : 2));
       candles.push({
         time,
-        open: Number(open.toFixed(basePrice < 1 ? 6 : 2)),
-        high: Number(high.toFixed(basePrice < 1 ? 6 : 2)),
-        low: Number(low.toFixed(basePrice < 1 ? 6 : 2)),
-        close: Number(close.toFixed(basePrice < 1 ? 6 : 2)),
-        volume: Math.round(volume),
+        open: Number((close * 0.998).toFixed(basePrice < 1 ? 6 : 2)),
+        high: Number((close * 1.008).toFixed(basePrice < 1 ? 6 : 2)),
+        low: Number((close * 0.992).toFixed(basePrice < 1 ? 6 : 2)),
+        close,
+        volume: Math.round(ticker.volume24h / 120),
       });
-
-      currentClose = close;
     }
 
-    // Ensure the last candle matches current price
+    // Ensure the last candle matches current live price
     const last = candles[candles.length - 1];
     last.close = ticker.price;
     last.high = Math.max(last.high, ticker.price);
     last.low = Math.min(last.low, ticker.price);
 
     const enriched = IndicatorsEngine.enrichCandlesWithEMAs(candles);
-    this.candlesCache.set(sym, enriched);
+    this.candlesCache.set(cacheKey, enriched);
     return enriched;
   }
 
-  setCandles(symbol: string, candles: Candle[]) {
+  setCandles(symbol: string, candles: Candle[], interval: string = '1d') {
     const enriched = IndicatorsEngine.enrichCandlesWithEMAs(candles);
-    this.candlesCache.set(symbol.toUpperCase(), enriched);
+    const cacheKey = `${symbol.toUpperCase()}_${interval.toLowerCase()}`;
+    this.candlesCache.set(cacheKey, enriched);
   }
 
   private seedInitialPaperTrades() {
@@ -798,7 +1046,526 @@ export class MarketStore {
       transactions,
     };
   }
+
+  private seedInitialTop5() {
+    this.calculateTop5(true);
+
+    const now = Date.now();
+    this.top5History = [
+      {
+        id: 'SNP-3',
+        timestamp: new Date(now - 120 * 60000).toISOString(),
+        timeLabel: '2 ชม. ที่แล้ว',
+        top5: [
+          { rank: 1, symbol: 'SOL', finalScore: 92.4, role: 'Best Overall', change24h: 3.2, movement: 'SAME' },
+          { rank: 2, symbol: 'LINK', finalScore: 89.8, role: 'Best Early Uptrend', change24h: 4.1, movement: 'UP', previousRank: 3 },
+          { rank: 3, symbol: 'SUI', finalScore: 88.5, role: 'Best Breakout', change24h: 6.8, movement: 'DOWN', previousRank: 2 },
+          { rank: 4, symbol: 'AAVE', finalScore: 86.7, role: 'Best Momentum', change24h: 2.5, movement: 'SAME' },
+          { rank: 5, symbol: 'NEAR', finalScore: 85.0, role: 'Best Risk/Reward', change24h: 1.8, movement: 'NEW' },
+        ],
+      },
+      {
+        id: 'SNP-2',
+        timestamp: new Date(now - 60 * 60000).toISOString(),
+        timeLabel: '1 ชม. ที่แล้ว',
+        top5: [
+          { rank: 1, symbol: 'LINK', finalScore: 93.1, role: 'Best Overall', change24h: 4.8, movement: 'UP', previousRank: 2 },
+          { rank: 2, symbol: 'SOL', finalScore: 91.5, role: 'Best Early Uptrend', change24h: 2.8, movement: 'DOWN', previousRank: 1 },
+          { rank: 3, symbol: 'SUI', finalScore: 89.2, role: 'Best Breakout', change24h: 7.2, movement: 'SAME', previousRank: 3 },
+          { rank: 4, symbol: 'RENDER', finalScore: 87.4, role: 'Best Momentum', change24h: 5.1, movement: 'NEW' },
+          { rank: 5, symbol: 'AAVE', finalScore: 86.2, role: 'Best Risk/Reward', change24h: 2.1, movement: 'DOWN', previousRank: 4 },
+        ],
+      },
+      {
+        id: 'SNP-1',
+        timestamp: new Date(now - 15 * 60000).toISOString(),
+        timeLabel: '15 นาทีที่แล้ว',
+        top5: (this.top5Candidates.length > 0 ? this.top5Candidates : []).map(item => ({
+          rank: item.rank,
+          symbol: item.symbol,
+          finalScore: item.finalScore,
+          role: item.role,
+          change24h: item.change24h,
+          movement: 'SAME',
+          previousRank: item.rank,
+        })),
+      },
+    ];
+  }
+
+  /**
+   * Run 10-step quantitative evaluation across all active Bitkub coins
+   */
+  calculateTop5(force: boolean = false): Top5CandidateItem[] {
+    const now = Date.now();
+    // Cache for 30 seconds unless forced
+    if (!force && this.top5Candidates.length > 0 && now - this.lastTop5CalculationTime < 30000) {
+      return this.top5Candidates;
+    }
+
+    const allCoins = this.getAllTickers();
+    if (allCoins.length === 0) return this.top5Candidates;
+
+    const btcTicker = this.tickers.get('BTC');
+    const kpis = this.getMarketOverviewKPIs();
+
+    const result = RankingEngine.evaluateTop5({
+      coins: allCoins,
+      btcTicker,
+      kpis,
+      news: this.news,
+    });
+
+    const previousMap = new Map<string, number>();
+    this.top5Candidates.forEach(c => previousMap.set(c.symbol, c.rank));
+
+    this.top5Candidates = result.top5;
+    this.opportunities = result.opportunities;
+    this.lastMarketContext = result.marketContext;
+    this.lastTop5CalculationTime = now;
+
+    // Automatically update buyNowResponse from the same Quant V3 calculation cycle
+    const isMarketBlocked = result.marketContext.favoredStrategy === 'Capital Preservation' || 
+                            result.marketContext.marketRegime === 'CAPITULATION' || 
+                            result.marketContext.marketRegime === 'RISK OFF';
+
+    let marketStatus: 'NORMAL' | 'HIGH RISK' | 'NO SETUP' = 'NORMAL';
+    let marketMessage: string | undefined = undefined;
+
+    if (isMarketBlocked) {
+      marketStatus = 'HIGH RISK';
+      marketMessage = `ระวัง: สภาวะตลาดอยู่ในโหมด ${result.marketContext.marketRegimeTh} (${result.marketContext.favoredStrategyTh}) กลยุทธ์เน้นรักษาเงินทุน (Capital Preservation First)`;
+    } else if (result.buyNowCandidates.length === 0) {
+      marketStatus = 'NO SETUP';
+      marketMessage = 'NO BUY NOW OPPORTUNITY — ไม่พบเหรียญที่ผ่านเกณฑ์ Hard Gate 12 ข้อตามวินัยระบบ Quant Engine V3 (อดทนรอจังหวะที่ได้เปรียบ)';
+    }
+
+    this.buyNowResponse = {
+      candidates: result.buyNowCandidates,
+      marketStatus,
+      marketMessage,
+      evaluatedTotal: result.totalEvaluated,
+      timestamp: new Date().toISOString(),
+    };
+    this.lastBuyNowCalculationTime = now;
+
+    if (force || this.top5History.length === 0 || now - new Date(this.top5History[this.top5History.length - 1].timestamp).getTime() > 600000) {
+      const snapshot: Top5SnapshotHistory = {
+        id: `SNP-${now}`,
+        timestamp: new Date().toISOString(),
+        timeLabel: 'ล่าสุด',
+        top5: this.top5Candidates.map(c => {
+          const prev = previousMap.get(c.symbol);
+          let movement: 'UP' | 'DOWN' | 'SAME' | 'NEW' = 'SAME';
+          if (prev === undefined) movement = 'NEW';
+          else if (c.rank < prev) movement = 'UP';
+          else if (c.rank > prev) movement = 'DOWN';
+          return {
+            rank: c.rank,
+            symbol: c.symbol,
+            finalScore: c.finalScore,
+            role: c.role,
+            change24h: c.change24h,
+            previousRank: prev,
+            movement,
+          };
+        }),
+      };
+
+      this.top5History.push(snapshot);
+      if (this.top5History.length > 20) {
+        this.top5History.shift();
+      }
+    }
+
+    return this.top5Candidates;
+  }
+
+  getTop5(): Top5Response {
+    if (this.top5Candidates.length === 0 || !this.lastMarketContext) {
+      this.calculateTop5(true);
+    }
+
+    const btcTicker = this.tickers.get('BTC');
+    const btcChange = btcTicker?.change24h ?? 0;
+    const btcTrend: 'bull' | 'bear' | 'neutral' = 
+      btcChange > 1.5 ? 'bull' : btcChange < -2.0 ? 'bear' : 'neutral';
+    const btcTrendTh = btcTrend === 'bull' ? 'กระทิง (Bullish)' : btcTrend === 'bear' ? 'หมี (Bearish)' : 'พักตัว (Sideways)';
+
+    return {
+      top5: this.top5Candidates,
+      marketContext: this.lastMarketContext || {
+        btcTrend,
+        btcTrendTh,
+        btcDominance: this.globalKPIs.btcDominance,
+        fearAndGreedIndex: this.fearAndGreed.index,
+        fearAndGreedSentiment: this.fearAndGreed.sentiment,
+        marketRegime: 'RISK_ON',
+        marketRegimeTh: 'RISK ON (เปิดรับความเสี่ยง)',
+        favoredStrategy: 'Momentum',
+        favoredStrategyTh: 'Momentum Trading (ตามแรงส่ง)',
+        regimeAdviceTh: 'ตลาดอยู่ในแนวโน้มเชิงบวก เหมาะแก่การเก็งกำไรตามโมเมนตัม',
+        totalActiveCoinsEvaluated: this.tickers.size,
+        lastUpdated: new Date().toISOString(),
+        dataFreshness: 'Live Feed (< 30s)',
+      },
+      history: this.top5History,
+    };
+  }
+
+  getTop5History(): Top5SnapshotHistory[] {
+    return this.top5History;
+  }
+
+  /**
+   * Run quantitative evaluation for TOP BUY NOW (Quant V3)
+   * Strictly filters for coins with immediate executable setup (R:R >= 1:2, Tech >= 75, Entry >= 80, Extension < 75)
+   */
+  calculateBuyNow(force: boolean = false): BuyNowResponse {
+    const now = Date.now();
+    if (!force && this.buyNowResponse.evaluatedTotal > 0 && now - this.lastBuyNowCalculationTime < 30000) {
+      return this.buyNowResponse;
+    }
+
+    // calculateTop5 computes top5, buyNowCandidates, and opportunities in a single Quant V3 pipeline run
+    this.calculateTop5(force);
+    return this.buyNowResponse;
+  }
+
+  getBuyNow(): BuyNowResponse {
+    if (this.buyNowResponse.evaluatedTotal === 0) {
+      this.calculateBuyNow(true);
+    }
+    return this.buyNowResponse;
+  }
+
+  /**
+   * Top Opportunities ("เหรียญไหนกำลังมา?" - Section 31)
+   */
+  getOpportunities(): {
+    opportunities: QuantV3OpportunityItem[];
+    marketContext: Top5Response['marketContext'] | undefined;
+    totalEvaluated: number;
+  } {
+    if (this.opportunities.length === 0 || !this.lastMarketContext) {
+      this.calculateTop5(true);
+    }
+    return {
+      opportunities: this.opportunities,
+      marketContext: this.lastMarketContext,
+      totalEvaluated: this.top5Candidates.length > 0 ? this.getAllTickers().length : 0,
+    };
+  }
+
+  /**
+   * Section 56: Quant V3 API Response Formatter for single coin or API endpoint
+   */
+  getQuantV3Detail(symbol: string): QuantV3ApiResponse | null {
+    const upperSymbol = symbol.toUpperCase();
+    const regime = (this.lastMarketContext?.marketRegime || 'RISK_ON') as any;
+
+    // Check top5 and buyNow candidates
+    const item = this.top5Candidates.find(c => c.symbol === upperSymbol) ||
+                 this.buyNowResponse.candidates.find(c => c.symbol === upperSymbol);
+
+    if (item) {
+      return QuantV3Engine.formatApiResponse(item, regime);
+    }
+
+    // Evaluate single coin if not in cache
+    const ticker = this.getTicker(upperSymbol);
+    if (!ticker) return null;
+
+    const btcTicker = this.tickers.get('BTC');
+    const kpis = this.getMarketOverviewKPIs();
+    const result = RankingEngine.evaluateTop5({
+      coins: [ticker, ...(btcTicker ? [btcTicker] : [])],
+      btcTicker,
+      kpis,
+      news: this.news
+    });
+
+    const evaluated = result.top5.find(c => c.symbol === upperSymbol) || 
+                      result.buyNowCandidates.find(c => c.symbol === upperSymbol) ||
+                      result.opportunities.find(c => c.symbol === upperSymbol);
+    if (evaluated) {
+      return QuantV3Engine.formatApiResponse(evaluated as any, regime);
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // FOCUS MODULE ENGINE & STATE MANAGEMENT
+  // ==========================================
+
+  private seedInitialFocus() {
+    const defaultFocusList: Array<{
+      symbol: string;
+      pair: string;
+      coinName: string;
+      priority: 'low' | 'normal' | 'high' | 'critical';
+      mode: 'normal' | 'high_focus' | 'critical_focus';
+      positionStatus: 'WATCHING' | 'PLANNING TO BUY' | 'HOLDING' | 'TAKING PROFIT' | 'EXITING';
+      position?: any;
+      userNotes?: string;
+    }> = [
+      {
+        symbol: 'ADA',
+        pair: 'ADA/THB',
+        coinName: 'Cardano',
+        priority: 'high',
+        mode: 'high_focus',
+        positionStatus: 'PLANNING TO BUY',
+        userNotes: 'Higher Low + Retest สำเร็จ เตรียมเข้าซื้อสะสมรอบใหม่',
+      },
+      {
+        symbol: 'ETH',
+        pair: 'ETH/THB',
+        coinName: 'Ethereum',
+        priority: 'high',
+        mode: 'normal',
+        positionStatus: 'WATCHING',
+        userNotes: '1D/4H Bullish ทดสอบแนวรับสำคัญ 90,500',
+      },
+      {
+        symbol: 'FLOCK',
+        pair: 'FLOCK/THB',
+        coinName: 'FLock.io',
+        priority: 'critical',
+        mode: 'critical_focus',
+        positionStatus: 'HOLDING',
+        position: {
+          averageCost: 2.65,
+          amount: 10000,
+          currentValue: 32400,
+          pnl: 5900,
+          pnlPercent: 22.26,
+          portfolioPercent: 12.5,
+        },
+        userNotes: 'ราคาวิ่งพุ่งแรง Momentum สูงแต่เริ่ม Overextended แนะนำล็อกกำไรและเลื่อน Trailing Stop',
+      },
+      {
+        symbol: 'BTC',
+        pair: 'BTC/THB',
+        coinName: 'Bitcoin',
+        priority: 'normal',
+        mode: 'normal',
+        positionStatus: 'WATCHING',
+        userNotes: 'ตัวชี้วัดทิศทางตลาดรวม (Market Benchmark)',
+      },
+    ];
+
+    defaultFocusList.forEach((item, index) => {
+      this.focusItems.set(item.symbol.toUpperCase(), {
+        id: `focus-${item.symbol.toLowerCase()}`,
+        symbol: item.symbol.toUpperCase(),
+        pair: item.pair,
+        coinName: item.coinName,
+        priority: item.priority,
+        mode: item.mode,
+        positionStatus: item.positionStatus,
+        position: item.position,
+        userNotes: item.userNotes,
+        isActive: true,
+        order: index + 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+    this.calculateFocusScores(true);
+  }
+
+  /**
+   * Recalculate deep Focus scores for all active focus coins
+   */
+  calculateFocusScores(force: boolean = false): FocusResponse {
+    const now = Date.now();
+    if (!force && this.focusScores.size > 0 && now - this.lastFocusCalculationTime < 5000) {
+      return this.getFocusList();
+    }
+
+    const items = Array.from(this.focusItems.values())
+      .filter(i => i.isActive)
+      .sort((a, b) => a.order - b.order);
+
+    for (const item of items) {
+      let ticker = this.tickers.get(item.symbol);
+      if (!ticker) {
+        const template = this.tickers.get('ETH') || Array.from(this.tickers.values())[0];
+        ticker = {
+          ...template,
+          symbol: item.symbol,
+          name: item.coinName,
+          price: item.symbol === 'FLOCK' ? 3.24 : 1.0,
+          change24h: item.symbol === 'FLOCK' ? 28.0 : 2.0,
+          change7d: item.symbol === 'FLOCK' ? 54.0 : 4.0,
+          rsi: item.symbol === 'FLOCK' ? 78.5 : 55.0,
+          signal: item.symbol === 'FLOCK' ? 'WATCH' : 'BUY',
+          trend: item.symbol === 'FLOCK' ? 'Strong Bullish' : 'Bullish',
+          aiScore: item.symbol === 'FLOCK' ? 84 : 85,
+        };
+        this.tickers.set(item.symbol, ticker);
+      }
+
+      const validTicker: TickerData = ticker;
+      const prevScoreData = this.focusScores.get(item.symbol) || null;
+      const evaluatedData = FocusEngine.evaluateFocusCoin(item, validTicker, this.usdThbRate, prevScoreData);
+      this.focusScores.set(item.symbol, evaluatedData);
+    }
+
+    this.lastFocusCalculationTime = now;
+    return this.getFocusList();
+  }
+
+  /**
+   * Get all Focus coins with live data
+   */
+  getFocusList(): FocusResponse {
+    const list = Array.from(this.focusScores.values())
+      .filter(f => f.isActive)
+      .sort((a, b) => {
+        // Sort by order or score
+        if (a.order !== b.order) return a.order - b.order;
+        return b.focusScore - a.focusScore;
+      });
+
+    const totalCount = this.focusItems.size;
+    const activeCount = list.length;
+    const averageScore = activeCount > 0
+      ? Math.round(list.reduce((acc, curr) => acc + curr.focusScore, 0) / activeCount)
+      : 0;
+
+    return {
+      items: list,
+      totalCount,
+      activeCount,
+      averageScore,
+      marketRegime: this.globalKPIs.btcDominance > 55 ? 'BTC Dominance High / Selective Altcoins' : 'Broad Altcoin Season',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Get single Focus coin deep detail
+   */
+  getFocusDetail(symbol: string): FocusCoinData | null {
+    const cleanSym = symbol.toUpperCase();
+    if (!this.focusScores.has(cleanSym)) {
+      if (this.focusItems.has(cleanSym)) {
+        this.calculateFocusScores(true);
+      } else {
+        return null;
+      }
+    }
+    return this.focusScores.get(cleanSym) || null;
+  }
+
+  /**
+   * Add coin to Focus
+   */
+  addFocusItem(symbol: string, options?: Partial<FocusItem>): FocusCoinData {
+    const cleanSym = symbol.toUpperCase();
+    let ticker = this.tickers.get(cleanSym);
+    const coinName = ticker?.name || options?.coinName || cleanSym;
+    const pair = options?.pair || `${cleanSym}/THB`;
+
+    const existing = this.focusItems.get(cleanSym);
+    const order = options?.order ?? (existing ? existing.order : this.focusItems.size + 1);
+
+    const item: FocusItem = {
+      id: existing ? existing.id : `focus-${cleanSym.toLowerCase()}-${Date.now()}`,
+      symbol: cleanSym,
+      pair,
+      coinName,
+      priority: options?.priority || 'normal',
+      mode: options?.mode || 'normal',
+      positionStatus: options?.positionStatus || 'WATCHING',
+      position: options?.position,
+      customTrailingStop: options?.customTrailingStop,
+      userNotes: options?.userNotes || '',
+      isActive: true,
+      order,
+      createdAt: existing ? existing.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.focusItems.set(cleanSym, item);
+    this.calculateFocusScores(true);
+    return this.focusScores.get(cleanSym)!;
+  }
+
+  /**
+   * Update Focus item
+   */
+  updateFocusItem(idOrSymbol: string, updates: Partial<FocusItem>): FocusCoinData | null {
+    let cleanSym = idOrSymbol.toUpperCase();
+    let found = this.focusItems.get(cleanSym);
+    if (!found) {
+      // Try searching by ID
+      for (const [sym, it] of this.focusItems.entries()) {
+        if (it.id === idOrSymbol) {
+          found = it;
+          cleanSym = sym;
+          break;
+        }
+      }
+    }
+
+    if (!found) return null;
+
+    const updated: FocusItem = {
+      ...found,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.focusItems.set(cleanSym, updated);
+    this.calculateFocusScores(true);
+    return this.focusScores.get(cleanSym) || null;
+  }
+
+  /**
+   * Remove coin from Focus
+   */
+  removeFocusItem(idOrSymbol: string): boolean {
+    let cleanSym = idOrSymbol.toUpperCase();
+    if (!this.focusItems.has(cleanSym)) {
+      for (const [sym, it] of this.focusItems.entries()) {
+        if (it.id === idOrSymbol) {
+          cleanSym = sym;
+          break;
+        }
+      }
+    }
+
+    if (this.focusItems.has(cleanSym)) {
+      this.focusItems.delete(cleanSym);
+      this.focusScores.delete(cleanSym);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Reorder Focus items
+   */
+  reorderFocusItems(symbolsInOrder: string[]): boolean {
+    symbolsInOrder.forEach((sym, idx) => {
+      const cleanSym = sym.toUpperCase();
+      const item = this.focusItems.get(cleanSym);
+      if (item) {
+        item.order = idx + 1;
+        item.updatedAt = new Date().toISOString();
+        this.focusItems.set(cleanSym, item);
+      }
+    });
+    this.calculateFocusScores(true);
+    return true;
+  }
 }
 
 export const marketStore = new MarketStore();
+
 

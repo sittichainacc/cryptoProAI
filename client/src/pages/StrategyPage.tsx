@@ -13,10 +13,18 @@ import {
   Percent, 
   Clock,
   Layers,
-  BarChart3
+  BarChart3,
+  Plus,
+  Trash2,
+  RefreshCw,
+  ArrowUpRight,
+  ArrowDownRight,
+  CheckCircle
 } from 'lucide-react';
-import { TickerData } from '../types/index.js';
+import { TickerData, PaperTrade } from '../types/index.js';
 import { api } from '../services/api.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
+import { realtimeService } from '../services/realtime.js';
 
 interface StrategyPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -24,7 +32,7 @@ interface StrategyPageProps {
 }
 
 export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, currency }) => {
-  const [activeTab, setActiveTab] = useState<'dca' | 'strategies' | 'expectancy' | 'correlation'>('dca');
+  const [activeTab, setActiveTab] = useState<'dca' | 'strategies' | 'expectancy' | 'correlation' | 'paper_trading'>('dca');
   
   // DCA Calculator State
   const [dcaSymbol, setDcaSymbol] = useState('BTC');
@@ -39,8 +47,112 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
   const [avgWinPercent, setAvgWinPercent] = useState(6);
   const [avgLossPercent, setAvgLossPercent] = useState(2.5);
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
+
+  // Paper Trading State
+  const [paperTrades, setPaperTrades] = useState<PaperTrade[]>([]);
+  const [paperStats, setPaperStats] = useState<any>(null);
+  const [isLoadingPaper, setIsLoadingPaper] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [paperToast, setPaperToast] = useState<string | null>(null);
+  const [availableCoins, setAvailableCoins] = useState<TickerData[]>([]);
+
+  // Paper Order Form State
+  const [orderSymbol, setOrderSymbol] = useState('SOL');
+  const [orderType, setOrderType] = useState<'BUY' | 'SELL'>('BUY');
+  const [orderEntryPrice, setOrderEntryPrice] = useState('185.00');
+  const [orderQty, setOrderQty] = useState('10');
+  const [orderSl, setOrderSl] = useState('172.00');
+  const [orderTp, setOrderTp] = useState('210.00');
+  const [orderNotes, setOrderNotes] = useState('เข้าตามสัญญาณ Strong Buy ทะลุแนวต้านสำคัญ');
+
+  const loadPaperTradingData = async () => {
+    setIsLoadingPaper(true);
+    try {
+      const data = await api.getPaperTrades();
+      if (data) {
+        setPaperTrades(data.trades || []);
+        setPaperStats(data.stats || null);
+      }
+    } catch (err) {
+      console.error('Failed to load paper trades:', err);
+    } finally {
+      setIsLoadingPaper(false);
+    }
+  };
+
+  useEffect(() => {
+    api.getCoins().then((coins) => {
+      setAvailableCoins(coins);
+      if (coins.length > 0) {
+        const sol = coins.find((c) => c.symbol === 'SOL') || coins[0];
+        setOrderSymbol(sol.symbol);
+        setOrderEntryPrice(sol.price.toString());
+        setOrderSl((sol.price * 0.94).toFixed(sol.price < 1 ? 4 : 2));
+        setOrderTp((sol.price * 1.15).toFixed(sol.price < 1 ? 4 : 2));
+      }
+    });
+    loadPaperTradingData();
+  }, []);
+
+  const handleSelectOrderCoin = (sym: string) => {
+    setOrderSymbol(sym);
+    const coin = availableCoins.find((c) => c.symbol === sym);
+    if (coin) {
+      setOrderEntryPrice(coin.price.toString());
+      setOrderSl((coin.price * 0.94).toFixed(coin.price < 1 ? 4 : 2));
+      setOrderTp((coin.price * 1.15).toFixed(coin.price < 1 ? 4 : 2));
+    }
+  };
+
+  const handleOpenPaperOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingOrder(true);
+    try {
+      await api.openPaperTrade({
+        symbol: orderSymbol,
+        type: orderType,
+        entryPrice: parseFloat(orderEntryPrice) || 0,
+        qty: parseFloat(orderQty) || 1,
+        sl: parseFloat(orderSl) || 0,
+        tp: parseFloat(orderTp) || 0,
+        notes: orderNotes,
+        signalOrigin: 'Manual / Strategy AI',
+      });
+      await loadPaperTradingData();
+      setOrderModalOpen(false);
+      setPaperToast(`เปิดโพซิชัน ${orderType} ${orderSymbol} จำลองสำเร็จ`);
+      setTimeout(() => setPaperToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to open paper trade:', err);
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
+  const handleCloseTrade = async (id: string) => {
+    try {
+      await api.closePaperTrade(id);
+      await loadPaperTradingData();
+      setPaperToast('ปิดสถานะตามราคาตลาดสดเรียบร้อยแล้ว');
+      setTimeout(() => setPaperToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to close trade:', err);
+    }
+  };
+
+  const handleDeleteTrade = async (id: string) => {
+    try {
+      await api.deletePaperTrade(id);
+      await loadPaperTradingData();
+      setPaperToast('ลบรายการเทรดเรียบร้อย');
+      setTimeout(() => setPaperToast(null), 2500);
+    } catch (err) {
+      console.error('Failed to delete trade:', err);
+    }
+  };
 
   // Run initial DCA Calculation
   const runDcaCalculation = async () => {
@@ -106,6 +218,7 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
           { id: 'strategies', label: 'กลยุทธ์เทรด AI (3 Core Strategies)', icon: Sparkles },
           { id: 'expectancy', label: 'คำนวณสถิติความได้เปรียบ (Expectancy & R:R)', icon: Percent },
           { id: 'correlation', label: 'เมทริกซ์สหสัมพันธ์ (Correlation Matrix)', icon: Layers },
+          { id: 'paper_trading', label: 'พอร์ตจำลองการเทรด (Live Paper Trading)', icon: TrendingUp },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -611,6 +724,459 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
 
           <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '12px', color: '#CBD5E1' }}>
             💡 <strong>คำแนะนำเชิงปริมาณ:</strong> การถือครอง Bitcoin (BTC) คู่กับ Ethereum (ETH) มีค่า Correlation สูงถึง 0.88 ทำให้การกระจายความเสี่ยงต่ำ หากต้องการกระจายความเสี่ยงที่แท้จริง ควรแบ่งสัดส่วนไปยังกลุ่มเหรียญที่มีสหสัมพันธ์ต่ำกว่า เช่น DePIN หรือ Meme (Correlation ~0.58 - 0.62) ควบคู่กับการคุม Position Sizing เสมอ
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: Live Paper Trading Simulation */}
+      {activeTab === 'paper_trading' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Toast Notification */}
+          {paperToast && (
+            <div
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: 'var(--neon-green-light)',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <CheckCircle size={16} color="#10B981" />
+              <span>{paperToast}</span>
+            </div>
+          )}
+
+          {/* Performance Summary KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div className="crypto-card">
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>อัตราชนะ (Win Rate)</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--neon-cyan)', marginTop: '4px' }}>
+                {paperStats?.winRatePct ?? 0}%
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                จากทั้งหมด {paperStats?.closedTradesCount ?? 0} ออเดอร์ที่ปิดแล้ว
+              </div>
+            </div>
+
+            <div className="crypto-card">
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Profit Factor</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--neon-green-light)', marginTop: '4px' }}>
+                {paperStats?.profitFactor ?? 0}x
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                อัตราส่วนกำไรเทียบขาดทุน
+              </div>
+            </div>
+
+            <div className="crypto-card">
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กำไรสุทธิรวม (Total Combined PnL)</div>
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 900,
+                  color: (paperStats?.totalPnlCombined ?? 0) >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                  marginTop: '4px',
+                }}
+              >
+                {(paperStats?.totalPnlCombined ?? 0) >= 0 ? '+' : ''}
+                {prefix}{((paperStats?.totalPnlCombined ?? 0) * multiplier).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Realized: {prefix}{((paperStats?.totalRealizedPnl ?? 0) * multiplier).toFixed(2)} | Unrealized: {prefix}{((paperStats?.totalUnrealizedPnl ?? 0) * multiplier).toFixed(2)}
+              </div>
+            </div>
+
+            <div className="crypto-card">
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>สถานะที่เปิดอยู่ (Active Open)</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#60A5FA', marginTop: '4px' }}>
+                {paperStats?.openTradesCount ?? 0} โพซิชัน
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                กำลังติดตามราคา Real-time
+              </div>
+            </div>
+          </div>
+
+          {/* Action Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <button
+              onClick={() => setOrderModalOpen(true)}
+              className="btn-primary"
+              style={{ fontSize: '12.5px', padding: '8px 16px', gap: '6px' }}
+            >
+              <Plus size={15} />
+              <span>เปิดออเดอร์จำลองใหม่ (+ New Order)</span>
+            </button>
+
+            <button
+              onClick={loadPaperTradingData}
+              className="btn-secondary"
+              style={{ fontSize: '12px', padding: '6px 12px', gap: '6px' }}
+              disabled={isLoadingPaper}
+            >
+              <RefreshCw size={13} className={isLoadingPaper ? 'spin' : ''} />
+              <span>{isLoadingPaper ? 'กำลังอัปเดต...' : 'รีเฟรชราคาโพซิชัน'}</span>
+            </button>
+          </div>
+
+          {/* New Order Modal / Drawer */}
+          {orderModalOpen && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(5, 8, 15, 0.85)',
+                backdropFilter: 'blur(8px)',
+                zIndex: 100,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px',
+              }}
+              onClick={() => setOrderModalOpen(false)}
+            >
+              <div
+                className="crypto-card"
+                style={{
+                  width: '100%',
+                  maxWidth: '520px',
+                  backgroundColor: '#0F172A',
+                  borderColor: 'rgba(59, 130, 246, 0.4)',
+                  padding: '24px',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={18} color="var(--neon-cyan)" />
+                  เปิดโพซิชันเทรดจำลอง (New Paper Order)
+                </div>
+
+                <form onSubmit={handleOpenPaperOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        เลือกเหรียญ:
+                      </label>
+                      <select
+                        value={orderSymbol}
+                        onChange={(e) => handleSelectOrderCoin(e.target.value)}
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      >
+                        {availableCoins.map((c) => (
+                          <option key={c.symbol} value={c.symbol}>
+                            {c.symbol} - {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        ทิศทาง (Order Type):
+                      </label>
+                      <select
+                        value={orderType}
+                        onChange={(e) => setOrderType(e.target.value as any)}
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      >
+                        <option value="BUY">🟢 BUY (Long)</option>
+                        <option value="SELL">🔴 SELL (Short)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        ราคาเข้า (Entry Price USDT):
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={orderEntryPrice}
+                        onChange={(e) => setOrderEntryPrice(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        จำนวนเหรียญ (Quantity):
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={orderQty}
+                        onChange={(e) => setOrderQty(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Stop Loss (ราคาตัดขาดทุน):
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={orderSl}
+                        onChange={(e) => setOrderSl(e.target.value)}
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Take Profit (ราคาทำกำไร):
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={orderTp}
+                        onChange={(e) => setOrderTp(e.target.value)}
+                        style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                      บันทึกเหตุผลการเข้าเทรด (Trading Notes):
+                    </label>
+                    <input
+                      type="text"
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      placeholder="เช่น เบรคเส้นเทรนด์ไลน์พร้อม Volume พุ่ง"
+                      style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setOrderModalOpen(false)}
+                      className="btn-secondary"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingOrder}
+                      className="btn-primary"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      {isSubmittingOrder ? 'กำลังบันทึก...' : 'ยืนยันเปิดออเดอร์'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Active Open Positions Table */}
+          <div className="crypto-card">
+            <div className="card-header-row" style={{ marginBottom: '12px' }}>
+              <div className="card-title" style={{ fontSize: '15px' }}>
+                โพซิชันที่กำลังเปิดอยู่ (Active Open Positions)
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--neon-green-light)', fontWeight: 700 }}>
+                ● คำนวณ PnL ตามราคา Real-time
+              </span>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="crypto-table">
+                <thead>
+                  <tr>
+                    <th>เหรียญ</th>
+                    <th>ประเภท</th>
+                    <th style={{ textAlign: 'right' }}>ราคาเข้า (Entry)</th>
+                    <th style={{ textAlign: 'right' }}>ราคาปัจจุบัน</th>
+                    <th style={{ textAlign: 'right' }}>จำนวน</th>
+                    <th style={{ textAlign: 'right' }}>SL / TP</th>
+                    <th style={{ textAlign: 'right' }}>กำไร/ขาดทุน (Unrealized)</th>
+                    <th style={{ textAlign: 'center' }}>การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paperTrades.filter((t) => t.status === 'OPEN').length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                        ยังไม่มีโพซิชันที่เปิดอยู่ กดปุ่ม "+ เปิดออเดอร์จำลองใหม่" เพื่อเริ่มทดสอบกลยุทธ์
+                      </td>
+                    </tr>
+                  ) : (
+                    paperTrades
+                      .filter((t) => t.status === 'OPEN')
+                      .map((trade) => {
+                        const isProfit = (trade.unrealizedPnl ?? 0) >= 0;
+                        return (
+                          <tr key={trade.id} onClick={() => onSelectCoin(trade.symbol)} style={{ cursor: 'pointer' }}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <strong style={{ color: '#FFF' }}>{trade.symbol}</strong>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{trade.notes}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                style={{
+                                  fontSize: '10.5px',
+                                  fontWeight: 800,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  backgroundColor: trade.type === 'BUY' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: trade.type === 'BUY' ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                                }}
+                              >
+                                {trade.type}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              {prefix}{(trade.entryPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 700, color: '#FFF' }}>
+                              {prefix}{(trade.currentPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>{trade.qty}</td>
+                            <td style={{ textAlign: 'right', fontSize: '11px', color: 'var(--text-muted)' }}>
+                              SL: {prefix}{(trade.sl * multiplier).toFixed(2)} | TP: {prefix}{(trade.tp * multiplier).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 800, color: isProfit ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+                              {isProfit ? '+' : ''}{prefix}{((trade.unrealizedPnl ?? 0) * multiplier).toFixed(2)} ({isProfit ? '+' : ''}{trade.unrealizedPnlPct?.toFixed(2)}%)
+                            </td>
+                            <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => handleCloseTrade(trade.id)}
+                                style={{
+                                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                                  color: 'var(--neon-amber)',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                ปิดออเดอร์
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Closed Trades History Table */}
+          <div className="crypto-card">
+            <div className="card-header-row" style={{ marginBottom: '12px' }}>
+              <div className="card-title" style={{ fontSize: '15px' }}>
+                ประวัติออเดอร์ที่ปิดแล้ว (Closed History)
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="crypto-table">
+                <thead>
+                  <tr>
+                    <th>เหรียญ</th>
+                    <th>ประเภท</th>
+                    <th style={{ textAlign: 'right' }}>ราคาเข้า</th>
+                    <th style={{ textAlign: 'right' }}>ราคาปิด (Exit)</th>
+                    <th style={{ textAlign: 'right' }}>จำนวน</th>
+                    <th style={{ textAlign: 'right' }}>กำไรที่รับรู้ (Realized PnL)</th>
+                    <th style={{ textAlign: 'center' }}>ผลลัพธ์</th>
+                    <th style={{ textAlign: 'center' }}>ลบ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paperTrades.filter((t) => t.status === 'CLOSED').length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                        ยังไม่มีประวัติออเดอร์ที่ปิด
+                      </td>
+                    </tr>
+                  ) : (
+                    paperTrades
+                      .filter((t) => t.status === 'CLOSED')
+                      .map((trade) => {
+                        const isProfit = (trade.realizedPnl ?? 0) >= 0;
+                        return (
+                          <tr key={trade.id}>
+                            <td><strong style={{ color: '#FFF' }}>{trade.symbol}</strong></td>
+                            <td>
+                              <span
+                                style={{
+                                  fontSize: '10.5px',
+                                  fontWeight: 800,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  backgroundColor: trade.type === 'BUY' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: trade.type === 'BUY' ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                                }}
+                              >
+                                {trade.type}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              {prefix}{(trade.entryPrice * multiplier).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', color: '#FFF' }}>
+                              {prefix}{((trade.closePrice ?? trade.currentPrice) * multiplier).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>{trade.qty}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 800, color: isProfit ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+                              {isProfit ? '+' : ''}{prefix}{((trade.realizedPnl ?? 0) * multiplier).toFixed(2)} ({isProfit ? '+' : ''}{trade.realizedPnlPct?.toFixed(2)}%)
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span
+                                style={{
+                                  fontSize: '10.5px',
+                                  fontWeight: 800,
+                                  padding: '2px 7px',
+                                  borderRadius: '4px',
+                                  backgroundColor: isProfit ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                  color: isProfit ? '#34D399' : '#F87171',
+                                }}
+                              >
+                                {isProfit ? 'WIN' : 'LOSS'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleDeleteTrade(trade.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                title="ลบประวัติรายการนี้"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

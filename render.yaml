@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cryptopro-ai
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production

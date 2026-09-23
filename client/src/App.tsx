@@ -8,16 +8,23 @@ import {
   PortfolioSummary, 
   SectorTopItem, 
   TickerData, 
-  Top3OverallItem 
+  Top3OverallItem,
+  BuyNowCandidateItem,
+  FocusResponse,
+  FocusCoinData
 } from './types/index.js';
 
 import { Sidebar } from './components/Sidebar.js';
 import { Topbar } from './components/Topbar.js';
 import { KpiCards } from './components/KpiCards.js';
+import { ResizableTradingWorkspace } from './components/ResizableTradingWorkspace.js';
+import { Top5BuyNowWidget } from './components/Top5BuyNowWidget.js';
 import { TopMoversCard } from './components/TopMoversCard.js';
 import { MainChartWidget } from './components/MainChartWidget.js';
 import { AISignalsCard } from './components/AISignalsCard.js';
 import { WatchlistMiniCard } from './components/WatchlistMiniCard.js';
+import { CollapsibleSection } from './components/CollapsibleSection.js';
+import { Activity, Layers, Award, BarChart3, Target } from 'lucide-react';
 import { PortfolioWidgets } from './components/PortfolioWidgets.js';
 import { RecentAlertsCard } from './components/RecentAlertsCard.js';
 import { AIScannerQuickCard } from './components/AIScannerQuickCard.js';
@@ -27,8 +34,11 @@ import { Sector24Grid } from './components/Sector24Grid.js';
 import { Top3OverallCard } from './components/Top3OverallCard.js';
 import { CoinRankingTable } from './components/CoinRankingTable.js';
 import { CoinAnalysisModal } from './components/CoinAnalysisModal.js';
-import { TradingViewTickerTape } from './components/TradingViewTickerTape.js';
+import { FocusRightSidebar } from './components/FocusRightSidebar.js';
+import { FocusAddModal } from './components/FocusAddModal.js';
+import { FocusCompareModal } from './components/FocusCompareModal.js';
 import { realtimeService } from './services/realtime.js';
+import { setGlobalUsdThbRate } from './utils/currency.js';
 
 // Dedicated Subpages
 import { MarketOverviewPage } from './pages/MarketOverviewPage.js';
@@ -40,6 +50,10 @@ import { AlertsPage } from './pages/AlertsPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { StrategyPage } from './pages/StrategyPage.js';
+import { NewsPage } from './pages/NewsPage.js';
+import { Top5Page } from './pages/Top5Page.js';
+import { FocusPage } from './pages/FocusPage.js';
+import { WatchlistPage } from './pages/WatchlistPage.js';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -63,13 +77,14 @@ export const App: React.FC = () => {
   const handleSidebarNavigation = useCallback((tabId: string) => {
     setActiveSidebarTab(tabId);
     setIsMobileSidebarOpen(false); // auto-close on mobile after navigation
-    if (tabId === 'dashboard') setActiveTopTab('overview');
+    if (tabId === 'dashboard' || tabId === 'market') setActiveTopTab('overview');
     else if (tabId === 'screener') setActiveTopTab('screener');
     else if (tabId === 'technical' || tabId === 'analysis') setActiveTopTab('chart');
     else if (tabId === 'signals') setActiveTopTab('signals');
-    else if (tabId === 'portfolio') setActiveTopTab('portfolio');
+    else if (tabId === 'portfolio' || tabId === 'strategy') setActiveTopTab('portfolio');
     else if (tabId === 'alerts') setActiveTopTab('alerts');
-    else if (tabId === 'reports') setActiveTopTab('reports');
+    else if (tabId === 'reports' || tabId === 'news') setActiveTopTab('reports');
+    else setActiveTopTab('');
   }, []);
 
   // Market Data State
@@ -87,6 +102,13 @@ export const App: React.FC = () => {
   const [sector24, setSector24] = useState<SectorTopItem[]>([]);
   const [top3Overall, setTop3Overall] = useState<Top3OverallItem[]>([]);
   const [allCoins, setAllCoins] = useState<TickerData[]>([]);
+  const [buyNowCandidates, setBuyNowCandidates] = useState<BuyNowCandidateItem[]>([]);
+  const [focusData, setFocusData] = useState<FocusResponse | null>(null);
+  const [isFocusSidebarOpen, setIsFocusSidebarOpen] = useState(false);
+  const [isFocusSidebarPinned, setIsFocusSidebarPinned] = useState(false);
+  const [isFocusSidebarCollapsed, setIsFocusSidebarCollapsed] = useState(false);
+  const [isFocusAddModalOpen, setIsFocusAddModalOpen] = useState(false);
+  const [isFocusCompareModalOpen, setIsFocusCompareModalOpen] = useState(false);
 
   // Selected Active Coin for Chart & Analysis
   const [selectedSymbol, setSelectedSymbol] = useState('BTC');
@@ -122,6 +144,8 @@ export const App: React.FC = () => {
         sector24Data,
         top3Data,
         coinsData,
+        buyNowData,
+        focusRes,
       ] = await Promise.all([
         api.getKPIs(),
         api.getMovers(),
@@ -133,8 +157,13 @@ export const App: React.FC = () => {
         api.get24Recommended(),
         api.getTop3Overall(),
         api.getCoins(),
+        api.getBuyNow(),
+        api.getFocusList(),
       ]);
 
+      if (kpisData?.usdThbRate) {
+        setGlobalUsdThbRate(kpisData.usdThbRate);
+      }
       setKpis(kpisData);
       setMovers(moversData);
       setSignals(signalsData);
@@ -145,8 +174,49 @@ export const App: React.FC = () => {
       setSector24(sector24Data);
       setTop3Overall(top3Data);
       setAllCoins(coinsData);
+      if (buyNowData?.candidates) {
+        setBuyNowCandidates(buyNowData.candidates);
+      }
+      if (focusRes) {
+        setFocusData(focusRes);
+      }
     } catch (err) {
       console.error('Failed to load market data:', err);
+    }
+  };
+
+  const handleRecalculateBuyNow = async () => {
+    try {
+      const res = await api.recalculateBuyNow();
+      if (res?.candidates) {
+        setBuyNowCandidates(res.candidates);
+      }
+    } catch (err) {
+      console.error('Failed to recalculate Buy Now:', err);
+    }
+  };
+
+  const handleToggleFocus = async (symbol: string) => {
+    try {
+      const isFocused = focusData?.items.some((i) => i.symbol === symbol);
+      if (isFocused) {
+        await api.removeFocus(symbol);
+      } else {
+        await api.addFocus({ symbol });
+      }
+      const updated = await api.getFocusList();
+      setFocusData(updated);
+    } catch (err) {
+      console.error('Failed to toggle focus:', err);
+    }
+  };
+
+  const handleRecalculateFocus = async () => {
+    try {
+      const res = await api.recalculateFocus();
+      setFocusData(res);
+    } catch (err) {
+      console.error('Failed to recalculate Focus:', err);
     }
   };
 
@@ -284,8 +354,36 @@ export const App: React.FC = () => {
   // Render Page Content based on active navigation
   const renderMainContent = () => {
     switch (activeSidebarTab) {
+      case 'focus':
+        return (
+          <FocusPage
+            currency={currency}
+            initialSymbol={selectedSymbol}
+            onSelectCoinToChart={(sym) => {
+              handleSelectCoin(sym);
+              setActiveSidebarTab('dashboard');
+            }}
+            allCoins={allCoins}
+          />
+        );
+      case 'top5':
+        return (
+          <Top5Page
+            currency={currency}
+            onSelectCoin={handleSelectCoin}
+            onOpenAnalysis={handleOpenAnalysis}
+          />
+        );
       case 'market':
-        return <MarketOverviewPage onSelectCoin={handleSelectCoin} currency={currency} />;
+        return (
+          <MarketOverviewPage
+            onSelectCoin={(sym) => {
+              handleSelectCoin(sym);
+              setActiveSidebarTab('dashboard');
+            }}
+            currency={currency}
+          />
+        );
       case 'screener':
         return (
           <CoinScreenerPage
@@ -304,23 +402,30 @@ export const App: React.FC = () => {
           />
         );
       case 'signals':
-        return <AISignalsPage onSelectCoin={handleSelectCoin} currency={currency} />;
+        return (
+          <AISignalsPage
+            onSelectCoin={(sym) => {
+              handleSelectCoin(sym);
+              setActiveSidebarTab('dashboard');
+            }}
+            currency={currency}
+          />
+        );
       case 'watchlist':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              <h2 style={{ fontSize: '20px', fontWeight: 800 }}>รายการเฝ้าดูของฉัน (Watchlist)</h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                เหรียญที่คุณติดตามอย่างใกล้ชิด พร้อมแจ้งเตือนการเปลี่ยนแปลงของสัญญาณและระดับราคา
-              </p>
-            </div>
-            <CoinRankingTable
-              coins={watchlist}
-              onSelectCoin={handleSelectCoin}
-              onToggleWatchlist={handleToggleWatchlist}
-              currency={currency}
-            />
-          </div>
+          <WatchlistPage
+            watchlist={watchlist}
+            allCoins={allCoins}
+            onSelectCoin={(sym) => {
+              handleSelectCoin(sym);
+              setActiveSidebarTab('dashboard');
+            }}
+            onToggleWatchlist={handleToggleWatchlist}
+            onOpenAnalysis={handleOpenAnalysis}
+            currency={currency}
+            onToggleFocus={handleToggleFocus}
+            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+          />
         );
       case 'portfolio':
         return <PortfolioPage onSelectCoin={handleSelectCoin} currency={currency} />;
@@ -332,6 +437,16 @@ export const App: React.FC = () => {
         return <StrategyPage onSelectCoin={handleSelectCoin} currency={currency} />;
       case 'settings':
         return <SettingsPage currency={currency} setCurrency={setCurrency} />;
+      case 'news':
+        return (
+          <NewsPage
+            onSelectCoin={(sym) => {
+              handleSelectCoin(sym);
+              setActiveSidebarTab('dashboard');
+            }}
+          />
+        );
+
       case 'dashboard':
       default:
         return (
@@ -339,85 +454,138 @@ export const App: React.FC = () => {
             {/* Row 1: KPI Cards */}
             <KpiCards kpis={kpis} currency={currency} />
 
-            {/* Row 2: Main Trading Section (Top Movers + Main Chart + AI Signals & Watchlist) */}
-            <div className="trading-main-grid">
-              {/* Left: Top 10 Movers (24h) */}
-              <TopMoversCard
-                gainers={movers.gainers}
-                losers={movers.losers}
-                volume={movers.volume}
-                watchlist={watchlist}
-                selectedSymbol={selectedSymbol}
-                onSelectCoin={handleSelectCoin}
-                onToggleWatchlist={handleToggleWatchlist}
-                currency={currency}
-              />
+            {/* Row 2: Main Trading Section — แบบชิดกัน ปรับสัดส่วนด้วยเมาส์ (Resizable Docked Workspace) */}
+            <ResizableTradingWorkspace
+              movers={movers}
+              watchlist={watchlist}
+              buyNowCandidates={buyNowCandidates}
+              selectedSymbol={selectedSymbol}
+              selectedCoinData={selectedCoinData}
+              chartCandles={chartCandles}
+              signals={signals}
+              currency={currency}
+              isCurrentInWatchlist={isCurrentInWatchlist}
+              onSelectCoin={handleSelectCoin}
+              onToggleWatchlist={handleToggleWatchlist}
+              onOpenAnalysis={handleOpenAnalysis}
+              onViewAllWatchlist={() => setActiveSidebarTab('watchlist')}
+            />
 
-              {/* Center: Main Candlestick Chart */}
-              <MainChartWidget
-                symbol={selectedSymbol}
-                ticker={selectedCoinData}
-                candles={chartCandles}
-                currency={currency}
-                isWatchlist={isCurrentInWatchlist}
-                onToggleWatchlist={handleToggleWatchlist}
-              />
+            {/* Special Module: Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ (ซ่อนอัตโนมัติหากไม่มีเหรียญผ่านเกณฑ์) */}
+            <Top5BuyNowWidget
+              candidates={buyNowCandidates}
+              currency={currency}
+              onSelectCoin={handleSelectCoin}
+              onOpenAnalysis={handleOpenAnalysis}
+              onRecalculate={handleRecalculateBuyNow}
+            />
 
-              {/* Right: AI Signals (Top) & Watchlist (Bottom) */}
-              <div className="right-signals-column" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <AISignalsCard
-                  signals={signals}
-                  onSelectCoin={handleSelectCoin}
-                  onViewAll={() => handleOpenAnalysis(signals[0]?.symbol || 'SOL')}
-                  currency={currency}
-                />
-                <WatchlistMiniCard
-                  watchlist={watchlist}
-                  onSelectCoin={handleSelectCoin}
-                  onViewAll={() => setActiveSidebarTab('watchlist')}
-                  currency={currency}
-                />
+            {/* Quick Section Guide Banner */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 14px',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px dashed var(--border-color)',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '11.5px',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  ส่วนประกอบวิเคราะห์เพิ่มเติม (ด้านล่างกราฟ)
+                </span>
+                <span>• คลิกที่หัวข้อแต่ละส่วนเพื่อ ย่อ/ขยาย (Collapse / Expand) เปิด-ปิด ได้อย่างอิสระ</span>
               </div>
             </div>
 
             {/* Row 3: Bottom Intelligence Grid (Portfolio, Alerts, AI Scanner, News, Quote) */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '14px',
-                marginBottom: '20px',
-              }}
+            <CollapsibleSection
+              id="intelligence_widgets"
+              title="ศูนย์วิเคราะห์พอร์ต ข่าว และเรดาร์อัจฉริยะ"
+              subtitle="การจัดสรรพอร์ต, การแจ้งเตือนสัญญาณ, AI Scanner สแกนเหรียญสด, ข่าวกรองตลาด"
+              badge="5 วิดเจ็ต"
+              badgeColor="var(--neon-cyan)"
+              icon={<Activity size={18} color="var(--neon-cyan)" />}
+              defaultOpen={true}
             >
-              <PortfolioWidgets portfolio={portfolio} currency={currency} />
-              <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
-              <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
-              <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
-              <QuoteBannerCard />
-            </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '14px',
+                }}
+              >
+                <PortfolioWidgets portfolio={portfolio} currency={currency} />
+                <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
+                <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
+                <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
+                <QuoteBannerCard />
+              </div>
+            </CollapsibleSection>
 
             {/* Row 4: 24 เหรียญแนะนำ (8 สาย สายละ 3 ตัว) - Section 25 & Image 2 */}
-            <Sector24Grid
-              items={sector24}
-              onSelectCoin={handleSelectCoin}
-              onViewAll={() => setActiveSidebarTab('market')}
-            />
+            <CollapsibleSection
+              id="sector_24"
+              title="24 เหรียญแนะนำตามกลุ่มอุตสาหกรรม (8 สาย สายละ 3 ตัว)"
+              subtitle="คัดกรองตามคะแนน AI และโครงสร้างทางเทคนิค จัดกลุ่ม Core, L1/L2, DeFi, AI, RWA, Meme, GameFi, Emerging"
+              badge="24 เหรียญ"
+              badgeColor="var(--neon-blue)"
+              icon={<Layers size={18} color="var(--neon-blue)" />}
+              action={{ label: 'ดูภาพรวมตลาด', onClick: () => setActiveSidebarTab('market') }}
+              defaultOpen={true}
+            >
+              <Sector24Grid
+                items={sector24}
+                onSelectCoin={handleSelectCoin}
+                onViewAll={() => setActiveSidebarTab('market')}
+                hideHeader={true}
+              />
+            </CollapsibleSection>
 
             {/* Row 5: ตัวเด่นที่สุดตอนนี้ (Top 3 Overall) - Section 26 & Image 2 */}
-            <Top3OverallCard
-              items={top3Overall}
-              onSelectCoin={handleSelectCoin}
-              onViewAll={() => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL')}
-              currency={currency}
-            />
+            <CollapsibleSection
+              id="top3_overall"
+              title="ตัวเด่นที่สุดตอนนี้ (Top 3 Overall - Gold, Silver, Bronze)"
+              subtitle="เหรียญที่มี Momentum เชิงบวกสูง ทะลุแนวต้านสำคัญ และได้คะแนน AI สูงสุดในตลาด"
+              badge="Top 3"
+              badgeColor="var(--neon-amber)"
+              icon={<Award size={18} color="var(--neon-amber)" />}
+              action={{ label: 'ดูบทวิเคราะห์เหรียญเด่น', onClick: () => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL') }}
+              defaultOpen={true}
+            >
+              <Top3OverallCard
+                items={top3Overall}
+                onSelectCoin={handleSelectCoin}
+                onViewAll={() => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL')}
+                currency={currency}
+                hideHeader={true}
+              />
+            </CollapsibleSection>
 
             {/* Row 6: Complete Crypto Ranking Table - Section 7 */}
-            <CoinRankingTable
-              coins={allCoins}
-              onSelectCoin={handleSelectCoin}
-              onToggleWatchlist={handleToggleWatchlist}
-              currency={currency}
-            />
+            <CollapsibleSection
+              id="coin_ranking"
+              title="ตารางจัดอันดับเหรียญคริปโตทั้งหมด (Crypto Screener & Ranking)"
+              subtitle="ข้อมูลสตรีมมิ่งสด 100% พร้อมตัวชี้วัดทางเทคนิค RSI, EMA, AI Score และสัญญาณการลงทุน"
+              badge={`${allCoins.length} เหรียญ`}
+              badgeColor="var(--neon-green)"
+              icon={<BarChart3 size={18} color="var(--neon-green)" />}
+              defaultOpen={true}
+            >
+              <CoinRankingTable
+                coins={allCoins}
+                onSelectCoin={handleSelectCoin}
+                onToggleWatchlist={handleToggleWatchlist}
+                currency={currency}
+                hideCardWrapper={true}
+                watchlist={watchlist}
+              />
+            </CollapsibleSection>
           </>
         );
     }
@@ -457,9 +625,6 @@ export const App: React.FC = () => {
         />
 
         <div className="content-body">
-          {/* Live Real-Time Internet Ticker Tape (Binance / Bitkub stream via TradingView) */}
-          <TradingViewTickerTape theme="dark" />
-
           {/* Investor Mode Notice Banner */}
           {userRole === 'investor' && (
             <div
@@ -543,6 +708,54 @@ export const App: React.FC = () => {
         onClose={() => setAnalysisModalCoin(null)}
         currency={currency}
       />
+
+      {/* Focus Right Sidebar Drawer */}
+      <FocusRightSidebar
+        isOpen={isFocusSidebarOpen}
+        onToggleOpen={() => setIsFocusSidebarOpen(!isFocusSidebarOpen)}
+        isPinned={isFocusSidebarPinned}
+        onTogglePin={() => setIsFocusSidebarPinned(!isFocusSidebarPinned)}
+        isCollapsed={isFocusSidebarCollapsed}
+        onToggleCollapse={() => setIsFocusSidebarCollapsed(!isFocusSidebarCollapsed)}
+        focusCoins={focusData?.items || []}
+        selectedSymbol={selectedSymbol}
+        onSelectCoin={handleSelectCoin}
+        onOpenAddModal={() => setIsFocusAddModalOpen(true)}
+        onOpenCompareModal={() => setIsFocusCompareModalOpen(true)}
+        onRecalculate={handleRecalculateFocus}
+        onOpenFocusPage={(sym) => {
+          if (sym) handleSelectCoin(sym);
+          setActiveSidebarTab('focus');
+        }}
+        currency={currency}
+      />
+
+      {/* Focus Add Modal */}
+      <FocusAddModal
+        isOpen={isFocusAddModalOpen}
+        onClose={() => setIsFocusAddModalOpen(false)}
+        coins={allCoins}
+        existingFocusSymbols={focusData?.items.map((i) => i.symbol) || []}
+        onAddFocus={async (payload) => {
+          await api.addFocus(payload);
+          await handleRecalculateFocus();
+        }}
+        currency={currency}
+      />
+
+      {/* Focus Compare Modal */}
+      {focusData && (
+        <FocusCompareModal
+          isOpen={isFocusCompareModalOpen}
+          onClose={() => setIsFocusCompareModalOpen(false)}
+          focusCoins={focusData.items}
+          currency={currency}
+          onSelectCoin={(sym) => {
+            handleSelectCoin(sym);
+            setActiveSidebarTab('focus');
+          }}
+        />
+      )}
     </div>
   );
 };

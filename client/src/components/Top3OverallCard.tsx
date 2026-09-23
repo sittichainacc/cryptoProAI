@@ -2,12 +2,14 @@ import React from 'react';
 import { Top3OverallItem } from '../types/index.js';
 import { Award, ChevronRight } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface Top3OverallCardProps {
   items: Top3OverallItem[];
   onSelectCoin: (symbol: string) => void;
   onViewAll?: () => void;
   currency: 'THB' | 'USDT';
+  hideHeader?: boolean;
 }
 
 export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
@@ -15,8 +17,9 @@ export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
   onSelectCoin,
   onViewAll,
   currency,
+  hideHeader,
 }) => {
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const getColorTheme = (type: 'gold' | 'silver' | 'bronze') => {
@@ -45,19 +48,21 @@ export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
   };
 
   return (
-    <div style={{ marginTop: '20px' }}>
-      <div className="card-header-row" style={{ marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Award size={18} color="var(--neon-amber)" />
-          <div className="card-title" style={{ fontSize: '15px' }}>
-            ตัวเด่นที่สุดตอนนี้ (Top 3 Overall)
+    <div style={{ marginTop: hideHeader ? '0' : '20px' }}>
+      {!hideHeader && (
+        <div className="card-header-row" style={{ marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Award size={18} color="var(--neon-amber)" />
+            <div className="card-title" style={{ fontSize: '15px' }}>
+              ตัวเด่นที่สุดตอนนี้ (Top 3 Overall)
+            </div>
+          </div>
+          <div className="card-action-link" onClick={onViewAll}>
+            <span>ดูเหตุผลทั้งหมด</span>
+            <ChevronRight size={14} />
           </div>
         </div>
-        <div className="card-action-link" onClick={onViewAll}>
-          <span>ดูเหตุผลทั้งหมด</span>
-          <ChevronRight size={14} />
-        </div>
-      </div>
+      )}
 
       <div
         style={{

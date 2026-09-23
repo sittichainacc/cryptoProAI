@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PortfolioSummary } from '../types/index.js';
 import { ArrowUpRight } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface PortfolioWidgetsProps {
   portfolio: PortfolioSummary | null;
@@ -12,7 +13,7 @@ export const PortfolioWidgets: React.FC<PortfolioWidgetsProps> = ({ portfolio, c
 
   if (!portfolio) return null;
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const totalDisplay = (portfolio.totalValue * multiplier).toLocaleString(undefined, {

@@ -2,6 +2,7 @@ import React from 'react';
 import { TickerData } from '../types/index.js';
 import { ChevronRight, Star } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface WatchlistMiniCardProps {
   watchlist: TickerData[];
@@ -38,7 +39,7 @@ export const WatchlistMiniCard: React.FC<WatchlistMiniCardProps> = ({
     }
   };
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   return (

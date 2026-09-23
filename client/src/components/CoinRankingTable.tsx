@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TickerData } from '../types/index.js';
-import { Star, ArrowUpDown, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
+import { Star, ArrowUpDown, ArrowUpRight, ArrowDownRight, Download, Brain, TrendingUp, LayoutList, Search, X, Target } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface CoinRankingTableProps {
   coins: TickerData[];
   onSelectCoin: (symbol: string) => void;
   onToggleWatchlist: (symbol: string) => void;
   currency: 'THB' | 'USDT';
+  hideCardWrapper?: boolean;
+  watchlist?: TickerData[];
+  onToggleFocus?: (symbol: string) => void;
+  focusSymbols?: string[];
 }
 
 export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
@@ -15,10 +20,24 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
   onSelectCoin,
   onToggleWatchlist,
   currency,
+  hideCardWrapper,
+  watchlist = [],
+  onToggleFocus,
+  focusSymbols = [],
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewMode, setViewMode] = useState<'watchlist' | 'all' | 'buy_interest' | 'best_buy_ai' | 'search'>('watchlist');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortField, setSortField] = useState<keyof TickerData>('marketCap');
   const [sortAsc, setSortAsc] = useState(false);
+
+  // Auto-focus search input when switching to search mode
+  useEffect(() => {
+    if (viewMode === 'search') {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [viewMode]);
 
   const categories = [
     { id: 'all', label: 'ทั้งหมด' },
@@ -42,17 +61,40 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
   };
 
   const filteredCoins = coins.filter((c) => {
-    if (selectedCategory !== 'all' && c.sector !== selectedCategory) return false;
+    // Category filter (always applies except in search mode)
+    if (viewMode !== 'search' && selectedCategory !== 'all' && c.sector !== selectedCategory) return false;
+
+    if (viewMode === 'watchlist') {
+      return c.isWatchlist || watchlist.some(w => w.symbol === c.symbol);
+    }
+    if (viewMode === 'buy_interest') {
+      return (c.signal === 'BUY' || c.signal === 'STRONG_BUY' || c.signal === 'WATCH') && c.change24h >= -1;
+    }
+    if (viewMode === 'best_buy_ai') {
+      return (c.signal === 'BUY' || c.signal === 'STRONG_BUY') && c.aiScore >= 65;
+    }
+    if (viewMode === 'search') {
+      if (!searchQuery.trim()) return true; // show all when empty
+      const q = searchQuery.trim().toLowerCase();
+      return c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
+    }
     return true;
   });
 
+  // For best_buy_ai: force sort by aiScore desc
+  const effectiveSortField = viewMode === 'best_buy_ai' ? 'aiScore' : sortField;
+  const effectiveSortAsc = viewMode === 'best_buy_ai' ? false : sortAsc;
+
   const sortedCoins = [...filteredCoins].sort((a: any, b: any) => {
-    const valA = a[sortField] ?? 0;
-    const valB = b[sortField] ?? 0;
-    return sortAsc ? (valA > valB ? 1 : -1) : valA < valB ? 1 : -1;
+    const valA = a[effectiveSortField] ?? 0;
+    const valB = b[effectiveSortField] ?? 0;
+    return effectiveSortAsc ? (valA > valB ? 1 : -1) : valA < valB ? 1 : -1;
   });
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  // Limit best_buy_ai to top 30 for focused view
+  const displayedCoins = viewMode === 'best_buy_ai' ? sortedCoins.slice(0, 30) : sortedCoins;
+
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const exportToCSV = () => {
@@ -115,12 +157,127 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
   };
 
   return (
-    <div className="crypto-card" style={{ marginTop: '20px' }}>
+    <div
+      className={hideCardWrapper ? '' : 'crypto-card'}
+      style={
+        hideCardWrapper
+          ? { marginTop: 0, padding: 0 }
+          : { marginTop: '20px' }
+      }
+    >
       {/* Table Header & Category Tabs */}
       <div className="card-header-row" style={{ flexWrap: 'wrap', gap: '10px' }}>
         <div className="card-title">
           <span>ตารางจัดอันดับเหรียญ (Crypto Ranking)</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({sortedCoins.length} เหรียญ)</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            ({displayedCoins.length} เหรียญ
+            {viewMode === 'best_buy_ai' ? ' · Top AI' : ''}
+            {viewMode === 'search' && searchQuery.trim() ? ` · "ค้นหา: ${searchQuery.trim()}"` : ''}
+            )
+          </span>
+        </div>
+
+        {/* View Mode Toggle — 4 options */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255,255,255,0.04)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '10px',
+          padding: '3px',
+          gap: '2px',
+          flexWrap: 'wrap',
+        }}>
+          {/* รายการโปรด */}
+          <button
+            onClick={() => setViewMode('watchlist')}
+            title="รายการโปรดของฉัน"
+            style={{
+              background: viewMode === 'watchlist' ? '#F59E0B' : 'transparent',
+              color: viewMode === 'watchlist' ? '#FFF' : 'var(--text-secondary)',
+              border: 'none', borderRadius: '7px',
+              padding: '5px 11px', fontSize: '11.5px', fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: '5px',
+            }}
+          >
+            <Star size={12} fill={viewMode === 'watchlist' ? '#FFF' : 'none'} color={viewMode === 'watchlist' ? '#FFF' : '#F59E0B'} />
+            <span>รายการโปรด</span>
+          </button>
+
+          {/* ทั้งหมด */}
+          <button
+            onClick={() => setViewMode('all')}
+            title="แสดงเหรียญทั้งหมด"
+            style={{
+              background: viewMode === 'all' ? 'var(--neon-blue)' : 'transparent',
+              color: viewMode === 'all' ? '#FFF' : 'var(--text-secondary)',
+              border: 'none', borderRadius: '7px',
+              padding: '5px 11px', fontSize: '11.5px', fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: '5px',
+            }}
+          >
+            <LayoutList size={12} />
+            <span>ทั้งหมด</span>
+          </button>
+
+          {/* น่าสนใจเข้าซื้อ */}
+          <button
+            onClick={() => setViewMode('buy_interest')}
+            title="เหรียญที่มีสัญญาณน่าสนใจสำหรับการเข้าซื้อ"
+            style={{
+              background: viewMode === 'buy_interest' ? 'var(--neon-green)' : 'transparent',
+              color: viewMode === 'buy_interest' ? '#FFF' : 'var(--text-secondary)',
+              border: 'none', borderRadius: '7px',
+              padding: '5px 11px', fontSize: '11.5px', fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: '5px',
+            }}
+          >
+            <TrendingUp size={12} color={viewMode === 'buy_interest' ? '#FFF' : 'var(--neon-green)'} />
+            <span>น่าสนใจเข้าซื้อ</span>
+          </button>
+
+          {/* ดีที่สุด AI */}
+          <button
+            onClick={() => setViewMode('best_buy_ai')}
+            title="Top AI Score — เหรียญที่ AI วิเคราะห์ว่าดีที่สุดสำหรับการเข้าซื้อ"
+            style={{
+              background: viewMode === 'best_buy_ai' ? 'var(--neon-purple)' : 'transparent',
+              color: viewMode === 'best_buy_ai' ? '#FFF' : 'var(--text-secondary)',
+              border: 'none', borderRadius: '7px',
+              padding: '5px 11px', fontSize: '11.5px', fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: '5px',
+            }}
+          >
+            <Brain size={12} color={viewMode === 'best_buy_ai' ? '#FFF' : 'var(--neon-purple)'} />
+            <span>ดีที่สุด AI</span>
+          </button>
+
+          {/* Separator */}
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 2px' }} />
+
+          {/* ค้นหา */}
+          <button
+            onClick={() => {
+              setViewMode('search');
+              setSearchQuery('');
+            }}
+            title="ค้นหาเหรียญด้วยชื่อหรือสัญลักษณ์"
+            style={{
+              background: viewMode === 'search' ? '#0891B2' : 'transparent',
+              color: viewMode === 'search' ? '#FFF' : 'var(--text-secondary)',
+              border: 'none', borderRadius: '7px',
+              padding: '5px 11px', fontSize: '11.5px', fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: '5px',
+            }}
+          >
+            <Search size={12} color={viewMode === 'search' ? '#FFF' : '#0891B2'} />
+            <span>ค้นหา</span>
+          </button>
         </div>
 
         {/* Category Pill Tabs & Export */}
@@ -157,6 +314,97 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Mode Context Banner / Search Input */}
+      {viewMode !== 'all' && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: viewMode === 'search' ? '6px 10px' : '8px 14px',
+          marginBottom: '8px',
+          borderRadius: '8px',
+          fontSize: '11.5px',
+          backgroundColor:
+            viewMode === 'watchlist' ? 'rgba(245, 158, 11, 0.08)' :
+            viewMode === 'buy_interest' ? 'rgba(16, 185, 129, 0.08)' :
+            viewMode === 'search' ? 'rgba(8, 145, 178, 0.08)' :
+            'rgba(139, 92, 246, 0.1)',
+          border:
+            viewMode === 'watchlist' ? '1px solid rgba(245, 158, 11, 0.25)' :
+            viewMode === 'buy_interest' ? '1px solid rgba(16, 185, 129, 0.25)' :
+            viewMode === 'search' ? '1px solid rgba(8, 145, 178, 0.35)' :
+            '1px solid rgba(139, 92, 246, 0.3)',
+          color: 'var(--text-secondary)',
+        }}>
+          {viewMode === 'watchlist' && (
+            <><Star size={12} fill="#F59E0B" color="#F59E0B" />
+            <span><b style={{ color: '#F59E0B' }}>รายการโปรด</b> — เหรียญที่คุณกด ★ ติดตามไว้</span></>
+          )}
+          {viewMode === 'buy_interest' && (
+            <><TrendingUp size={12} color="var(--neon-green)" />
+            <span><b style={{ color: 'var(--neon-green)' }}>น่าสนใจเข้าซื้อ</b> — สัญญาณ BUY / STRONG BUY / WATCH ที่ยังเป็นบวกใน 24h</span></>
+          )}
+          {viewMode === 'best_buy_ai' && (
+            <><Brain size={12} color="var(--neon-purple)" />
+            <span><b style={{ color: 'var(--neon-purple)' }}>ดีที่สุด AI</b> — AI Score &gt; 65 + สัญญาณ BUY/STRONG BUY — แสดง Top {displayedCoins.length} เหรียญ เรียงตาม AI Score</span></>
+          )}
+          {viewMode === 'search' && (
+            <>
+              <Search size={14} color="#0891B2" style={{ flexShrink: 0 }} />
+              <div style={{
+                flex: 1,
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+              }}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ค้นหาด้วยชื่อเหรียญ หรือสัญลักษณ์... เช่น BTC, Ethereum, SOL"
+                  onKeyDown={(e) => e.key === 'Escape' && setViewMode('watchlist')}
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    fontFamily: 'inherit',
+                    padding: '2px 4px',
+                    width: '100%',
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--text-muted)', padding: '2px 4px',
+                      display: 'flex', alignItems: 'center', flexShrink: 0,
+                    }}
+                    title="ล้างคำค้นหา"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <span style={{
+                fontSize: '11px',
+                color: '#0891B2',
+                fontWeight: 600,
+                flexShrink: 0,
+                opacity: searchQuery.trim() ? 1 : 0.5,
+              }}>
+                {searchQuery.trim() ? `${displayedCoins.length} ผล` : 'พิมพ์เพื่อค้นหา'}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Responsive Table */}
       <div style={{ overflowX: 'auto' }}>
@@ -198,7 +446,49 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {sortedCoins.map((coin, index) => {
+            {displayedCoins.length === 0 ? (
+              <tr>
+                <td colSpan={13} style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text-muted)' }}>
+                  {
+                    viewMode === 'watchlist' ? (
+                      <div>
+                        <Star size={28} color="#F59E0B" style={{ marginBottom: '8px', opacity: 0.5 }} />
+                        <div style={{ fontSize: '13px', fontWeight: 600 }}>ยังไม่มีรายการโปรด</div>
+                        <div style={{ fontSize: '11px', marginTop: '4px' }}>กดไอคอน ★ ที่เหรียญใดก็ได้เพื่อเพิ่มเข้ารายการโปรด</div>
+                      </div>
+                    ) : viewMode === 'buy_interest' ? (
+                      <div>
+                        <span style={{ fontSize: '22px' }}>📊</span>
+                        <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}>ไม่พบเหรียญน่าสนใจในขณะนี้</div>
+                        <div style={{ fontSize: '11px', marginTop: '4px' }}>ตลาดอาจอยู่ในช่วง Sideways หรือ Bearish — ลองดูหมวดหมู่อื่น</div>
+                      </div>
+                    ) : viewMode === 'best_buy_ai' ? (
+                      <div>
+                        <span style={{ fontSize: '22px' }}>🤖</span>
+                        <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}>AI ยังไม่พบเหรียญที่ดีที่สุดในขณะนี้</div>
+                        <div style={{ fontSize: '11px', marginTop: '4px' }}>AI Score ต้องมากกว่า 65 และต้องมีสัญญาณ BUY / STRONG BUY</div>
+                      </div>
+                    ) : viewMode === 'search' ? (
+                      <div>
+                        <Search size={28} color="#0891B2" style={{ marginBottom: '8px', opacity: 0.4 }} />
+                        <div style={{ fontSize: '13px', fontWeight: 600 }}>
+                          {searchQuery.trim()
+                            ? `ไม่พบเหรียญที่ตรงกับ "${searchQuery}"`
+                            : 'พิมพ์ชื่อหรือสัญลักษณ์เหรียญที่ต้องการค้นหา'}
+                        </div>
+                        <div style={{ fontSize: '11px', marginTop: '4px', color: 'var(--text-muted)' }}>
+                          {searchQuery.trim()
+                            ? 'ลองค้นหาด้วยคำอื่น หรือตรวจสอบตัวสะกด'
+                            : 'เช่น BTC, ETH, Solana, DOGE ...'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>ไม่พบข้อมูล</div>
+                    )
+                  }
+                </td>
+              </tr>
+            ) : displayedCoins.map((coin, index) => {
               const displayPrice = (coin.price * multiplier).toLocaleString(undefined, {
                 minimumFractionDigits: coin.price < 1 ? 4 : 2,
                 maximumFractionDigits: coin.price < 1 ? 4 : 2,
@@ -212,19 +502,39 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
                 >
                   <td style={{ color: 'var(--text-muted)' }}>{index + 1}</td>
                   <td>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleWatchlist(coin.symbol);
-                      }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      <Star
-                        size={14}
-                        fill={coin.isWatchlist ? '#F59E0B' : 'none'}
-                        color={coin.isWatchlist ? '#F59E0B' : 'var(--text-muted)'}
-                      />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleWatchlist(coin.symbol);
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                        title={coin.isWatchlist ? 'นำออกจาก Watchlist' : 'เพิ่มใน Watchlist'}
+                      >
+                        <Star
+                          size={14}
+                          fill={coin.isWatchlist ? '#F59E0B' : 'none'}
+                          color={coin.isWatchlist ? '#F59E0B' : 'var(--text-muted)'}
+                        />
+                      </button>
+
+                      {onToggleFocus && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFocus(coin.symbol);
+                          }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                          title={focusSymbols.includes(coin.symbol) ? 'นำออกจาก FOCUS' : 'เพิ่มเข้าสู่ FOCUS (🎯)'}
+                        >
+                          <Target
+                            size={14}
+                            color={focusSymbols.includes(coin.symbol) ? '#8B5CF6' : 'var(--text-muted)'}
+                            style={{ filter: focusSymbols.includes(coin.symbol) ? 'drop-shadow(0 0 4px #8B5CF6)' : 'none' }}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

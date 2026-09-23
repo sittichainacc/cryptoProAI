@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { WhaleRadarSummary, WhaleTransaction } from '../types/index.js';
 import { Radar, ArrowUpRight, ArrowDownRight, Shield, RefreshCw, ExternalLink, Filter } from 'lucide-react';
+import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface WhaleRadarWidgetProps {
   currency: 'THB' | 'USDT';
@@ -42,7 +43,7 @@ export const WhaleRadarWidget: React.FC<WhaleRadarWidgetProps> = ({
     );
   }
 
-  const multiplier = currency === 'THB' ? 34.5 : 1;
+  const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
   const filteredTx = data.transactions.filter((tx) => {
@@ -110,7 +111,7 @@ export const WhaleRadarWidget: React.FC<WhaleRadarWidgetProps> = ({
         <div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>วอลุ่มเจ้ามือ 24 ชม.</div>
           <div style={{ fontSize: '17px', fontWeight: 800, color: '#FFF', marginTop: '2px' }}>
-            {currency === 'THB' ? `฿${(data.totalWhaleVolume24h * 34.5 / 1e9).toFixed(1)}B` : data.totalWhaleVolumeFormatted}
+            {currency === 'THB' ? `฿${(data.totalWhaleVolume24h * multiplier / 1e9).toFixed(1)}B` : data.totalWhaleVolumeFormatted}
           </div>
           <div style={{ fontSize: '10.5px', color: 'var(--neon-cyan)', marginTop: '2px' }}>
             ตรวจพบ 142 ธุรกรรมขนาดใหญ่
@@ -121,7 +122,7 @@ export const WhaleRadarWidget: React.FC<WhaleRadarWidgetProps> = ({
         <div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กระแสสุทธิเข้า/ออก Exchange</div>
           <div style={{ fontSize: '17px', fontWeight: 800, color: '#10B981', marginTop: '2px' }}>
-            {currency === 'THB' ? `-฿${(Math.abs(data.netExchangeFlowUsd) * 34.5 / 1e6).toFixed(1)}M` : data.netExchangeFlowFormatted}
+            {currency === 'THB' ? `-฿${(Math.abs(data.netExchangeFlowUsd) * multiplier / 1e6).toFixed(1)}M` : data.netExchangeFlowFormatted}
           </div>
           <div style={{ fontSize: '10.5px', color: '#10B981', marginTop: '2px' }}>
             ● ถอนออกสะสมเข้า Cold Wallet

@@ -1,12 +1,13 @@
 {
   "name": "cryptopro-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "CryptoPro AI Analysis Backend Server",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "tsx src/index.ts"
+    "start": "node dist/index.js"
   },
   "keywords": ["crypto", "bitkub", "analysis", "ai"],
   "author": "",
