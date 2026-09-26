@@ -91,7 +91,9 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
       case 'losers':
         return movers.losers.length > 0 ? movers.losers.slice(0, 15) : [];
       case 'signals':
-        return signals.length > 0 ? signals.slice(0, 15) : [];
+        return signals.length > 0
+          ? [...signals].sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0) || (b.technicalScore ?? 0) - (a.technicalScore ?? 0)).slice(0, 15)
+          : [];
       case 'watchlist':
       default:
         // If user watchlist has items use it; else fallback to top market coins

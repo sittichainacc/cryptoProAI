@@ -71,7 +71,10 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {signals.slice(0, 5).map((item, index) => (
+        {[...signals]
+          .sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0) || (b.technicalScore ?? 0) - (a.technicalScore ?? 0))
+          .slice(0, 5)
+          .map((item, index) => (
           <div
             key={item.symbol}
             onClick={() => onSelectCoin(item.symbol)}
