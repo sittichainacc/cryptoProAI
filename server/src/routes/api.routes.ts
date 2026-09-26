@@ -549,6 +549,7 @@ apiRouter.get('/market/top5-premium', (_req, res) => {
   const ethTicker = marketStore.getTicker('ETH');
   const kpis = marketStore.getMarketOverviewKPIs();
   const news = marketStore.getNews();
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
 
   const response = QuantPremiumEngine.evaluateUniverse({
     coins: allCoins,
@@ -556,6 +557,7 @@ apiRouter.get('/market/top5-premium', (_req, res) => {
     ethTicker,
     kpis,
     news,
+    usdThbRate,
   });
 
   cachedPremiumTop5 = response;
@@ -571,6 +573,7 @@ apiRouter.post('/market/top5-premium/recalculate', (req, res) => {
   const kpis = marketStore.getMarketOverviewKPIs();
   const news = marketStore.getNews();
   const customConfig = req.body?.config || {};
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
 
   const response = QuantPremiumEngine.evaluateUniverse({
     coins: allCoins,
@@ -579,6 +582,7 @@ apiRouter.post('/market/top5-premium/recalculate', (req, res) => {
     kpis,
     news,
     config: customConfig,
+    usdThbRate,
   });
 
   cachedPremiumTop5 = response;
@@ -594,6 +598,7 @@ apiRouter.get('/market/top5-premium/focus/:symbol', (req, res) => {
   const ethTicker = marketStore.getTicker('ETH');
   const kpis = marketStore.getMarketOverviewKPIs();
   const news = marketStore.getNews();
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
 
   const result = QuantPremiumEngine.evaluateSingleCoin(symbol, {
     coins: allCoins,
@@ -601,6 +606,7 @@ apiRouter.get('/market/top5-premium/focus/:symbol', (req, res) => {
     ethTicker,
     kpis,
     news,
+    usdThbRate,
   });
 
   if (!result.candidate) {
@@ -621,8 +627,15 @@ apiRouter.post('/market/top5-premium/slippage-sim', (req, res) => {
     return res.status(404).json({ success: false, error: `Coin ${symbol} not found` });
   }
 
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
+  const coinThb = {
+    ...coin,
+    price: coin.price * usdThbRate,
+    volume24h: (coin.volume24h || 1000000) * usdThbRate,
+  };
+
   const result = QuantPremiumEngine.simulateCapitalSlippage({
-    coin,
+    coin: coinThb,
     capitalThb: Number(capitalThb) || 50000,
   });
 

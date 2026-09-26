@@ -65,7 +65,7 @@ import {
   TradeDecisionAssistant
 } from '../types/index.js';
 import { api } from '../services/api.js';
-import { formatCurrencyValue, getCurrencyMultiplier } from '../utils/currency.js';
+import { formatCurrencyValue, getCurrencyMultiplier, getUsdThbRate } from '../utils/currency.js';
 import { PriceCell } from '../components/PriceCell.js';
 import { CryptoIcon } from '../components/CryptoIcon.js';
 
@@ -86,6 +86,26 @@ interface ResearchPhaseItem {
   findings: string[];
   promotedFeatures: string[];
   rejectedRules: string[];
+}
+
+// Robust THB currency formatter for crypto prices & financial amounts
+export function formatThb(val: number | undefined | null, opts?: { decimals?: number }): string {
+  if (val === undefined || val === null || isNaN(val)) return '0.00';
+  if (val === 0) return '0.00';
+  const absVal = Math.abs(val);
+  if (opts?.decimals !== undefined) {
+    return val.toLocaleString('th-TH', { minimumFractionDigits: opts.decimals, maximumFractionDigits: opts.decimals });
+  }
+  if (absVal < 0.0001) {
+    return val.toLocaleString('th-TH', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  }
+  if (absVal < 1) {
+    return val.toLocaleString('th-TH', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  }
+  if (absVal < 10) {
+    return val.toLocaleString('th-TH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  }
+  return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
@@ -471,8 +491,15 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
 
   // Enhance Top 5 candidates with research metrics & live Phase 20 Quant Data
   const premiumCandidates = useMemo(() => {
+    const liveRate = getUsdThbRate() || 33.39;
+
     if (premiumData && premiumData.candidates && premiumData.candidates.length > 0) {
       return premiumData.candidates.map((candidate, idx) => {
+        const isAlreadyThb = premiumData.denominatedCurrency === 'THB' || candidate.price > 5000 || (candidate.symbol === 'BTC' && candidate.price > 1000000);
+        const rate = isAlreadyThb ? 1 : liveRate;
+
+        const price = isAlreadyThb ? candidate.price : Number((candidate.price * rate).toFixed(candidate.price * rate < 0.01 ? 6 : candidate.price * rate < 1 ? 4 : 2));
+
         const grossAlphaBps = candidate.tradableEdge.grossExpectedAlphaBps;
         const feeBps = candidate.tradableEdge.feeBps;
         const spreadBps = candidate.tradableEdge.spreadBps;
@@ -505,23 +532,72 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
 
         const hrpWeight = candidate.sizing?.hrpWeightPct || [28, 24, 20, 16, 12][idx] || 15;
 
+        const setup = isAlreadyThb ? candidate.setup : {
+          ...candidate.setup,
+          entryZone: {
+            min: +(candidate.setup.entryZone.min * rate).toFixed(2),
+            max: +(candidate.setup.entryZone.max * rate).toFixed(2),
+            preferred: +(candidate.setup.entryZone.preferred * rate).toFixed(2),
+          },
+          initialStopPrice: +(candidate.setup.initialStopPrice * rate).toFixed(2),
+          invalidationPrice: +(candidate.setup.invalidationPrice * rate).toFixed(2),
+          target1: +(candidate.setup.target1 * rate).toFixed(2),
+          target2: +(candidate.setup.target2 * rate).toFixed(2),
+          target3: +(candidate.setup.target3 * rate).toFixed(2),
+        };
+
+        const fibonacci = isAlreadyThb ? candidate.fibonacci : {
+          ...candidate.fibonacci,
+          swingHigh: +(candidate.fibonacci.swingHigh * rate).toFixed(2),
+          swingLow: +(candidate.fibonacci.swingLow * rate).toFixed(2),
+          atrDistance: +(candidate.fibonacci.atrDistance * rate).toFixed(2),
+          retracements: {
+            fib236: +(candidate.fibonacci.retracements.fib236 * rate).toFixed(2),
+            fib382: +(candidate.fibonacci.retracements.fib382 * rate).toFixed(2),
+            fib500: +(candidate.fibonacci.retracements.fib500 * rate).toFixed(2),
+            fib618: +(candidate.fibonacci.retracements.fib618 * rate).toFixed(2),
+            fib786: +(candidate.fibonacci.retracements.fib786 * rate).toFixed(2),
+          },
+          extensions: {
+            ext1272: +(candidate.fibonacci.extensions.ext1272 * rate).toFixed(2),
+            ext1618: +(candidate.fibonacci.extensions.ext1618 * rate).toFixed(2),
+            ext2000: +(candidate.fibonacci.extensions.ext2000 * rate).toFixed(2),
+          }
+        };
+
+        const assistant: TradeDecisionAssistant = isAlreadyThb ? candidate.decisionAssistant : {
+          ...candidate.decisionAssistant,
+          entryZone: setup.entryZone,
+          stops: {
+            ...candidate.decisionAssistant.stops,
+            softWarningPrice: +(candidate.decisionAssistant.stops.softWarningPrice * rate).toFixed(2),
+            hardStopPrice: +(candidate.decisionAssistant.stops.hardStopPrice * rate).toFixed(2),
+          },
+          takeProfits: {
+            ...candidate.decisionAssistant.takeProfits,
+            tp1Price: +(candidate.decisionAssistant.takeProfits.tp1Price * rate).toFixed(2),
+            tp2Price: +(candidate.decisionAssistant.takeProfits.tp2Price * rate).toFixed(2),
+            tp3Price: +(candidate.decisionAssistant.takeProfits.tp3Price * rate).toFixed(2),
+          }
+        };
+
         return {
           rank: candidate.rank,
           symbol: candidate.symbol,
           name: candidate.name,
-          price: candidate.price,
+          price,
           change24h: candidate.change24h,
           change7d: candidate.change7d,
-          volume24h: candidate.volume24h,
+          volume24h: isAlreadyThb ? candidate.volume24h : candidate.volume24h * rate,
           sector: candidate.sector,
           coinQualityScore: candidate.scores.coinQuality,
           opportunityScore: candidate.scores.opportunity,
           finalScore: candidate.sizing.riskAdjustedScore,
           extensionScore: candidate.scores.extension,
-          entryQualityScore: candidate.setup.entryQualityScore,
-          entryStatus: candidate.setup.entryMode,
+          entryQualityScore: setup.entryQualityScore,
+          entryStatus: setup.entryMode,
           extensionLevel: candidate.scores.extension > 75 ? 'High Risk' : candidate.scores.extension > 60 ? 'Moderate' : 'Normal',
-          badges: [candidate.setup.entryMode, `Edge +${expectedNetEdgeBps}bps`, `R:R 1:${candidate.setup.riskRewardRatio}`],
+          badges: [setup.entryMode, `Edge +${expectedNetEdgeBps}bps`, `R:R 1:${setup.riskRewardRatio}`],
           grossAlphaBps,
           allInCostBps,
           feeBps,
@@ -548,16 +624,22 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
             ? 'Zaremba et al. (IRFA) Liquidity Momentum' 
             : 'Guo et al. (JEDC 2024) Cross-Coin Lead-Lag',
           trailingStopPlan: {
-            currentStopPrice: candidate.setup.initialStopPrice,
-            step1TriggerPrice: candidate.setup.target1,
-            step1NewStopPrice: candidate.setup.entryZone.preferred,
-            step2TriggerPrice: candidate.setup.target2,
-            step2NewStopPrice: candidate.setup.target1,
+            currentStopPrice: setup.initialStopPrice,
+            step1TriggerPrice: setup.target1,
+            step1NewStopPrice: setup.entryZone.preferred,
+            step2TriggerPrice: setup.target2,
+            step2NewStopPrice: setup.target1,
             trailingDistancePct: 4.5,
           },
-          invalidation: `< ฿${candidate.setup.invalidationPrice.toLocaleString()}`,
-          decisionAssistant: candidate.decisionAssistant,
-          rawPhase20: candidate,
+          invalidation: `< ฿${formatThb(setup.invalidationPrice)}`,
+          decisionAssistant: assistant,
+          rawPhase20: {
+            ...candidate,
+            price,
+            setup,
+            fibonacci,
+            decisionAssistant: assistant,
+          },
         };
       });
     }
@@ -565,6 +647,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
     if (!data?.top5 || data.top5.length === 0) return [];
     
     return data.top5.map((candidate, idx) => {
+      const candidatePriceThb = Number((candidate.price * liveRate).toFixed(candidate.price * liveRate < 0.01 ? 6 : candidate.price * liveRate < 1 ? 4 : 2));
       // Calculate realistic tradable edge based on candidate rank and scores
       const grossAlphaBps = Math.round(180 + (candidate.opportunityScore * 1.2) - (idx * 22));
       const feeBps = 25; // Bitkub 0.25% taker fee
@@ -605,28 +688,28 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
         currentPriceZoneRelation: idx === 1 ? 'ABOVE_ENTRY_ZONE' : 'INSIDE_ENTRY_ZONE',
         zoneDistancePct: idx === 1 ? 4.7 : 0,
         zoneRecommendationTh: idx === 1 
-          ? `สูงกว่า Entry Zone +4.7% → ไม่แนะนำไล่ราคา → รอย่อกลับ ฿${Math.round(candidate.price * 0.95).toLocaleString()}–฿${Math.round(candidate.price * 0.98).toLocaleString()}`
-          : `ราคาอยู่ใน Entry Zone (฿${Math.round(candidate.price * 0.985).toLocaleString()} – ฿${Math.round(candidate.price * 1.01).toLocaleString()}) → เข้าได้ตามแผน`,
+          ? `สูงกว่า Entry Zone +4.7% → ไม่แนะนำไล่ราคา → รอย่อกลับ ฿${Math.round(candidatePriceThb * 0.95).toLocaleString()}–฿${Math.round(candidatePriceThb * 0.98).toLocaleString()}`
+          : `ราคาอยู่ใน Entry Zone (฿${Math.round(candidatePriceThb * 0.985).toLocaleString()} – ฿${Math.round(candidatePriceThb * 1.01).toLocaleString()}) → เข้าได้ตามแผน`,
         entryZone: {
-          min: Math.round(candidate.price * 0.985),
-          max: Math.round(candidate.price * 1.01),
-          preferred: Math.round(candidate.price * 0.995),
+          min: Math.round(candidatePriceThb * 0.985),
+          max: Math.round(candidatePriceThb * 1.01),
+          preferred: Math.round(candidatePriceThb * 0.995),
         },
         stops: {
-          softWarningPrice: Math.round(candidate.price * 0.965),
+          softWarningPrice: Math.round(candidatePriceThb * 0.965),
           softWarningRationaleTh: 'ยังไม่ขายทันที แต่เริ่มเฝ้าระวัง (หลุดระดับ EMA 20 หรือทดสอบแนวรับย่อย)',
-          hardStopPrice: Math.round(candidate.price * 0.94),
+          hardStopPrice: Math.round(candidatePriceThb * 0.94),
           hardStopRationaleTh: 'Thesis ผิดแล้ว ไม่ควรถือด้วยเหตุผลเดิม: หลุดแนวรับ 4H + ต่ำกว่า Swing Low',
           stopDistancePct: 6.0,
         },
         takeProfits: {
-          tp1Price: Math.round(candidate.price * 1.064),
+          tp1Price: Math.round(candidatePriceThb * 1.064),
           tp1GainPct: 6.4,
           tp1ActionTh: 'ขาย 25–30% และเลื่อน Stop ขยับบังทุน (Break-even)',
-          tp2Price: Math.round(candidate.price * 1.117),
+          tp2Price: Math.round(candidatePriceThb * 1.117),
           tp2GainPct: 11.7,
           tp2ActionTh: 'ขายเพิ่ม 25–35% เพื่อล็อกกำไรก้อนหลัก',
-          tp3Price: Math.round(candidate.price * 1.182),
+          tp3Price: Math.round(candidatePriceThb * 1.182),
           tp3GainPct: 18.2,
           tp3ActionTh: 'ปล่อยกำไรวิ่งต่อ (Let Profit Run) ด้วย Trailing Stop สำหรับส่วนที่เหลือ',
         },
@@ -655,12 +738,13 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
             'เกิด Critical Risk Gate หรือ Exchange Outflow ผิดปกติ',
           ],
         },
-        executiveSummaryTh: `${candidate.symbol} — ตอนนี้ “${idx === 1 ? 'รอย่อเข้า อย่าไล่ราคา' : 'เข้าได้ตามแผน'}”: ราคา ฿${candidate.price.toLocaleString()} ${idx === 1 ? 'สูงกว่าโซนซื้อเล็กน้อย ควรรอจังหวะย่อตัว' : 'อยู่ในโซนเข้าที่ระบบประเมินไว้'} แนวโน้ม 4H/1D ยังเป็นบวก และ Order Flow ยังอยู่ในภาวะสะสม หากเข้าบริเวณนี้ให้ใช้ ฿${Math.round(candidate.price * 0.94).toLocaleString()} เป็นจุดยกเลิกแผน และตั้งเป้าหมายแรก ฿${Math.round(candidate.price * 1.064).toLocaleString()} ถึง TP1 ให้เลื่อน Stop บังทุนทันที`,
-        planActionTh: `เข้าบริเวณ ฿${Math.round(candidate.price * 0.985).toLocaleString()}–฿${Math.round(candidate.price * 1.01).toLocaleString()} / ถือต่อขณะราคาไม่หลุด ฿${Math.round(candidate.price * 0.94).toLocaleString()} / ถึง TP1 ทยอยขาย 25–30% และยก Stop บังทุน`,
+        executiveSummaryTh: `${candidate.symbol} — ตอนนี้ “${idx === 1 ? 'รอย่อเข้า อย่าไล่ราคา' : 'เข้าได้ตามแผน'}”: ราคา ฿${candidatePriceThb.toLocaleString()} ${idx === 1 ? 'สูงกว่าโซนซื้อเล็กน้อย ควรรอจังหวะย่อตัว' : 'อยู่ในโซนเข้าที่ระบบประเมินไว้'} แนวโน้ม 4H/1D ยังเป็นบวก และ Order Flow ยังอยู่ในภาวะสะสม หากเข้าบริเวณนี้ให้ใช้ ฿${Math.round(candidatePriceThb * 0.94).toLocaleString()} เป็นจุดยกเลิกแผน และตั้งเป้าหมายแรก ฿${Math.round(candidatePriceThb * 1.064).toLocaleString()} ถึง TP1 ให้เลื่อน Stop บังทุนทันที`,
+        planActionTh: `เข้าบริเวณ ฿${Math.round(candidatePriceThb * 0.985).toLocaleString()}–฿${Math.round(candidatePriceThb * 1.01).toLocaleString()} / ถือต่อขณะราคาไม่หลุด ฿${Math.round(candidatePriceThb * 0.94).toLocaleString()} / ถึง TP1 ทยอยขาย 25–30% และยก Stop บังทุน`,
       };
 
       return {
         ...candidate,
+        price: candidatePriceThb,
         grossAlphaBps,
         allInCostBps,
         feeBps,
@@ -691,26 +775,6 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
       };
     });
   }, [data?.top5, premiumData]);
-
-  // Robust THB currency formatter for crypto prices & financial amounts
-  const formatThb = (val: number | undefined | null, opts?: { decimals?: number }): string => {
-    if (val === undefined || val === null || isNaN(val)) return '0.00';
-    if (val === 0) return '0.00';
-    const absVal = Math.abs(val);
-    if (opts?.decimals !== undefined) {
-      return val.toLocaleString('th-TH', { minimumFractionDigits: opts.decimals, maximumFractionDigits: opts.decimals });
-    }
-    if (absVal < 0.0001) {
-      return val.toLocaleString('th-TH', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
-    }
-    if (absVal < 1) {
-      return val.toLocaleString('th-TH', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
-    }
-    if (absVal < 10) {
-      return val.toLocaleString('th-TH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-    }
-    return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
 
   const toggleCardExpand = (symbol: string) => {
     setExpandedCards(prev => ({

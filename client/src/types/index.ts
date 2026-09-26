@@ -1634,6 +1634,8 @@ export interface Phase20EvaluationResponse {
   scoreRunId: string;
   timestamp: string;
   configVersion: string;
+  denominatedCurrency?: 'THB' | 'USDT';
+  usdThbRate?: number;
   marketRegime: MarketRegimeMatrix6Axis;
   modelHealth: {
     championScore: number;

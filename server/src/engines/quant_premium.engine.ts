@@ -332,6 +332,8 @@ export interface Phase20EvaluationResponse {
   scoreRunId: string;
   timestamp: string;
   configVersion: string;
+  denominatedCurrency?: 'THB' | 'USDT';
+  usdThbRate?: number;
   marketRegime: MarketRegimeMatrix6Axis;
   modelHealth: {
     championScore: number;
@@ -369,11 +371,13 @@ export class QuantPremiumEngine {
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
     config?: Partial<Phase20Config>;
+    usdThbRate?: number;
   }): Phase20EvaluationResponse {
     const startTime = Date.now();
     const config: Phase20Config = { ...DEFAULT_PHASE20_CONFIG, ...params.config };
     const scoreRunId = `RUN-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
+    const usdThbRate = params.usdThbRate || 33.39;
 
     // ─── Stage 3: Market Intelligence & 6-Axis Regime Detection ───
     const marketRegime = this.detect6AxisRegime(params);
@@ -383,7 +387,11 @@ export class QuantPremiumEngine {
     const eligibleCandidates: Phase20Candidate[] = [];
     let evaluatedCount = 0;
 
-    const btcPrice = params.btcTicker?.price || 2800000;
+    const btcTickerThb = params.btcTicker ? {
+      ...params.btcTicker,
+      price: Number((params.btcTicker.price * usdThbRate).toFixed(2)),
+    } : undefined;
+    const btcPrice = btcTickerThb?.price || 2800000;
     const btcChange = params.btcTicker?.change24h || 0;
 
     // Filter valid non-stable coins
@@ -393,15 +401,25 @@ export class QuantPremiumEngine {
       evaluatedCount++;
       const coinStartTime = Date.now();
 
+      // Convert coin to Thai Baht (THB) for 100% native institutional Thai market execution
+      const coinPriceThb = Number((coin.price * usdThbRate).toFixed(coin.price * usdThbRate < 0.01 ? 6 : coin.price * usdThbRate < 1 ? 4 : 2));
+      const coinThb: TickerData = {
+        ...coin,
+        price: coinPriceThb,
+        high24h: coin.high24h ? Number((coin.high24h * usdThbRate).toFixed(2)) : undefined,
+        low24h: coin.low24h ? Number((coin.low24h * usdThbRate).toFixed(2)) : undefined,
+        volume24h: (coin.volume24h || 1000000) * usdThbRate,
+      };
+
       // ─── Stage 1: Universe & Data Quality Gate ───
-      const dataQualityCheck = this.checkDataQuality(coin);
+      const dataQualityCheck = this.checkDataQuality(coinThb);
       if (!dataQualityCheck.passed) {
         rejectedReasonsSummary[dataQualityCheck.reason] = (rejectedReasonsSummary[dataQualityCheck.reason] || 0) + 1;
         continue;
       }
 
       // ─── Stage 2: Liquidity & Execution Capacity ───
-      const executionReport = this.calculateTradableEdge(coin, config, marketRegime);
+      const executionReport = this.calculateTradableEdge(coinThb, config, marketRegime, usdThbRate);
       if (executionReport.spreadBps > 120 || executionReport.estimatedSlippageBps > (config.maxSlippageLimitPct * 100)) {
         const reason = executionReport.spreadBps > 120 ? 'EXCESSIVE_SPREAD' : 'EXCESSIVE_SLIPPAGE';
         rejectedReasonsSummary[reason] = (rejectedReasonsSummary[reason] || 0) + 1;
@@ -409,22 +427,22 @@ export class QuantPremiumEngine {
       }
 
       // ─── Stage 4: Specialist Engines Scoring ───
-      const scores = this.computeSpecialistScores(coin, params.btcTicker, marketRegime, executionReport);
+      const scores = this.computeSpecialistScores(coinThb, btcTickerThb, marketRegime, executionReport);
 
       // ─── Stage 5 & 6: Multi-Timeframe RSI Matrix (Risk Context) ───
-      const mtfRsi = this.computeMtfRsi(coin, scores.trend);
+      const mtfRsi = this.computeMtfRsi(coinThb, scores.trend);
 
       // ─── Stage 7: Time Horizon Engine ───
-      const horizons = this.computeTimeHorizons(coin, scores, mtfRsi);
+      const horizons = this.computeTimeHorizons(coinThb, scores, mtfRsi);
 
       // ─── Stage 8: Objective Fibonacci Visualization Layer ───
-      const fibonacci = this.computeObjectiveFibonacci(coin);
+      const fibonacci = this.computeObjectiveFibonacci(coinThb);
 
       // ─── Stage 9: Entry & Trade Setup Engine ───
-      const setup = this.computeEntrySetup(coin, fibonacci, executionReport);
+      const setup = this.computeEntrySetup(coinThb, fibonacci, executionReport);
 
       // ─── Stage 10: Hard Gates (Strict Pre-Score Invalidation) ───
-      const hardGateCheck = this.evaluateHardGates(coin, executionReport, setup, marketRegime, config);
+      const hardGateCheck = this.evaluateHardGates(coinThb, executionReport, setup, marketRegime, config);
       if (!hardGateCheck.passed) {
         for (const code of hardGateCheck.reasonCodes) {
           rejectedReasonsSummary[code] = (rejectedReasonsSummary[code] || 0) + 1;
@@ -441,7 +459,7 @@ export class QuantPremiumEngine {
 
       const tailRiskPenalty = scores.risk > 65 ? (scores.risk - 65) * 0.4 : 0;
       const extensionPenalty = scores.extension > 70 ? (scores.extension - 70) * 0.5 : 0;
-      const crowdingPenalty = coin.change24h > 20 ? (coin.change24h - 20) * 0.3 : 0;
+      const crowdingPenalty = coinThb.change24h > 20 ? (coinThb.change24h - 20) * 0.3 : 0;
       const localPremiumPenalty = executionReport.spreadBps > 40 ? 5 : 0;
       const negativeCatalystPenalty = scores.negativeCatalyst * 0.3;
 
@@ -458,10 +476,10 @@ export class QuantPremiumEngine {
       );
 
       // ─── Stage 12: Position Sizing & Allocation (Separated from Rank) ───
-      const sizing = this.computePositionSizing(coin, scores, setup, config, marketRegime);
+      const sizing = this.computePositionSizing(coinThb, scores, setup, config, marketRegime);
 
       // ─── Stage 13: Position State Machine & Profit Protection ───
-      const lifecycle = this.computeLifecycleState(coin, setup, scores);
+      const lifecycle = this.computeLifecycleState(coinThb, setup, scores);
 
       // ─── Stage 14: Explainability Contract ───
       const explainability: ExplainabilityContract = {
@@ -494,7 +512,7 @@ export class QuantPremiumEngine {
       };
 
       const decisionAssistant = this.computeDecisionAssistant({
-        coin,
+        coin: coinThb,
         setup,
         scores,
         executionReport,
@@ -507,13 +525,13 @@ export class QuantPremiumEngine {
 
       const candidate: Phase20Candidate = {
         rank: 0, // Assigned after sorting
-        symbol: coin.symbol,
-        name: coin.name,
-        price: coin.price,
-        change24h: coin.change24h,
-        change7d: coin.change7d,
-        volume24h: coin.volume24h,
-        sector: coin.sector || 'core',
+        symbol: coinThb.symbol,
+        name: coinThb.name,
+        price: coinThb.price,
+        change24h: coinThb.change24h,
+        change7d: coinThb.change7d,
+        volume24h: coinThb.volume24h,
+        sector: coinThb.sector || 'core',
         scores,
         tradableEdge: executionReport,
         mtfRsi,
@@ -529,7 +547,7 @@ export class QuantPremiumEngine {
         explainability,
         audit: {
           scoreRunId,
-          assetId: `${coin.symbol}-THB`,
+          assetId: `${coinThb.symbol}-THB`,
           timestamp,
           calculationLatencyMs: Date.now() - coinStartTime,
         },
@@ -568,6 +586,8 @@ export class QuantPremiumEngine {
     return {
       scoreRunId,
       timestamp,
+      denominatedCurrency: 'THB',
+      usdThbRate,
       configVersion: config.configVersion,
       marketRegime,
       modelHealth: {
@@ -688,15 +708,16 @@ export class QuantPremiumEngine {
   private static calculateTradableEdge(
     coin: TickerData, 
     config: Phase20Config, 
-    regime: MarketRegimeMatrix6Axis
+    regime: MarketRegimeMatrix6Axis,
+    usdThbRate: number = 33.39
   ): ExecutionTradableEdgeReport {
     const feeBps = config.tradingFeeBps; // 25 bps taker
     
     // Spread bps: 0.10% to 0.40%
-    const spreadBps = Math.max(10, Math.min(80, Math.round(18 + (coin.price < 5 ? 12 : 0) - Math.min(10, Math.log10(coin.volume24h || 1)))));
+    const spreadBps = Math.max(10, Math.min(80, Math.round(18 + (coin.price < 5 * usdThbRate ? 12 : 0) - Math.min(10, Math.log10((coin.volume24h / usdThbRate) || 1)))));
     
     // Estimated Slippage for standard 50k THB trade
-    const estimatedSlippageBps = Math.max(8, Math.min(65, Math.round(15 + (coin.price < 1 ? 15 : 0))));
+    const estimatedSlippageBps = Math.max(8, Math.min(65, Math.round(15 + (coin.price < 1 * usdThbRate ? 15 : 0))));
     const marketImpactBps = Math.max(5, Math.min(30, Math.round(8 + (coin.change24h > 15 ? 12 : 0))));
     const adverseSelectionBps = regime.volatilityRegime === 'HIGH_VOL' ? 12 : 6;
     const latencyCostBps = 3;
@@ -1226,17 +1247,19 @@ export class QuantPremiumEngine {
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
     config?: Partial<Phase20Config>;
+    usdThbRate?: number;
   }): {
     candidate: Phase20Candidate | null;
     hardGates: { passed: boolean; reasonCodes: string[] };
     marketRegime: MarketRegimeMatrix6Axis;
   } {
+    const usdThbRate = params.usdThbRate || 33.39;
     const config: Phase20Config = { ...DEFAULT_PHASE20_CONFIG, ...params.config };
     const marketRegime = this.detect6AxisRegime(params);
     const targetSymbol = symbol.toUpperCase();
-    const coin = params.coins.find(c => c.symbol.toUpperCase() === targetSymbol);
+    const rawCoin = params.coins.find(c => c.symbol.toUpperCase() === targetSymbol);
 
-    if (!coin) {
+    if (!rawCoin) {
       return {
         candidate: null,
         hardGates: { passed: false, reasonCodes: ['ASSET_NOT_FOUND'] },
@@ -1244,8 +1267,22 @@ export class QuantPremiumEngine {
       };
     }
 
-    const executionReport = this.calculateTradableEdge(coin, config, marketRegime);
-    const scores = this.computeSpecialistScores(coin, params.btcTicker, marketRegime, executionReport);
+    const coinPriceThb = Number((rawCoin.price * usdThbRate).toFixed(rawCoin.price * usdThbRate < 0.01 ? 6 : rawCoin.price * usdThbRate < 1 ? 4 : 2));
+    const coin: TickerData = {
+      ...rawCoin,
+      price: coinPriceThb,
+      high24h: rawCoin.high24h ? Number((rawCoin.high24h * usdThbRate).toFixed(2)) : undefined,
+      low24h: rawCoin.low24h ? Number((rawCoin.low24h * usdThbRate).toFixed(2)) : undefined,
+      volume24h: (rawCoin.volume24h || 1000000) * usdThbRate,
+    };
+
+    const btcTickerThb = params.btcTicker ? {
+      ...params.btcTicker,
+      price: Number((params.btcTicker.price * usdThbRate).toFixed(2)),
+    } : undefined;
+
+    const executionReport = this.calculateTradableEdge(coin, config, marketRegime, usdThbRate);
+    const scores = this.computeSpecialistScores(coin, btcTickerThb, marketRegime, executionReport);
     const mtfRsi = this.computeMtfRsi(coin, scores.trend);
     const horizons = this.computeTimeHorizons(coin, scores, mtfRsi);
     const fibonacci = this.computeObjectiveFibonacci(coin);
