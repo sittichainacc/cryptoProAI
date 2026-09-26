@@ -3,6 +3,7 @@ import { TickerData, AlertItem, CryptoNewsItem } from '../types/index.js';
 import { PriceCell } from './PriceCell.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
 import { api } from '../services/api.js';
+import { CryptoIcon } from './CryptoIcon.js';
 import {
   Bookmark,
   Bell,
@@ -371,26 +372,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                           }}
                         >
                           {/* Brand Logo / Avatar */}
-                          <div
-                            style={{
-                              width: '18px',
-                              height: '18px',
-                              minWidth: '18px',
-                              minHeight: '18px',
-                              borderRadius: '50%',
-                              backgroundColor: meta.bg,
-                              color: '#FFFFFF',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9px',
-                              fontWeight: 800,
-                              flexShrink: 0,
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                            }}
-                          >
-                            {meta.label}
-                          </div>
+                          <CryptoIcon symbol={item.symbol} size={18} />
 
                           {/* Symbol */}
                           <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, paddingLeft: '4px' }}>
@@ -773,26 +755,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
           {/* Header of Detail: Coin Logo + Symbol + Actions */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  minWidth: '24px',
-                  minHeight: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: getCoinMeta(coin.symbol).bg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#FFFFFF',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  flexShrink: 0,
-                  boxShadow: '0 0 10px rgba(0,0,0,0.5)',
-                }}
-              >
-                {getCoinMeta(coin.symbol).label}
-              </div>
+              {/* Brand Logo / Avatar */}
+              <CryptoIcon symbol={coin.symbol} size={28} />
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                   {coin.symbol}THB

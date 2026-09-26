@@ -6,6 +6,7 @@ import { IndicatorsEngine } from '../engines/indicators.engine.js';
 import { MarketStructureEngine } from '../engines/structure.engine.js';
 import { RiskEngine } from '../engines/risk.engine.js';
 import { TradingPlanEngine } from '../engines/trading_plan.engine.js';
+import { QuantPremiumEngine, DEFAULT_PHASE20_CONFIG } from '../engines/quant_premium.engine.js';
 
 export const apiRouter = Router();
 
@@ -526,6 +527,106 @@ apiRouter.delete('/paper-trading/:id', (req, res) => {
 apiRouter.get('/market/whale-radar', (_req, res) => {
   const summary = marketStore.getWhaleRadarSummary();
   res.json({ success: true, data: summary });
+});
+
+/**
+ * Phase 20 Production Architecture: Top 5 Premium Quant Decision Intelligence
+ * 19-Stage Pipeline: Universe -> Liquidity & Execution -> Regime -> Specialist Engines -> 
+ * Tradable Edge -> Pre-score Hard Gates -> Top 0-5 (Never force 5) -> Sizing uncoupled from Ranking ->
+ * Position State Machine & Profit Protection -> Explainability Contract & Audit Trail
+ */
+let cachedPremiumTop5: any = null;
+let lastPremiumCalcTime = 0;
+
+apiRouter.get('/market/top5-premium', (_req, res) => {
+  const now = Date.now();
+  if (cachedPremiumTop5 && (now - lastPremiumCalcTime < 10000)) {
+    return res.json({ success: true, data: cachedPremiumTop5 });
+  }
+
+  const allCoins = marketStore.getAllTickers();
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+
+  const response = QuantPremiumEngine.evaluateUniverse({
+    coins: allCoins,
+    btcTicker,
+    ethTicker,
+    kpis,
+    news,
+  });
+
+  cachedPremiumTop5 = response;
+  lastPremiumCalcTime = now;
+
+  res.json({ success: true, data: response });
+});
+
+apiRouter.post('/market/top5-premium/recalculate', (req, res) => {
+  const allCoins = marketStore.getAllTickers();
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+  const customConfig = req.body?.config || {};
+
+  const response = QuantPremiumEngine.evaluateUniverse({
+    coins: allCoins,
+    btcTicker,
+    ethTicker,
+    kpis,
+    news,
+    config: customConfig,
+  });
+
+  cachedPremiumTop5 = response;
+  lastPremiumCalcTime = Date.now();
+
+  res.json({ success: true, data: response });
+});
+
+apiRouter.get('/market/top5-premium/focus/:symbol', (req, res) => {
+  const { symbol } = req.params;
+  const allCoins = marketStore.getAllTickers();
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+
+  const result = QuantPremiumEngine.evaluateSingleCoin(symbol, {
+    coins: allCoins,
+    btcTicker,
+    ethTicker,
+    kpis,
+    news,
+  });
+
+  if (!result.candidate) {
+    return res.status(404).json({ success: false, error: `Coin ${symbol} not found in Bitkub universe` });
+  }
+
+  res.json({ success: true, data: result });
+});
+
+apiRouter.post('/market/top5-premium/slippage-sim', (req, res) => {
+  const { symbol, capitalThb } = req.body;
+  if (!symbol) {
+    return res.status(400).json({ success: false, error: 'Symbol is required' });
+  }
+
+  const coin = marketStore.getTicker(symbol);
+  if (!coin) {
+    return res.status(404).json({ success: false, error: `Coin ${symbol} not found` });
+  }
+
+  const result = QuantPremiumEngine.simulateCapitalSlippage({
+    coin,
+    capitalThb: Number(capitalThb) || 50000,
+  });
+
+  res.json({ success: true, data: result });
 });
 
 /**

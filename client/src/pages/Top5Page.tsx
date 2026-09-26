@@ -51,6 +51,7 @@ import {
 import { api } from '../services/api.js';
 import { formatCurrencyValue, getCurrencyMultiplier } from '../utils/currency.js';
 import { PriceCell } from '../components/PriceCell.js';
+import { CryptoIcon } from '../components/CryptoIcon.js';
 
 interface Top5PageProps {
   currency: 'THB' | 'USDT';
@@ -661,6 +662,9 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                         #{coin.rank}
                       </div>
 
+                      {/* Coin Icon */}
+                      <CryptoIcon symbol={coin.symbol} size={42} />
+
                       {/* Role & Name */}
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -1140,6 +1144,8 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                     >
                       #{opp.rank}
                     </div>
+                    {/* Coin Icon */}
+                    <CryptoIcon symbol={opp.symbol} size={30} />
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: 900, color: '#FFFFFF' }}>{opp.symbol}</div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{opp.sector || opp.leadLagRole}</div>
@@ -1295,6 +1301,8 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                     >
                       #{coin.rank}
                     </div>
+                    {/* Coin Icon */}
+                    <CryptoIcon symbol={coin.symbol} size={42} />
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF' }}>{coin.symbol}</span>

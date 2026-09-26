@@ -30,7 +30,11 @@ import {
   Maximize2,
   RefreshCw,
   Zap,
-  Info
+  Info,
+  Crosshair,
+  Star,
+  Plus,
+  X
 } from 'lucide-react';
 import { realtimeService } from '../services/realtime.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
@@ -39,12 +43,16 @@ interface CoinAnalysisPageProps {
   selectedSymbol: string;
   onSelectCoin: (symbol: string) => void;
   currency: 'THB' | 'USDT';
+  focusSymbols?: string[];
+  onToggleFocus?: (symbol: string) => void | Promise<void>;
 }
 
 export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
   selectedSymbol,
   onSelectCoin,
   currency,
+  focusSymbols,
+  onToggleFocus,
 }) => {
   const [analysisData, setAnalysisData] = useState<DeepAnalysisData | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
@@ -52,10 +60,57 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
   const [boughtPriceInput, setBoughtPriceInput] = useState<string>('');
   const [activeBoughtPrice, setActiveBoughtPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [focusList, setFocusList] = useState<string[]>(focusSymbols || []);
 
   useEffect(() => {
     api.getCoins().then(setAllCoins);
   }, []);
+
+  // Sync focus list from props or API
+  useEffect(() => {
+    if (focusSymbols && focusSymbols.length > 0) {
+      setFocusList(focusSymbols);
+    } else {
+      api.getFocusList().then((res) => {
+        if (res?.items) {
+          setFocusList(res.items.map((i) => i.symbol.toUpperCase()));
+        }
+      }).catch((err) => console.error('Failed to load focus list:', err));
+    }
+  }, [focusSymbols]);
+
+  const handleToggleFocus = async (sym: string) => {
+    const cleanSym = sym.toUpperCase();
+    const isFocused = focusList.includes(cleanSym);
+    try {
+      if (isFocused) {
+        await api.removeFocus(cleanSym);
+        setFocusList((prev) => prev.filter((s) => s.toUpperCase() !== cleanSym));
+      } else {
+        await api.addFocus({ symbol: cleanSym });
+        setFocusList((prev) => [...prev.filter((s) => s.toUpperCase() !== cleanSym), cleanSym]);
+      }
+      if (onToggleFocus) {
+        await onToggleFocus(cleanSym);
+      }
+    } catch (err) {
+      console.error('Failed to toggle focus for', cleanSym, err);
+    }
+  };
+
+  const handleRemoveFocus = async (sym: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const cleanSym = sym.toUpperCase();
+    try {
+      await api.removeFocus(cleanSym);
+      setFocusList((prev) => prev.filter((s) => s.toUpperCase() !== cleanSym));
+      if (onToggleFocus) {
+        await onToggleFocus(cleanSym);
+      }
+    } catch (err) {
+      console.error('Failed to remove focus for', cleanSym, err);
+    }
+  };
 
   const fetchAnalysis = async (sym: string, boughtPrice?: number | null) => {
     setIsLoading(true);
@@ -119,8 +174,6 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
 
   const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
-
-  const popularSymbols = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'FLOCK', 'LINK', 'AAVE', 'SUI'];
 
   if (!analysisData || isLoading && !analysisData) {
     return (
@@ -249,31 +302,137 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
 
           {/* Quick Select & Search Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: 600 }}>ยอดนิยม:</span>
-              {popularSymbols.slice(0, 6).map((sym) => {
-                const isActive = selectedSymbol === sym;
-                return (
-                  <button
-                    key={sym}
-                    type="button"
-                    onClick={() => onSelectCoin(sym)}
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      borderRadius: '6px',
-                      border: isActive ? '1px solid var(--neon-blue)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      background: isActive ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                      color: isActive ? 'var(--neon-blue-light)' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {sym}
-                  </button>
-                );
-              })}
+            {/* Focus Coins Bar (Replaces popular coins) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ 
+                  fontSize: '11.5px', 
+                  color: 'var(--neon-amber)', 
+                  fontWeight: 800, 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '4px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  letterSpacing: '0.2px',
+                }}>
+                  <Crosshair size={13} color="var(--neon-amber)" />
+                  Focus ({focusList.length}):
+                </span>
+              </div>
+
+              {/* Scrollable Focus Chips */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '5px', 
+                overflowX: 'auto', 
+                maxWidth: '460px', 
+                padding: '2px 0',
+                scrollbarWidth: 'none' 
+              }}>
+                {focusList.length === 0 ? (
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0 4px' }}>
+                    ยังไม่มีเหรียญใน Focus
+                  </span>
+                ) : (
+                  focusList.map((sym) => {
+                    const isActive = selectedSymbol.toUpperCase() === sym.toUpperCase();
+                    return (
+                      <div
+                        key={sym}
+                        onClick={() => onSelectCoin(sym)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '3px 8px',
+                          fontSize: '11.5px',
+                          fontWeight: 800,
+                          borderRadius: '6px',
+                          border: isActive ? '1px solid var(--neon-amber)' : '1px solid rgba(255, 255, 255, 0.12)',
+                          background: isActive 
+                            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.32) 0%, rgba(217, 119, 6, 0.18) 100%)' 
+                            : 'rgba(255, 255, 255, 0.05)',
+                          color: isActive ? '#FDE68A' : '#E2E8F0',
+                          cursor: 'pointer',
+                          boxShadow: isActive ? '0 0 10px rgba(245, 158, 11, 0.35)' : 'none',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={`คลิกเพื่อดูการวิเคราะห์เชิงลึกของ ${sym}`}
+                      >
+                        <span>{sym}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveFocus(sym, e)}
+                          title={`ลบ ${sym} ออกจาก Focus`}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: isActive ? '#FCD34D' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            padding: '1px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '3px',
+                            transition: 'color 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = isActive ? '#FCD34D' : 'var(--text-muted)')}
+                        >
+                          <X size={11} />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Add / Toggle Focus for Current Coin */}
+              {selectedSymbol && (
+                <button
+                  type="button"
+                  onClick={() => handleToggleFocus(selectedSymbol)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 9px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    border: focusList.includes(selectedSymbol.toUpperCase()) 
+                      ? '1px solid rgba(245, 158, 11, 0.45)' 
+                      : '1px dashed rgba(59, 130, 246, 0.45)',
+                    background: focusList.includes(selectedSymbol.toUpperCase())
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'rgba(59, 130, 246, 0.1)',
+                    color: focusList.includes(selectedSymbol.toUpperCase())
+                      ? '#F59E0B'
+                      : 'var(--neon-blue-light)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={focusList.includes(selectedSymbol.toUpperCase()) ? `คลิกเพื่อนำ ${selectedSymbol} ออกจาก Focus` : `คลิกเพื่อเพิ่ม ${selectedSymbol} เข้า Focus`}
+                >
+                  {focusList.includes(selectedSymbol.toUpperCase()) ? (
+                    <>
+                      <Star size={11} fill="#F59E0B" color="#F59E0B" />
+                      โฟกัสอยู่
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={11} />
+                      + โฟกัส {selectedSymbol}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Custom Searchable Coin Select Combobox */}
@@ -287,7 +446,8 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
                 onSelectCoin={onSelectCoin}
                 currency={currency}
                 placeholder="ค้นหาเหรียญทั้งหมด 355+ ตัว..."
-                width="310px"
+                width="290px"
+                focusSymbols={focusList}
               />
             </div>
           </div>

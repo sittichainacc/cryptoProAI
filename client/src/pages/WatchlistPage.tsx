@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TickerData } from '../types/index.js';
 import { CoinRankingTable } from '../components/CoinRankingTable.js';
+import { CryptoIcon } from '../components/CryptoIcon.js';
 import { 
   Star, 
   TrendingUp, 
@@ -333,9 +334,12 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <strong style={{ fontSize: '15px', color: '#FFF' }}>{coin.symbol}</strong>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{coin.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CryptoIcon symbol={coin.symbol} size={22} />
+                        <div>
+                          <strong style={{ fontSize: '15px', color: '#FFF' }}>{coin.symbol}</strong>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px' }}>{coin.name}</span>
+                        </div>
                       </div>
                       <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px' }}>
                         <PriceCell price={coin.price * multiplier} prefix={prefix} />
@@ -445,6 +449,7 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
                 style={{ fontSize: '12px', padding: '6px 14px', gap: '6px' }}
               >
                 <Plus size={13} color="var(--neon-green)" />
+                <CryptoIcon symbol={sym} size={15} />
                 <span>เพิ่ม {sym}</span>
               </button>
             ))}

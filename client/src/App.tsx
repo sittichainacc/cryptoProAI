@@ -44,6 +44,7 @@ import { setGlobalUsdThbRate } from './utils/currency.js';
 import { MarketOverviewPage } from './pages/MarketOverviewPage.js';
 import { CoinScreenerPage } from './pages/CoinScreenerPage.js';
 import { CoinAnalysisPage } from './pages/CoinAnalysisPage.js';
+import { ChartAnalysisPage } from './pages/ChartAnalysisPage.js';
 import { AISignalsPage } from './pages/AISignalsPage.js';
 import { PortfolioPage } from './pages/PortfolioPage.js';
 import { AlertsPage } from './pages/AlertsPage.js';
@@ -51,9 +52,12 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { StrategyPage } from './pages/StrategyPage.js';
 import { NewsPage } from './pages/NewsPage.js';
+import { Top5PremiumPage } from './pages/Top5PremiumPage.js';
 import { Top5Page } from './pages/Top5Page.js';
 import { FocusPage } from './pages/FocusPage.js';
 import { WatchlistPage } from './pages/WatchlistPage.js';
+import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
+import { LoginModal } from './components/LoginModal.js';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -62,7 +66,12 @@ export const App: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<'THB' | 'USDT'>('THB');
-  const [userRole, setUserRole] = useState<'admin' | 'analyst' | 'investor'>('analyst');
+  const [userRole, setUserRole] = useState<'admin' | 'analyst' | 'investor'>(() => {
+    const saved = localStorage.getItem('cryptopro_auth_role');
+    if (saved === 'admin') return 'admin';
+    return 'analyst';
+  });
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Close mobile sidebar when resizing to desktop
@@ -351,6 +360,17 @@ export const App: React.FC = () => {
 
   const isCurrentInWatchlist = watchlist.some((c) => c.symbol === selectedSymbol);
 
+  const handleLoginSuccess = (user: { username: string; name: string; role: 'admin' }) => {
+    setUserRole('admin');
+    localStorage.setItem('cryptopro_auth_role', 'admin');
+  };
+
+  const handleLogout = () => {
+    setUserRole('analyst');
+    localStorage.removeItem('cryptopro_auth_role');
+    localStorage.removeItem('cryptopro_auth_user');
+  };
+
   // Render Page Content based on active navigation
   const renderMainContent = () => {
     switch (activeSidebarTab) {
@@ -364,6 +384,24 @@ export const App: React.FC = () => {
               setActiveSidebarTab('dashboard');
             }}
             allCoins={allCoins}
+          />
+        );
+      case 'top5-premium':
+        if (userRole !== 'admin') {
+          return (
+            <PermissionDeniedGuard
+              featureTitle="แนะนำ Top 5 Premium"
+              description="สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              onOpenLogin={() => setIsLoginModalOpen(true)}
+              onGoBack={() => setActiveSidebarTab('dashboard')}
+            />
+          );
+        }
+        return (
+          <Top5PremiumPage
+            currency={currency}
+            onSelectCoin={handleSelectCoin}
+            onOpenAnalysis={handleOpenAnalysis}
           />
         );
       case 'top5':
@@ -393,12 +431,33 @@ export const App: React.FC = () => {
           />
         );
       case 'analysis':
-      case 'technical':
+        if (userRole !== 'admin') {
+          return (
+            <PermissionDeniedGuard
+              featureTitle="วิเคราะห์เชิงลึก (In-Depth Analysis)"
+              description="โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              onOpenLogin={() => setIsLoginModalOpen(true)}
+              onGoBack={() => setActiveSidebarTab('dashboard')}
+            />
+          );
+        }
         return (
           <CoinAnalysisPage
             selectedSymbol={selectedSymbol}
             onSelectCoin={handleSelectCoin}
             currency={currency}
+            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+            onToggleFocus={handleToggleFocus}
+          />
+        );
+      case 'technical':
+        return (
+          <ChartAnalysisPage
+            selectedSymbol={selectedSymbol}
+            onSelectCoin={handleSelectCoin}
+            currency={currency}
+            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+            onToggleFocus={handleToggleFocus}
           />
         );
       case 'signals':
@@ -412,6 +471,16 @@ export const App: React.FC = () => {
           />
         );
       case 'watchlist':
+        if (userRole !== 'admin') {
+          return (
+            <PermissionDeniedGuard
+              featureTitle="รายการเฝ้าดู (Watchlist Tracking)"
+              description="ระบบติดตามความเคลื่อนไหวเหรียญส่วนตัว สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              onOpenLogin={() => setIsLoginModalOpen(true)}
+              onGoBack={() => setActiveSidebarTab('dashboard')}
+            />
+          );
+        }
         return (
           <WatchlistPage
             watchlist={watchlist}
@@ -428,6 +497,16 @@ export const App: React.FC = () => {
           />
         );
       case 'portfolio':
+        if (userRole !== 'admin') {
+          return (
+            <PermissionDeniedGuard
+              featureTitle="วิเคราะห์พอร์ต & เสี่ยง (Portfolio & Risk)"
+              description="ระบบวิเคราะห์การจัดสรรพอร์ตและการประเมินความเสี่ยง VaR สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              onOpenLogin={() => setIsLoginModalOpen(true)}
+              onGoBack={() => setActiveSidebarTab('dashboard')}
+            />
+          );
+        }
         return <PortfolioPage onSelectCoin={handleSelectCoin} currency={currency} />;
       case 'alerts':
         return <AlertsPage currency={currency} />;
@@ -436,6 +515,16 @@ export const App: React.FC = () => {
       case 'strategy':
         return <StrategyPage onSelectCoin={handleSelectCoin} currency={currency} />;
       case 'settings':
+        if (userRole !== 'admin') {
+          return (
+            <PermissionDeniedGuard
+              featureTitle="ตั้งค่าระบบ (System Settings)"
+              description="การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              onOpenLogin={() => setIsLoginModalOpen(true)}
+              onGoBack={() => setActiveSidebarTab('dashboard')}
+            />
+          );
+        }
         return <SettingsPage currency={currency} setCurrency={setCurrency} />;
       case 'news':
         return (
@@ -622,6 +711,8 @@ export const App: React.FC = () => {
           userRole={userRole}
           setUserRole={setUserRole}
           onMobileMenuToggle={() => setIsMobileSidebarOpen((p) => !p)}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+          onLogout={handleLogout}
         />
 
         <div className="content-body">
@@ -707,6 +798,8 @@ export const App: React.FC = () => {
         coin={analysisModalCoin}
         onClose={() => setAnalysisModalCoin(null)}
         currency={currency}
+        userRole={userRole}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       {/* Focus Right Sidebar Drawer */}
@@ -728,6 +821,21 @@ export const App: React.FC = () => {
           setActiveSidebarTab('focus');
         }}
         currency={currency}
+        buyCandidates={buyNowCandidates}
+        onNavigateToAnalysis={(sym) => {
+          handleSelectCoin(sym);
+          setActiveSidebarTab('analysis');
+        }}
+        onNavigateToTop5Premium={(sym) => {
+          if (sym) handleSelectCoin(sym);
+          setActiveSidebarTab('top5-premium');
+        }}
+        onNavigateToTop5={(sym) => {
+          if (sym) handleSelectCoin(sym);
+          setActiveSidebarTab('top5');
+        }}
+        userRole={userRole}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       {/* Focus Add Modal */}
@@ -756,6 +864,13 @@ export const App: React.FC = () => {
           }}
         />
       )}
+
+      {/* Admin Login Modal with Fixed Credentials & IP Lockout Rate Limiting */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

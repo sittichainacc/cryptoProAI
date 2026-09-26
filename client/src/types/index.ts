@@ -1377,5 +1377,301 @@ export interface FocusResponse {
   timestamp: string;
 }
 
+// ==========================================
+// PHASE 20: TOP 5 PREMIUM QUANT ARCHITECTURE
+// ==========================================
+
+export interface MarketRegimeMatrix6Axis {
+  directionRegime: 'STRONG_BULL' | 'BULL' | 'SIDEWAYS' | 'BEAR' | 'STRONG_BEAR';
+  volatilityRegime: 'LOW_VOL' | 'NORMAL_VOL' | 'HIGH_VOL' | 'EXTREME_VOL';
+  liquidityRegime: 'DEEP' | 'NORMAL' | 'THIN' | 'STRESSED';
+  participationRegime: 'BROAD_RISK_ON' | 'SELECTIVE_RISK_ON' | 'BTC_LED' | 'ALT_LED' | 'RISK_OFF';
+  behavioralRegime: 'FEAR' | 'NEUTRAL' | 'GREED' | 'EUPHORIA' | 'PANIC';
+  transitionState: 'STABLE' | 'EARLY_TRANSITION' | 'HIGH_TRANSITION_RISK' | 'SHIFT_CONFIRMED';
+  hmmProbabilities: {
+    bull: number;
+    sideways: number;
+    bear: number;
+  };
+  confidenceScore: number;
+  regimeLabelTh: string;
+  regimeAdviceTh: string;
+  isExtremeRiskBlocked: boolean;
+}
+
+export interface ExecutionTradableEdgeReport {
+  grossExpectedAlphaBps: number;
+  feeBps: number;
+  spreadBps: number;
+  estimatedSlippageBps: number;
+  marketImpactBps: number;
+  adverseSelectionBps: number;
+  latencyCostBps: number;
+  totalAllInCostBps: number;
+  expectedTradableEdgeBps: number;
+  expectedTradableEdgePct: number;
+  isTradablePositive: boolean;
+  maxExecutableCapacityThb: number;
+}
+
+export interface MtfRsiMatrix {
+  rsi5m: number;
+  rsi15m: number;
+  rsi1h: number;
+  rsi4h: number;
+  rsi1d: number;
+  rsi1w: number;
+  contextualState: 
+    | 'OVERSOLD_BOUNCE_SETUP' 
+    | 'STRONG_TREND_HEALTHY' 
+    | 'MODERATE_EXTENSION_RISK' 
+    | 'PARABOLIC_EXHAUSTION' 
+    | 'BEARISH_DIVERGENCE_WARNING' 
+    | 'NEUTRAL_COMPRESSION';
+  interpretationTh: string;
+}
+
+export interface MultiTimeHorizonSuitability {
+  scalp: { suitability: 'OPTIMAL' | 'FAIR' | 'AVOID'; expectedHoldTime: string; strategy: string };
+  short: { suitability: 'OPTIMAL' | 'FAIR' | 'AVOID'; expectedHoldTime: string; strategy: string };
+  swing: { suitability: 'OPTIMAL' | 'FAIR' | 'AVOID'; expectedHoldTime: string; strategy: string };
+  position: { suitability: 'OPTIMAL' | 'FAIR' | 'AVOID'; expectedHoldTime: string; strategy: string };
+  structural: { suitability: 'OPTIMAL' | 'FAIR' | 'AVOID'; expectedHoldTime: string; strategy: string };
+}
+
+export interface ObjectiveFibonacciLevels {
+  swingLow: number;
+  swingHigh: number;
+  swingDurationCandles: number;
+  confirmationMethod: 'CONFIRMED_PIVOT_ATR';
+  fib236: number;
+  fib382: number;
+  fib500: number;
+  fib618: number;
+  fib786: number;
+  ext1272: number;
+  ext1618: number;
+  ext2000: number;
+}
+
+export interface PremiumTradeSetup {
+  entryMode: 'BREAKOUT' | 'RETEST' | 'PULLBACK' | 'REVERSAL' | 'CATALYST_EVENT';
+  entryZone: {
+    min: number;
+    max: number;
+    preferred: number;
+  };
+  invalidationPrice: number;
+  initialStopPrice: number;
+  target1: number;
+  target2: number;
+  target3: number;
+  riskRewardRatio: number;
+  entryQualityScore: number;
+}
+
+export type PositionLifecycleState = 
+  | 'CANDIDATE' 
+  | 'WATCH' 
+  | 'ENTRY_READY' 
+  | 'ENTERED' 
+  | 'CONFIRMED' 
+  | 'PROFIT' 
+  | 'PROTECT' 
+  | 'TRAIL' 
+  | 'EXIT' 
+  | 'EMERGENCY_EXIT';
+
+export interface DynamicProfitProtectionState {
+  lifecycleState: PositionLifecycleState;
+  currentRMultiple: number;
+  maxFavorableExcursionR: number;
+  maxAdverseExcursionR: number;
+  mfeCaptureRatioPct: number;
+  peakUnrealizedProfitThb: number;
+  profitGivebackThb: number;
+  trailingStopPrice: number;
+  profitProtectionOverrideActive: boolean;
+  thesisHealthScore: number;
+  recommendedAction: string;
+}
+
+export interface ExplainabilityContract {
+  finalSignal: 'BUY_NOW' | 'SCALE_IN' | 'WATCH' | 'ABSTAIN' | 'EXIT';
+  score: number;
+  confidence: number;
+  reasonCodes: string[];
+  positiveContributors: { factor: string; impactBps: string }[];
+  negativeContributors: { factor: string; impactBps: string }[];
+  hardGates: { name: string; passed: boolean; detail: string }[];
+  featureFreshness: Record<string, string>;
+  modelVersion: string;
+  scoreVersion: string;
+  calculatedAt: string;
+}
+
+// ─── Trade Plan & Decision Assistant Layer (Phase 20 Innovation) ───
+export type DecisionState = 
+  | 'ENTRY_READY'          // 🟢 พร้อมเข้า: ราคาอยู่ใน Entry Zone และเงื่อนไขผ่าน
+  | 'WAIT_FOR_PULLBACK'     // 🔵 รอย่อเข้า: แนวโน้มดี แต่ราคาสูงกว่าโซนซื้อ
+  | 'WAIT_FOR_BREAKOUT'     // 🟡 รอ Breakout: ยังไม่ผ่านแนวต้านสำคัญ
+  | 'HOLD'                  // 🟢 ถือต่อ: Thesis ยังแข็งแรง ไม่ต้องขาย
+  | 'HOLD_AND_PROTECT'      // 🟠 ปกป้องกำไร: กำไรมากแล้ว เริ่มยก Trailing Stop
+  | 'TAKE_PARTIAL_PROFIT'   // 🟡 ทยอยทำกำไร: ถึง TP หรือ Reward เริ่มลด
+  | 'EXIT'                  // 🔴 ควรออก: Thesis เสีย / หลุด Invalidation
+  | 'EMERGENCY_EXIT'        // 🚨 ออกทันที: Critical Event / Risk Gate
+  | 'ABSTAIN';              // ⚪ ไม่ควรเข้า: Expected Tradable Edge ไม่พอ
+
+export interface TradeDecisionAssistant {
+  decisionState: DecisionState;
+  decisionLabelTh: string;
+  decisionSubTh: string;
+  currentPriceZoneRelation: 'INSIDE_ENTRY_ZONE' | 'ABOVE_ENTRY_ZONE' | 'BELOW_ENTRY_ZONE' | 'INVALIDATED';
+  zoneDistancePct: number;
+  zoneRecommendationTh: string;
+  
+  entryZone: {
+    min: number;
+    max: number;
+    preferred: number;
+  };
+
+  stops: {
+    softWarningPrice: number;
+    softWarningRationaleTh: string;
+    hardStopPrice: number;
+    hardStopRationaleTh: string;
+    stopDistancePct: number;
+  };
+
+  takeProfits: {
+    tp1Price: number;
+    tp1GainPct: number;
+    tp1ActionTh: string;
+    tp2Price: number;
+    tp2GainPct: number;
+    tp2ActionTh: string;
+    tp3Price: number;
+    tp3GainPct: number;
+    tp3ActionTh: string;
+  };
+
+  riskRewardRatio: number;
+  recommendedHoldingDurationTh: string;
+  confidencePct: number;
+  thesisHealthScore: number;
+  thesisHealthLevel: 'HEALTHY' | 'HOLD' | 'WATCH' | 'REDUCE' | 'EXIT';
+
+  holdPlan: {
+    holdConditions: string[];
+    reduceConditions: string[];
+    exitConditions: string[];
+  };
+
+  executiveSummaryTh: string;
+  planActionTh: string;
+}
+
+export interface Phase20Candidate {
+  rank: number;
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  change7d: number;
+  volume24h: number;
+  sector: string;
+  scores: {
+    coinQuality: number;
+    trend: number;
+    technical: number;
+    momentum: number;
+    breakout: number;
+    reversal: number;
+    relativeStrength: number;
+    orderFlow: number;
+    liquidity: number;
+    execution: number;
+    derivatives: number;
+    onchain: number;
+    fundamental: number;
+    tokenomics: number;
+    positiveCatalyst: number;
+    negativeCatalyst: number;
+    opportunity: number;
+    entry: number;
+    risk: number;
+    extension: number;
+    buyNow: number;
+    exit: number;
+    profitProtection: number;
+    confidence: number;
+  };
+  tradableEdge: ExecutionTradableEdgeReport;
+  mtfRsi: MtfRsiMatrix;
+  horizons: MultiTimeHorizonSuitability;
+  fibonacci: ObjectiveFibonacciLevels;
+  setup: PremiumTradeSetup;
+  decisionAssistant: TradeDecisionAssistant;
+  sizing: {
+    recommendedAllocationPct: number;
+    recommendedPositionSizeThb: number;
+    hrpWeightPct: number;
+    volatilityScalingFactor: number;
+    riskAdjustedScore: number;
+  };
+  lifecycle: DynamicProfitProtectionState;
+  explainability: ExplainabilityContract;
+  audit: {
+    scoreRunId: string;
+    assetId: string;
+    timestamp: string;
+    calculationLatencyMs: number;
+  };
+}
+
+export interface Phase20EvaluationResponse {
+  scoreRunId: string;
+  timestamp: string;
+  configVersion: string;
+  marketRegime: MarketRegimeMatrix6Axis;
+  modelHealth: {
+    championScore: number;
+    shadowChallengers: {
+      randomForestScore: number;
+      xgBoostScore: number;
+      lightGbmScore: number;
+      learningToRankScore: number;
+      deepSequenceScore: number;
+    };
+    featureDriftIndex: number;
+    outOfDistributionStatus: 'NORMAL' | 'ELEVATED' | 'CRITICAL_OOD';
+    ensembleAgreementPct: number;
+  };
+  status: 'SUCCESS' | 'NO_BUY_NOW_OPPORTUNITY' | 'CAPITAL_PRESERVATION_MODE' | 'HIGH_VOLATILITY_LOCK';
+  statusMessageTh: string;
+  candidates: Phase20Candidate[];
+  totalEvaluated: number;
+  eligibleCount: number;
+  rejectedCount: number;
+  rejectedReasonsSummary: Record<string, number>;
+  portfolioRiskBudgetPct: number;
+  allocatedRiskBudgetPct: number;
+}
+
+export interface SlippageSimulationResult {
+  capitalThb: number;
+  estimatedFeeBps: number;
+  spreadBps: number;
+  slippageBps: number;
+  marketImpactBps: number;
+  adverseSelectionBps: number;
+  totalCostBps: number;
+  totalCostThb: number;
+  expectedTradableEdgeBps: number;
+  isTradablePositive: boolean;
+  tier: string;
+}
+
 
 

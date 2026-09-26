@@ -10,6 +10,8 @@ timeout /t 3 /nobreak >nul
 start "CryptoPro AI - Frontend Client" cmd /k "cd /d %~dp0client && npm run dev -- --port 3000"
 timeout /t 2 /nobreak >nul
 
+start http://localhost:3000/
+
 echo.
 echo ===================================================
 echo   System launched successfully!

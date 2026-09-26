@@ -3,6 +3,7 @@ import { TickerData, BuyNowCandidateItem } from '../types/index.js';
 import { PriceCell } from './PriceCell.js';
 import { Star, TrendingUp, TrendingDown, BarChart2, Zap } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 
 type TabId = 'watchlist' | 'buynow' | 'volume' | 'gainers' | 'losers';
 
@@ -259,23 +260,8 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
 
                   {/* Symbol + sub info */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', paddingLeft: '2px' }}>
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: '#10B98122',
-                        color: '#34D399',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '9.5px',
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {c.symbol.slice(0, 2)}
-                    </div>
+                    {/* Coin Icon */}
+                    <CryptoIcon symbol={c.symbol} size={20} />
                     <div style={{ overflow: 'hidden', minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: '12px', color: '#FFF', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span>{c.symbol}</span>
@@ -400,23 +386,8 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
 
                 {/* Symbol + sub info */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', paddingLeft: '2px' }}>
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      backgroundColor: getCoinAvatarColor(coin.symbol),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '8px',
-                      fontWeight: 800,
-                      color: '#FFF',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {coin.symbol.slice(0, 2)}
-                  </div>
+                  {/* Coin Icon */}
+                  <CryptoIcon symbol={coin.symbol} size={20} />
                   <div style={{ overflow: 'hidden' }}>
                     <div
                       style={{

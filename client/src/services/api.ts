@@ -20,7 +20,10 @@ import {
   FocusItem,
   WhaleRadarSummary,
   QuantV3OpportunityItem,
-  QuantV3ApiResponse
+  QuantV3ApiResponse,
+  Phase20EvaluationResponse,
+  Phase20Candidate,
+  SlippageSimulationResult
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -261,6 +264,43 @@ export const api = {
     return json.data;
   },
 
+  // Phase 20 Production Architecture: Top 5 Premium
+  async getTop5Premium(): Promise<Phase20EvaluationResponse> {
+    const res = await fetch(`${API_BASE}/market/top5-premium`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async recalculateTop5Premium(config?: any): Promise<Phase20EvaluationResponse> {
+    const res = await fetch(`${API_BASE}/market/top5-premium/recalculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  async getTop5PremiumFocus(symbol: string): Promise<{
+    candidate: Phase20Candidate | null;
+    hardGates: { passed: boolean; reasonCodes: string[] };
+    marketRegime: any;
+  }> {
+    const res = await fetch(`${API_BASE}/market/top5-premium/focus/${encodeURIComponent(symbol)}`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async simulateSlippage(symbol: string, capitalThb: number): Promise<SlippageSimulationResult> {
+    const res = await fetch(`${API_BASE}/market/top5-premium/slippage-sim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, capitalThb }),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
   async getTop5(): Promise<Top5Response> {
     const res = await fetch(`${API_BASE}/market/top5`);
     const json = await res.json();
@@ -410,6 +450,48 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exchange }),
     });
+    return await res.json();
+  },
+
+  // Auth & Rate Limiting
+  async login(username: string, password: string): Promise<{
+    success: boolean;
+    isLocked: boolean;
+    attempts: number;
+    maxAttempts: number;
+    ip?: string;
+    message: string;
+    user?: {
+      username: string;
+      name: string;
+      role: 'admin';
+      loggedInAt: string;
+    };
+  }> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    return await res.json();
+  },
+
+  async getAuthStatus(): Promise<{
+    success: boolean;
+    data: {
+      ip: string;
+      attempts: number;
+      maxAttempts: number;
+      isLocked: boolean;
+      lockedAt?: number;
+    };
+  }> {
+    const res = await fetch(`${API_BASE}/auth/status`);
+    return await res.json();
+  },
+
+  async resetAuthLock(): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/reset-lock`, { method: 'POST' });
     return await res.json();
   },
 };

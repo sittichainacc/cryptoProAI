@@ -54,6 +54,7 @@ import { api } from '../services/api.js';
 import { realtimeService } from '../services/realtime.js';
 import { FocusAddModal } from '../components/FocusAddModal.js';
 import { FocusCompareModal } from '../components/FocusCompareModal.js';
+import { CryptoIcon } from '../components/CryptoIcon.js';
 
 interface FocusPageProps {
   currency: 'THB' | 'USDT';
@@ -771,6 +772,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                       >
                         #{idx + 1}
                       </span>
+                      <CryptoIcon symbol={candidate.symbol} size={22} />
                       <strong style={{ fontSize: '16px', color: '#FFFFFF', letterSpacing: '-0.2px' }}>
                         {candidate.symbol}
                       </strong>
@@ -1253,6 +1255,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                     >
                       #{index + 1}
                     </span>
+                    <CryptoIcon symbol={coin.symbol} size={22} />
                     <strong style={{ fontSize: '15px', color: '#FFFFFF' }}>{coin.symbol}</strong>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/THB</span>
 
@@ -1396,6 +1399,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <CryptoIcon symbol={activeCoin.symbol} size={24} />
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF' }}>
                       DECISION COCKPIT: {activeCoin.symbol} / THB
                     </div>

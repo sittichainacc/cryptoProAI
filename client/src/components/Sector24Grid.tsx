@@ -1,6 +1,7 @@
 import React from 'react';
 import { SectorTopItem, SignalType } from '../types/index.js';
 import { ChevronRight, Zap, Layers, DollarSign, Cpu, Globe, Smile, Gamepad2, Rocket } from 'lucide-react';
+import { CryptoIcon } from './CryptoIcon.js';
 
 interface Sector24GridProps {
   items: SectorTopItem[];
@@ -139,6 +140,7 @@ export const Sector24Grid: React.FC<Sector24GridProps> = ({ items, onSelectCoin,
                     >
                       {coin.rank}
                     </span>
+                    <CryptoIcon symbol={coin.symbol} size={15} />
                     <span style={{ fontWeight: 800, fontSize: '12px' }}>{coin.symbol}</span>
                   </div>
 

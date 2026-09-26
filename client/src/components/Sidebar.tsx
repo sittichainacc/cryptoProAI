@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   Activity,
   Award,
+  Crown,
   Target
 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
     { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE' },
+    { id: 'top5-premium', label: 'แนะนำ top 5 Premium', icon: Crown, badge: 'PRO' },
     { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI' },
     { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
@@ -202,15 +204,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         fontWeight: 800,
                         padding: '1px 6px',
                         borderRadius: '6px',
-                        background: item.id === 'focus' ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
-                        color: item.id === 'focus' ? '#34D399' : '#FBBF24',
-                        border: item.id === 'focus' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                        background: item.id === 'focus' 
+                          ? 'rgba(16, 185, 129, 0.2)' 
+                          : item.id === 'top5-premium'
+                          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(168, 85, 247, 0.3))'
+                          : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
+                        color: item.id === 'focus' 
+                          ? '#34D399' 
+                          : item.id === 'top5-premium'
+                          ? '#FDE047'
+                          : '#FBBF24',
+                        border: item.id === 'focus' 
+                          ? '1px solid rgba(16, 185, 129, 0.4)' 
+                          : item.id === 'top5-premium'
+                          ? '1px solid rgba(245, 158, 11, 0.6)'
+                          : '1px solid rgba(245, 158, 11, 0.4)',
                         letterSpacing: '0.4px',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px',
+                        boxShadow: item.id === 'top5-premium' ? '0 0 10px rgba(245, 158, 11, 0.35)' : 'none'
                       }}
                     >
+                      {item.id === 'top5-premium' && <Sparkles size={9} color="#FDE047" />}
                       {item.id === 'focus' && (
                         <span
                           className="live-green-pulse"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BuyNowCandidateItem } from '../types/index.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 import { Zap, ShieldAlert, ArrowUpRight, BarChart2, Target, CheckCircle2, ChevronRight, TrendingUp } from 'lucide-react';
 
 interface Top5BuyNowWidgetProps {
@@ -192,6 +193,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   >
                     #{item.rank}
                   </div>
+                  <CryptoIcon symbol={item.symbol} size={28} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{item.symbol}</span>

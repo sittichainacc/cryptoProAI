@@ -5,6 +5,7 @@ import { TrendingUp, ArrowUpRight, ArrowDownRight, Compass, Shield, Activity } f
 import { WhaleRadarWidget } from '../components/WhaleRadarWidget.js';
 import { realtimeService } from '../services/realtime.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from '../components/CryptoIcon.js';
 
 interface MarketOverviewPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -311,8 +312,11 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
                   onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.02)')}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontWeight: 800, fontSize: '14px', color: '#FFF' }}>{item.symbol}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CryptoIcon symbol={item.symbol} size={18} />
+                      <span style={{ fontWeight: 800, fontSize: '14px', color: '#FFF' }}>{item.symbol}</span>
+                    </div>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
                       {prefix}{(item.price * multiplier).toLocaleString(undefined, { maximumFractionDigits: item.price < 1 ? 4 : 2 })}
                     </span>

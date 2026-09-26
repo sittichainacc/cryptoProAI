@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { TickerData } from '../types/index.js';
 import { Star, ArrowUpDown, ArrowUpRight, ArrowDownRight, Download, Brain, TrendingUp, LayoutList, Search, X, Target } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
+import { CryptoIcon } from './CryptoIcon.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
 
 interface CoinRankingTableProps {
@@ -538,6 +539,7 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CryptoIcon symbol={coin.symbol} size={22} />
                       <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{coin.symbol}</span>
                       <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{coin.name}</span>
                     </div>

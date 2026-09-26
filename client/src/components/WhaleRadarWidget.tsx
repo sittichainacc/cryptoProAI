@@ -3,6 +3,7 @@ import { api } from '../services/api.js';
 import { WhaleRadarSummary, WhaleTransaction } from '../types/index.js';
 import { Radar, ArrowUpRight, ArrowDownRight, Shield, RefreshCw, ExternalLink, Filter } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 
 interface WhaleRadarWidgetProps {
   currency: 'THB' | 'USDT';
@@ -219,22 +220,8 @@ export const WhaleRadarWidget: React.FC<WhaleRadarWidgetProps> = ({
                   <td style={{ color: 'var(--text-muted)', fontSize: '11.5px' }}>{tx.timeAgo}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          color: 'var(--neon-cyan)',
-                        }}
-                      >
-                        {tx.symbol.slice(0, 3)}
-                      </div>
+                      {/* Coin Icon */}
+                      <CryptoIcon symbol={tx.symbol} size={24} />
                       <span style={{ fontWeight: 800, color: '#FFF' }}>{tx.symbol}</span>
                     </div>
                   </td>

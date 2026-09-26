@@ -3,6 +3,7 @@ import { TickerData } from '../types/index.js';
 import { ChevronRight, ArrowUpRight } from 'lucide-react';
 import { PriceCell } from './PriceCell.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 
 interface AISignalsCardProps {
   signals: TickerData[];
@@ -92,22 +93,8 @@ export const AISignalsCard: React.FC<AISignalsCardProps> = ({
               <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', width: '12px' }}>
                 {index + 1}
               </span>
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: getAvatarColor(item.symbol),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: 800,
-                  color: '#FFFFFF',
-                }}
-              >
-                {item.symbol.slice(0, 2)}
-              </div>
+              {/* Coin Icon */}
+              <CryptoIcon symbol={item.symbol} size={24} />
               <div>
                 <div style={{ fontWeight: 800, fontSize: '13px' }}>{item.symbol}</div>
                 <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>

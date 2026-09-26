@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { TickerData } from '../types/index.js';
 import { Search, ChevronDown, Check, X, TrendingUp, TrendingDown, Sparkles, Filter } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 
 interface SearchableCoinSelectProps {
   coins: TickerData[];
@@ -10,6 +11,7 @@ interface SearchableCoinSelectProps {
   currency: 'THB' | 'USDT';
   placeholder?: string;
   width?: string;
+  focusSymbols?: string[];
 }
 
 export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
@@ -19,6 +21,7 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
   currency,
   placeholder = 'ค้นหาและเลือกเหรียญ...',
   width = '300px',
+  focusSymbols,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,23 +190,7 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
           <Search size={14} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
           {/* Symbol Avatar */}
-          <div
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0284C7, #3B82F6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: '11px',
-              color: '#FFF',
-              flexShrink: 0,
-            }}
-          >
-            {currentCoin.symbol.slice(0, 2)}
-          </div>
+          <CryptoIcon symbol={currentCoin.symbol} size={24} />
           <div style={{ textAlign: 'left', lineHeight: 1.2, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFF' }}>{currentCoin.symbol}</span>
@@ -452,21 +439,29 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div
-                        style={{
-                          width: '26px',
-                          height: '26px',
-                          borderRadius: '50%',
-                          background: isSelected ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
-                          color: '#FFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                        }}
-                      >
-                        {isSelected ? <Check size={14} /> : coin.symbol.slice(0, 2)}
+                      {/* Coin Icon with Selected Check badge */}
+                      <div style={{ position: 'relative', width: '26px', height: '26px', flexShrink: 0 }}>
+                        <CryptoIcon symbol={coin.symbol} size={26} />
+                        {isSelected && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '-2px',
+                              right: '-2px',
+                              width: '13px',
+                              height: '13px',
+                              borderRadius: '50%',
+                              backgroundColor: '#10B981',
+                              color: '#FFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 0 4px rgba(0,0,0,0.6)',
+                            }}
+                          >
+                            <Check size={9} strokeWidth={3} />
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -483,6 +478,21 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                           >
                             {coin.sector || 'crypto'}
                           </span>
+                          {focusSymbols && focusSymbols.includes(coin.symbol.toUpperCase()) && (
+                            <span
+                              style={{
+                                fontSize: '9.5px',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid rgba(245, 158, 11, 0.35)',
+                                color: '#F59E0B',
+                                fontWeight: 800,
+                              }}
+                            >
+                              ★ FOCUS
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{coin.name}</div>
                       </div>

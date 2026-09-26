@@ -4,6 +4,7 @@ import { realtimeService } from '../services/realtime.js';
 import { PortfolioPosition, PortfolioSummary, PositionSizingResult } from '../types/index.js';
 import { Calculator, PieChart, ShieldAlert, ArrowUpRight, ArrowDownRight, CheckCircle2, AlertTriangle, RefreshCw, Layers, Activity, TrendingUp, BarChart3, Compass, Info } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from '../components/CryptoIcon.js';
 
 interface PortfolioPageProps {
   onSelectCoin: (symbol: string) => void;
@@ -304,22 +305,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onSelectCoin, curr
                   <tr key={pos.symbol} onClick={() => onSelectCoin(pos.symbol)} style={{ cursor: 'pointer' }}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div
-                          style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            background: 'rgba(255, 255, 255, 0.08)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 800,
-                            fontSize: '11px',
-                            color: 'var(--neon-cyan)',
-                          }}
-                        >
-                          {pos.symbol.substring(0, 1)}
-                        </div>
+                        {/* Coin Icon */}
+                        <CryptoIcon symbol={pos.symbol} size={28} />
                         <div>
                           <div style={{ fontWeight: 800, color: '#FFFFFF' }}>{pos.symbol}</div>
                           <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{pos.qty} {pos.symbol}</div>

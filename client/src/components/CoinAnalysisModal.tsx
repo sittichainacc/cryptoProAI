@@ -1,17 +1,27 @@
 import React from 'react';
 import { TickerData } from '../types/index.js';
-import { X, Sparkles, AlertTriangle, CheckCircle, TrendingUp, Shield, Target } from 'lucide-react';
+import { X, Sparkles, AlertTriangle, CheckCircle, TrendingUp, Shield, Target, ShieldAlert, LogIn } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
+import { CryptoIcon } from './CryptoIcon.js';
 
 interface CoinAnalysisModalProps {
   coin: TickerData | null;
   onClose: () => void;
   currency: 'THB' | 'USDT';
+  userRole?: 'admin' | 'analyst' | 'investor';
+  onOpenLogin?: () => void;
 }
 
-export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({ coin, onClose, currency }) => {
+export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({ 
+  coin, 
+  onClose, 
+  currency,
+  userRole = 'analyst',
+  onOpenLogin,
+}) => {
   if (!coin) return null;
 
+  const isAdmin = userRole === 'admin';
   const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
 
@@ -59,22 +69,8 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({ coin, onCl
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: '18px',
-                color: '#FFF',
-              }}
-            >
-              {coin.symbol.slice(0, 2)}
-            </div>
+            {/* Official Coin Icon */}
+            <CryptoIcon symbol={coin.symbol} size={42} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '20px', fontWeight: 800 }}>{coin.symbol}</span>
@@ -106,124 +102,208 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({ coin, onCl
           </button>
         </div>
 
-        {/* Score & Metrics Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '10px',
-            marginBottom: '20px',
-          }}
-        >
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ราคาปัจจุบัน</div>
-            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '4px' }}>
-              {prefix}{displayPrice}
-            </div>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: coin.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
-              }}
-            >
-              {coin.change24h > 0 ? `+${coin.change24h}%` : `${coin.change24h}%`}
-            </div>
-          </div>
-
-          <div style={{ backgroundColor: 'rgba(6, 182, 212, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--neon-cyan)' }}>AI Score</div>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--neon-cyan)', marginTop: '4px' }}>
-              {coin.aiScore} <span style={{ fontSize: '12px', fontWeight: 600 }}>/100</span>
-            </div>
-          </div>
-
-          <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--neon-blue-light)' }}>Technical Score</div>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--neon-blue-light)', marginTop: '4px' }}>
-              {coin.technicalScore}{' '}
-              <span style={{ fontSize: '12px', fontWeight: 600 }}>({coin.scoreGrade})</span>
-            </div>
-          </div>
-
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ความเสี่ยง (Risk)</div>
-            <div
-              style={{
-                fontSize: '16px',
-                fontWeight: 800,
-                marginTop: '4px',
-                color: coin.riskLevel === 'Low' ? '#10B981' : coin.riskLevel === 'Medium' ? '#F59E0B' : '#EF4444',
-              }}
-            >
-              {coin.riskLevel}
-            </div>
-          </div>
-        </div>
-
-        {/* AI Thai Rationale Box (Section 14 & 47) */}
-        <div
-          style={{
-            backgroundColor: 'rgba(16, 24, 43, 0.8)',
-            border: '1px solid rgba(59, 130, 246, 0.25)',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '18px',
-          }}
-        >
+        {/* If non-admin: Display "ท่านไม่มีสิทธิ์ดูส่วนนี้" */}
+        {!isAdmin ? (
           <div
             style={{
-              fontSize: '13px',
-              fontWeight: 700,
-              color: 'var(--neon-cyan)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginBottom: '8px',
+              padding: '28px 16px',
+              textAlign: 'center',
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              border: '1.5px solid rgba(239, 68, 68, 0.35)',
+              borderRadius: '14px',
+              margin: '10px 0',
             }}
           >
-            <Sparkles size={16} />
-            บทวิเคราะห์และเหตุผลประกอบจาก AI (Human-Readable)
-          </div>
-          <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#E2E8F0', marginBottom: '10px' }}>
-            {coin.signalReasonTh}
-          </p>
-        </div>
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '16px',
+                margin: '0 auto 14px auto',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(153, 27, 27, 0.4))',
+                border: '1px solid rgba(239, 68, 68, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)',
+              }}
+            >
+              <ShieldAlert size={32} color="#EF4444" />
+            </div>
 
-        {/* Key Trade Levels (S/R, Entry, Invalidation) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '18px' }}>
-          <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-            <div style={{ fontSize: '11px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <CheckCircle size={12} /> แนวรับสำคัญ (Support)
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
-              {prefix}{support}
+            <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF', margin: '0 0 8px 0' }}>
+              ท่านไม่มีสิทธิ์ดูส่วนนี้
+            </h3>
+
+            <p style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: 1.5, maxWidth: '440px', margin: '0 auto 20px auto' }}>
+              การวิเคราะห์เชิงลึกเหรียญ <strong style={{ color: 'var(--neon-cyan)' }}>{coin.symbol}</strong> (โมเดล AI Score, Technical Score, Trade Levels, AI Thai Rationale) สงวนสิทธิ์เฉพาะ <strong style={{ color: '#F59E0B' }}>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {onOpenLogin && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenLogin();
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #F59E0B, #8B5CF6)',
+                    border: 'none',
+                    color: '#FFF',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    boxShadow: '0 0 16px rgba(245, 158, 11, 0.4)',
+                  }}
+                >
+                  <LogIn size={15} />
+                  <span>เข้าสู่ระบบในฐานะ Admin</span>
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#CBD5E1',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                ปิดหน้าต่าง
+              </button>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Score & Metrics Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '10px',
+                marginBottom: '20px',
+              }}
+            >
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ราคาปัจจุบัน</div>
+                <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '4px' }}>
+                  {prefix}{displayPrice}
+                </div>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: coin.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                  }}
+                >
+                  {coin.change24h > 0 ? `+${coin.change24h}%` : `${coin.change24h}%`}
+                </div>
+              </div>
 
-          <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(6, 182, 212, 0.06)', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Target size={12} /> แนวต้านเป้าหมาย (Target)
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
-              {prefix}{resistance}
-            </div>
-          </div>
+              <div style={{ backgroundColor: 'rgba(6, 182, 212, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--neon-cyan)' }}>AI Score</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--neon-cyan)', marginTop: '4px' }}>
+                  {coin.aiScore} <span style={{ fontSize: '12px', fontWeight: 600 }}>/100</span>
+                </div>
+              </div>
 
-          <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-            <div style={{ fontSize: '11px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <AlertTriangle size={12} /> จุดตัดขาดทุน (Invalidation)
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
-              {prefix}{invalidation}
-            </div>
-          </div>
-        </div>
+              <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--neon-blue-light)' }}>Technical Score</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--neon-blue-light)', marginTop: '4px' }}>
+                  {coin.technicalScore}{' '}
+                  <span style={{ fontSize: '12px', fontWeight: 600 }}>({coin.scoreGrade})</span>
+                </div>
+              </div>
 
-        {/* Decision Support Disclaimer */}
-        <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', textAlign: 'center', fontStyle: 'italic' }}>
-          * ระบบนี้เป็น Decision Support System ช่วยประมวลผลข้อมูลทางเทคนิค ไม่ใช่ระบบการันตีกำไร ผู้ลงทุนควรบริหารความเสี่ยงอย่างเคร่งครัด
-        </div>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ความเสี่ยง (Risk)</div>
+                <div
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 800,
+                    marginTop: '4px',
+                    color: coin.riskLevel === 'Low' ? '#10B981' : coin.riskLevel === 'Medium' ? '#F59E0B' : '#EF4444',
+                  }}
+                >
+                  {coin.riskLevel}
+                </div>
+              </div>
+            </div>
+
+            {/* AI Thai Rationale Box (Section 14 & 47) */}
+            <div
+              style={{
+                backgroundColor: 'rgba(16, 24, 43, 0.8)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '18px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: 'var(--neon-cyan)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '8px',
+                }}
+              >
+                <Sparkles size={16} />
+                บทวิเคราะห์และเหตุผลประกอบจาก AI (Human-Readable)
+              </div>
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#E2E8F0', marginBottom: '10px' }}>
+                {coin.signalReasonTh}
+              </p>
+            </div>
+
+            {/* Key Trade Levels (S/R, Entry, Invalidation) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '18px' }}>
+              <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div style={{ fontSize: '11px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <CheckCircle size={12} /> แนวรับสำคัญ (Support)
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
+                  {prefix}{support}
+                </div>
+              </div>
+
+              <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(6, 182, 212, 0.06)', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Target size={12} /> แนวต้านเป้าหมาย (Target)
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
+                  {prefix}{resistance}
+                </div>
+              </div>
+
+              <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                <div style={{ fontSize: '11px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <AlertTriangle size={12} /> จุดตัดขาดทุน (Invalidation)
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px' }}>
+                  {prefix}{invalidation}
+                </div>
+              </div>
+            </div>
+
+            {/* Decision Support Disclaimer */}
+            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', textAlign: 'center', fontStyle: 'italic' }}>
+              * ระบบนี้เป็น Decision Support System ช่วยประมวลผลข้อมูลทางเทคนิค ไม่ใช่ระบบการันตีกำไร ผู้ลงทุนควรบริหารความเสี่ยงอย่างเคร่งครัด
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

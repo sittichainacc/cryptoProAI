@@ -38,6 +38,8 @@ interface CryptoAnalystProfileProps {
   wsStatus: 'connected' | 'connecting' | 'disconnected';
   onOpenShortcuts?: () => void;
   onNavigateTab?: (tab: string) => void;
+  onOpenLogin?: () => void;
+  onLogout?: () => void;
 }
 
 export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
@@ -53,6 +55,8 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
   wsStatus,
   onOpenShortcuts,
   onNavigateTab,
+  onOpenLogin,
+  onLogout,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -564,6 +568,13 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                     <div
                       key={r.id}
                       onClick={() => {
+                        if (r.id === 'admin' && userRole !== 'admin') {
+                          if (onOpenLogin) {
+                            setIsOpen(false);
+                            onOpenLogin();
+                          }
+                          return;
+                        }
                         if (setUserRole) setUserRole(r.id as any);
                       }}
                       style={{
@@ -836,6 +847,45 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                 </button>
               )}
             </div>
+
+            {/* ─── Admin Logout Option ─── */}
+            {userRole === 'admin' && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                <button
+                  onClick={() => {
+                    if (onLogout) onLogout();
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    color: '#F87171',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                    e.currentTarget.style.borderColor = '#EF4444';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>ออกจากระบบ Admin</span>
+                </button>
+              </div>
+            )}
 
             {/* ─── Footer Telemetry ─── */}
             <div
