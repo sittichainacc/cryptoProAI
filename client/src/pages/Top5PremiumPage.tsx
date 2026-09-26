@@ -106,12 +106,13 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [activeTab, setActiveTab] = useState<'candidates' | 'microstructure' | 'regimes' | 'portfolio' | 'research'>('candidates');
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
-  const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [selectedSimOrderSize, setSelectedSimOrderSize] = useState<number>(50000); // 50,000 THB
   const [selectedResearchPhase, setSelectedResearchPhase] = useState<ResearchPhaseItem | null>(null);
 
-  const multiplier = getCurrencyMultiplier(currency);
-  const prefix = currency === 'THB' ? '฿' : '$';
+  // Top 5 Premium is strictly evaluated & displayed in Thai Baht (THB)
+  const multiplier = 1;
+  const prefix = '฿';
 
   const loadQuantData = async (force: boolean = false) => {
     if (force) setIsRecalculating(true);
@@ -601,7 +602,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
         decisionState: (idx === 0 ? 'ENTRY_READY' : idx === 1 ? 'WAIT_FOR_PULLBACK' : 'ENTRY_READY') as DecisionState,
         decisionLabelTh: idx === 1 ? '🔵 รอย่อเข้า' : '🟢 พร้อมเข้า',
         decisionSubTh: idx === 1 ? 'แนวโน้มดี แต่ราคาสูงกว่าโซนซื้อ ห้ามไล่ราคา รอย่อกลับ' : 'ราคาอยู่ใน Entry Zone และเงื่อนไขสถาบันผ่านครบ',
-        currentPriceZoneRelation: (idx === 1 ? 'ABOVE_ENTRY_ZONE' : 'INSIDE_ENTRY_ZONE') as const,
+        currentPriceZoneRelation: idx === 1 ? 'ABOVE_ENTRY_ZONE' : 'INSIDE_ENTRY_ZONE',
         zoneDistancePct: idx === 1 ? 4.7 : 0,
         zoneRecommendationTh: idx === 1 
           ? `สูงกว่า Entry Zone +4.7% → ไม่แนะนำไล่ราคา → รอย่อกลับ ฿${Math.round(candidate.price * 0.95).toLocaleString()}–฿${Math.round(candidate.price * 0.98).toLocaleString()}`
@@ -633,7 +634,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
         recommendedHoldingDurationTh: '3–10 วัน (Swing Trade)',
         confidencePct: Math.round(candidate.confidenceScore || 84),
         thesisHealthScore: 86 - (idx * 5),
-        thesisHealthLevel: (idx === 0 ? 'HEALTHY' : idx === 1 ? 'HOLD' : 'HEALTHY') as const,
+        thesisHealthLevel: idx === 0 ? 'HEALTHY' : idx === 1 ? 'HOLD' : 'HEALTHY',
         holdPlan: {
           holdConditions: [
             '4H Trend และ 1D Trend ยังคงรักษาโครงสร้างขาขึ้นต่อเนื่อง',
@@ -690,6 +691,45 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
       };
     });
   }, [data?.top5, premiumData]);
+
+  // Robust THB currency formatter for crypto prices & financial amounts
+  const formatThb = (val: number | undefined | null, opts?: { decimals?: number }): string => {
+    if (val === undefined || val === null || isNaN(val)) return '0.00';
+    if (val === 0) return '0.00';
+    const absVal = Math.abs(val);
+    if (opts?.decimals !== undefined) {
+      return val.toLocaleString('th-TH', { minimumFractionDigits: opts.decimals, maximumFractionDigits: opts.decimals });
+    }
+    if (absVal < 0.0001) {
+      return val.toLocaleString('th-TH', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+    }
+    if (absVal < 1) {
+      return val.toLocaleString('th-TH', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    }
+    if (absVal < 10) {
+      return val.toLocaleString('th-TH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+    return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const toggleCardExpand = (symbol: string) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [symbol]: !prev[symbol]
+    }));
+  };
+
+  const expandAllCards = () => {
+    const nextState: Record<string, boolean> = {};
+    premiumCandidates.forEach(c => {
+      nextState[c.symbol] = true;
+    });
+    setExpandedCards(nextState);
+  };
+
+  const collapseAllCards = () => {
+    setExpandedCards({});
+  };
 
   const getRankBadgeStyle = (rank: number) => {
     switch (rank) {
@@ -1198,9 +1238,110 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '6px' }}>ระบบควบคุมความเสี่ยง (Abstention Model) ปิดรับคำสั่งซื้อชั่วคราว</div>
             </div>
           ) : (
-            premiumCandidates.map((coin) => {
-              const rankTheme = getRankBadgeStyle(coin.rank);
-              const isExpanded = expandedSymbol === coin.symbol;
+            <>
+              {/* Master Toolbar: Summary & Expand/Collapse All Buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.06))',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  marginBottom: '6px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '7px',
+                      background: 'linear-gradient(135deg, #F59E0B, #8B5CF6)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFFFFF'
+                    }}
+                  >
+                    <Crown size={15} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>5 เหรียญชั้นยอดระดับสถาบัน (Top 5 Premium)</span>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          background: 'rgba(16, 185, 129, 0.2)',
+                          color: '#34D399',
+                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          fontWeight: 800
+                        }}
+                      >
+                        สกุลเงิน THB (฿) ทั้งหมด
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      แสดงสรุปแผนเทรดอย่างกระชับสบายตา &middot; รายละเอียดเชิงลึกถูกย่อไว้ คลิกเพื่อเปิดดูเมื่อต้องการ
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={expandAllCards}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      color: '#93C5FD',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="เปิดดูรายละเอียดเชิงลึกและแผนเทรด 20 ขั้นตอนของทั้ง 5 เหรียญ"
+                  >
+                    <Eye size={13} />
+                    ขยายดูรายละเอียดทั้งหมด
+                  </button>
+
+                  <button
+                    onClick={collapseAllCards}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="ย่อรายละเอียดเชิงลึกทั้งหมดเพื่อดูสบายตา"
+                  >
+                    <ChevronUp size={13} />
+                    ย่อรายละเอียดทั้งหมด
+                  </button>
+                </div>
+              </div>
+
+              {premiumCandidates.map((coin) => {
+                const rankTheme = getRankBadgeStyle(coin.rank);
+                const isExpanded = !!expandedCards[coin.symbol];
               const assistant: TradeDecisionAssistant = coin.decisionAssistant || (coin.rawPhase20?.decisionAssistant as TradeDecisionAssistant);
               const planMode = activePlanModes[coin.symbol] || 'ENTRY';
               const isHoldPlanOpen = !!expandedHoldPlan[coin.symbol];
@@ -1278,7 +1419,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '18px', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
-                          <PriceCell price={coin.price * multiplier} prefix={prefix} />
+                          <PriceCell price={coin.price} prefix="฿" />
                         </div>
                         <div 
                           style={{ 
@@ -1319,7 +1460,179 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     </div>
                   </div>
 
-                  {/* ─── TIER 1: TRADE PLAN / DECISION ASSISTANT BOX ─── */}
+                  {/* ─── QUICK TRADE SUMMARY STRIP (ALWAYS VISIBLE & COMPACT) ─── */}
+                  <div
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px'
+                    }}
+                  >
+                    {/* Left: Quick Decision State & Key Price Targets in THB */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      {/* Decision State Badge */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: decStyle.bg,
+                          border: `1px solid ${decStyle.border}`,
+                          borderRadius: '8px',
+                          padding: '4px 10px'
+                        }}
+                      >
+                        <span style={{ fontSize: '13px', fontWeight: 900, color: decStyle.color }}>
+                          {decStyle.label}
+                        </span>
+                        <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 700 }}>
+                          ({assistant?.decisionState || 'ENTRY_READY'})
+                        </span>
+                      </div>
+
+                      {/* Entry Zone in THB */}
+                      {assistant && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>โซนเข้า:</span>
+                          <span style={{ fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                            ฿{formatThb(assistant.entryZone.min)} – ฿{formatThb(assistant.entryZone.max)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Preferred Entry in THB */}
+                      {assistant && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>จุดเข้าเหมาะสม:</span>
+                          <span style={{ fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
+                            ฿{formatThb(assistant.entryZone.preferred)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* TP1 in THB */}
+                      {assistant && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>เป้าหมาย TP1:</span>
+                          <span style={{ fontWeight: 800, color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>
+                            ฿{formatThb(assistant.takeProfits.tp1Price)} (+{assistant.takeProfits.tp1GainPct}%)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Hard Stop in THB */}
+                      {assistant && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Stop Loss:</span>
+                          <span style={{ fontWeight: 800, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
+                            ฿{formatThb(assistant.stops.hardStopPrice)} (-{assistant.stops.stopDistancePct}%)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* R:R */}
+                      {assistant && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>R:R:</span>
+                          <span style={{ fontWeight: 800, color: '#A78BFA', fontFamily: 'var(--font-mono)' }}>
+                            1 : {assistant.riskRewardRatio}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Quick Action Buttons & Main Collapsible Toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => setDetailedPlanCandidate(coin.rawPhase20 || null)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          background: 'rgba(16, 185, 129, 0.12)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          color: '#6EE7B7',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title="เปิดดูบันไดราคาแบบละเอียด"
+                      >
+                        <Target size={13} />
+                        บันไดราคา
+                      </button>
+
+                      {onOpenAnalysis && (
+                        <button
+                          onClick={() => onOpenAnalysis(coin.symbol)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            background: 'rgba(59, 130, 246, 0.12)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            color: '#93C5FD',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          title="วิเคราะห์เชิงลึก AI"
+                        >
+                          <Sparkles size={13} />
+                          วิเคราะห์ AI
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => toggleCardExpand(coin.symbol)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          background: isExpanded ? 'rgba(239, 68, 68, 0.12)' : 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
+                          border: isExpanded ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(6, 182, 212, 0.5)',
+                          color: isExpanded ? '#FCA5A5' : '#67E8F9',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          boxShadow: isExpanded ? 'none' : '0 0 12px rgba(6, 182, 212, 0.2)'
+                        }}
+                      >
+                        {isExpanded ? (
+                          <>
+                            <span>ย่อรายละเอียด</span>
+                            <ChevronUp size={14} />
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={13} />
+                            <span>ดูรายละเอียด &amp; แผนเทรดสถาบัน 20 ขั้นตอน</span>
+                            <ChevronDown size={14} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── COLLAPSIBLE DETAILS (HIDDEN BY DEFAULT, SHOWN ON EXPAND) ─── */}
+                  {isExpanded && (
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {/* ─── TIER 1: TRADE PLAN / DECISION ASSISTANT BOX ─── */}
                   {assistant && (
                     <div
                       style={{
@@ -1485,14 +1798,14 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
                                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Entry Zone (โซนเข้า):</span>
                                 <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                  ฿{assistant.entryZone.min.toLocaleString()} – ฿{assistant.entryZone.max.toLocaleString()}
+                                  ฿{formatThb(assistant.entryZone.min)} – ฿{formatThb(assistant.entryZone.max)}
                                 </span>
                               </div>
 
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)' }}>
                                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>จุดเข้าที่เหมาะสม (Preferred):</span>
                                 <span style={{ fontSize: '14px', fontWeight: 900, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
-                                  ฿{assistant.entryZone.preferred.toLocaleString()}
+                                  ฿{formatThb(assistant.entryZone.preferred)}
                                 </span>
                               </div>
 
@@ -1501,7 +1814,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <span style={{ fontSize: '11px', color: '#FBBF24', fontWeight: 700 }}>⚠️ Soft Warning (เริ่มเฝ้าระวัง):</span>
                                   <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FCD34D', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{assistant.stops.softWarningPrice.toLocaleString()}
+                                    ฿{formatThb(assistant.stops.softWarningPrice)}
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -1513,7 +1826,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <span style={{ fontSize: '11px', color: '#F87171', fontWeight: 700 }}>🛑 Hard Stop (Thesis เสีย/ออก):</span>
                                   <span style={{ fontSize: '13px', fontWeight: 900, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{assistant.stops.hardStopPrice.toLocaleString()} (-{assistant.stops.stopDistancePct}%)
+                                    ฿{formatThb(assistant.stops.hardStopPrice)} (-{assistant.stops.stopDistancePct}%)
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '10.5px', color: '#FDA4AF', marginTop: '2px' }}>
@@ -1541,7 +1854,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                     TP1 ({assistant.takeProfits.tp1GainPct > 0 ? `+${assistant.takeProfits.tp1GainPct}%` : ''}):
                                   </span>
                                   <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{assistant.takeProfits.tp1Price.toLocaleString()}
+                                    ฿{formatThb(assistant.takeProfits.tp1Price)}
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '10.5px', color: '#A7F3D0', marginTop: '2px' }}>
@@ -1555,7 +1868,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                     TP2 (+{assistant.takeProfits.tp2GainPct}%):
                                   </span>
                                   <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{assistant.takeProfits.tp2Price.toLocaleString()}
+                                    ฿{formatThb(assistant.takeProfits.tp2Price)}
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '10.5px', color: '#BFDBFE', marginTop: '2px' }}>
@@ -1569,7 +1882,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                     TP3 (+{assistant.takeProfits.tp3GainPct}%):
                                   </span>
                                   <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#C4B5FD', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{assistant.takeProfits.tp3Price.toLocaleString()}
+                                    ฿{formatThb(assistant.takeProfits.tp3Price)}
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '10.5px', color: '#DDD6FE', marginTop: '2px' }}>
@@ -1777,7 +2090,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                                   สถานะ: 🟠 ปกป้องกำไร (PROTECT PROFIT)
                                 </div>
                                 <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                                  TP1 ฿{assistant.takeProfits.tp1Price.toLocaleString()} ✓ ผ่านเป้าหมายแรกแล้ว (ล็อกกำไร 25% สำเร็จ)
+                                  TP1 ฿{formatThb(assistant.takeProfits.tp1Price)} ✓ ผ่านเป้าหมายแรกแล้ว (ล็อกกำไร 25% สำเร็จ)
                                 </div>
                               </div>
                             </div>
@@ -1795,28 +2108,28 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                             <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                               <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>ต้นทุนที่เข้า (ENTRY)</div>
                               <div style={{ fontSize: '15px', fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
-                                ฿{assistant.entryZone.preferred.toLocaleString()}
+                                ฿{formatThb(assistant.entryZone.preferred)}
                               </div>
                             </div>
 
                             <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                               <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>ราคาปัจจุบัน (CURRENT)</div>
                               <div style={{ fontSize: '15px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                ฿{coin.price.toLocaleString()} (+7.81%)
+                                ฿{formatThb(coin.price)} (+7.81%)
                               </div>
                             </div>
 
                             <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                               <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>TRAILING STOP ปัจจุบัน</div>
                               <div style={{ fontSize: '15px', fontWeight: 800, color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>
-                                ฿{(coin.price * 0.955).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} (ยกบังกำไร)
+                                ฿{formatThb(coin.price * 0.955)} (ยกบังกำไร)
                               </div>
                             </div>
 
                             <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                               <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>เป้าหมายถัดไป (TP2)</div>
                               <div style={{ fontSize: '15px', fontWeight: 800, color: '#C4B5FD', fontFamily: 'var(--font-mono)' }}>
-                                ฿{assistant.takeProfits.tp2Price.toLocaleString()} (+{assistant.takeProfits.tp2GainPct}%)
+                                ฿{formatThb(assistant.takeProfits.tp2Price)} (+{assistant.takeProfits.tp2GainPct}%)
                               </div>
                             </div>
                           </div>
@@ -1827,11 +2140,11 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                               💡 คำแนะนำการบริหารสถานะ:
                             </div>
                             <div style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.6 }}>
-                              • ทยอยขาย 25% ที่ TP1 ฿{assistant.takeProfits.tp1Price.toLocaleString()} เรียบร้อยแล้ว<br />
-                              • เลื่อน Stop จาก ฿{assistant.stops.hardStopPrice.toLocaleString()} ขึ้นมาที่ ฿{(assistant.entryZone.preferred * 1.02).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} (บวกกำไรบังทุน)<br />
-                              • ถือสถานะส่วนที่เหลือ 75% มุ่งหน้าสู่เป้าหมาย TP2 ฿{assistant.takeProfits.tp2Price.toLocaleString()}<br />
+                              • ทยอยขาย 25% ที่ TP1 ฿{formatThb(assistant.takeProfits.tp1Price)} เรียบร้อยแล้ว<br />
+                              • เลื่อน Stop จาก ฿{formatThb(assistant.stops.hardStopPrice)} ขึ้นมาที่ ฿{formatThb(assistant.entryZone.preferred * 1.02)} (บวกกำไรบังทุน)<br />
+                              • ถือสถานะส่วนที่เหลือ 75% มุ่งหน้าสู่เป้าหมาย TP2 ฿{formatThb(assistant.takeProfits.tp2Price)}<br />
                               • <strong>หากราคายังขึ้น:</strong> ปล่อยให้กำไรวิ่งต่อ (Let Profit Run)<br />
-                              • <strong>หากราคากลับต่ำกว่า ฿{(coin.price * 0.955).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}:</strong> ปิดสถานะที่เหลือทันที เพื่อล็อกกำไรทั้งหมด
+                              • <strong>หากราคากลับต่ำกว่า ฿{formatThb(coin.price * 0.955)}:</strong> ปิดสถานะที่เหลือทันที เพื่อล็อกกำไรทั้งหมด
                             </div>
                           </div>
                         </div>
@@ -1914,14 +2227,14 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     <div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>MAX SAFE ORDER CAPACITY</div>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-                        ฿{coin.maxExecutableSizeThb.toLocaleString()}
+                        ฿{formatThb(coin.maxExecutableSizeThb, { decimals: 0 })}
                       </div>
                       <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Slippage &lt; 0.25% บน Bitkub</div>
                     </div>
                   </div>
 
-                  {/* ─── Expand / Collapse Toggle Button ─── */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px' }}>
+                  {/* Setup & Extension Badges Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span 
                         style={{ 
@@ -1948,41 +2261,19 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                         Extension: {coin.extensionLevel}
                       </span>
                     </div>
-
-                    <button
-                      onClick={() => setExpandedSymbol(isExpanded ? null : coin.symbol)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#60A5FA',
-                        fontSize: '12.5px',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isExpanded ? (
-                        <>ย่อการวิเคราะห์เชิงลึก <ChevronUp size={16} /></>
-                      ) : (
-                        <>ดู SHAP Factor & แผนเทรดสถาบัน <ChevronDown size={16} /></>
-                      )}
-                    </button>
                   </div>
 
-                  {/* ─── Expanded Deep Dive Drawer ─── */}
-                  {isExpanded && (
-                    <div 
-                      style={{
-                        marginTop: '16px',
-                        paddingTop: '16px',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                        gap: '16px'
-                      }}
-                    >
+                  {/* ─── Deep Dive Details Drawer ─── */}
+                  <div 
+                    style={{
+                      marginTop: '14px',
+                      paddingTop: '14px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                      gap: '16px'
+                    }}
+                  >
                       {/* Left Column: SHAP Factor Attribution */}
                       <div 
                         style={{
@@ -2238,24 +2529,24 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                               Objective Fibonacci (จุดสวิงคัดเลือกอัตโนมัติ ไม่ใช่ Core Alpha)
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                              Swing Low: ฿{coin.rawPhase20.fibonacci.swingLow.toLocaleString()} &middot; Swing High: ฿{coin.rawPhase20.fibonacci.swingHigh.toLocaleString()} (Pivot Confirmed)
+                              Swing Low: ฿{formatThb(coin.rawPhase20.fibonacci.swingLow)} &middot; Swing High: ฿{formatThb(coin.rawPhase20.fibonacci.swingHigh)} (Pivot Confirmed)
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', textAlign: 'center', fontSize: '11px' }}>
                               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '6px' }}>
                                 <div style={{ color: 'var(--text-muted)' }}>0.382 Retrace</div>
-                                <div style={{ fontWeight: 700, color: '#93C5FD' }}>฿{coin.rawPhase20.fibonacci.fib382}</div>
+                                <div style={{ fontWeight: 700, color: '#93C5FD' }}>฿{formatThb(coin.rawPhase20.fibonacci.fib382)}</div>
                               </div>
                               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '6px' }}>
                                 <div style={{ color: 'var(--text-muted)' }}>0.500 Mid</div>
-                                <div style={{ fontWeight: 700, color: '#FBBF24' }}>฿{coin.rawPhase20.fibonacci.fib500}</div>
+                                <div style={{ fontWeight: 700, color: '#FBBF24' }}>฿{formatThb(coin.rawPhase20.fibonacci.fib500)}</div>
                               </div>
                               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '6px' }}>
                                 <div style={{ color: 'var(--text-muted)' }}>0.618 Pocket</div>
-                                <div style={{ fontWeight: 700, color: '#34D399' }}>฿{coin.rawPhase20.fibonacci.fib618}</div>
+                                <div style={{ fontWeight: 700, color: '#34D399' }}>฿{formatThb(coin.rawPhase20.fibonacci.fib618)}</div>
                               </div>
                               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '6px' }}>
                                 <div style={{ color: 'var(--text-muted)' }}>1.618 Ext</div>
-                                <div style={{ fontWeight: 700, color: '#C084FC' }}>฿{coin.rawPhase20.fibonacci.ext1618}</div>
+                                <div style={{ fontWeight: 700, color: '#C084FC' }}>฿{formatThb(coin.rawPhase20.fibonacci.ext1618)}</div>
                               </div>
                             </div>
                           </div>
@@ -2298,12 +2589,38 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                           </div>
                         </div>
                       )}
+
+                      {/* Bottom Collapse Button inside expanded container */}
+                      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '6px' }}>
+                        <button
+                          onClick={() => toggleCardExpand(coin.symbol)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 16px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            color: 'var(--text-secondary)',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <ChevronUp size={14} />
+                          ย่อรายละเอียด {coin.symbol}
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          </>
+        )}
         </div>
       )}
 
@@ -2404,7 +2721,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                           {coin.symbol}
                         </td>
                         <td style={{ padding: '12px', fontFamily: 'var(--font-mono)' }}>
-                          ฿{coin.price.toLocaleString()}
+                          ฿{formatThb(coin.price)}
                         </td>
                         <td style={{ padding: '12px' }}>
                           {(coin.spreadBps / 100).toFixed(2)}% ({coin.spreadBps} bps)
@@ -2617,7 +2934,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     <span style={{ fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>{coin.hrpWeight}%</span>
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Stop Buffer: ฿{(coin.trailingStopPlan?.currentStopPrice || (coin.price * 0.94)).toLocaleString()}
+                    Stop Buffer: ฿{formatThb(coin.trailingStopPlan?.currentStopPrice || (coin.price * 0.94))}
                   </div>
                 </div>
               ))}
@@ -3199,7 +3516,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Trailing remainder &middot; ปล่อยกำไรวิ่ง</div>
                     </div>
                     <div style={{ fontSize: '15px', fontWeight: 900, color: '#DDD6FE', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.decisionAssistant?.takeProfits?.tp3Price?.toLocaleString() || (detailedPlanCandidate.price * 1.18).toFixed(0)}
+                      ฿{formatThb(detailedPlanCandidate.decisionAssistant?.takeProfits?.tp3Price || detailedPlanCandidate.price * 1.18)}
                     </div>
                   </div>
 
@@ -3210,7 +3527,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ขายเพิ่ม 25–35% &middot; ล็อกกำไรก้อนหลัก</div>
                     </div>
                     <div style={{ fontSize: '15px', fontWeight: 900, color: '#BFDBFE', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.decisionAssistant?.takeProfits?.tp2Price?.toLocaleString() || (detailedPlanCandidate.price * 1.11).toFixed(0)}
+                      ฿{formatThb(detailedPlanCandidate.decisionAssistant?.takeProfits?.tp2Price || detailedPlanCandidate.price * 1.11)}
                     </div>
                   </div>
 
@@ -3221,7 +3538,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ขาย 25% &middot; ยก Stop บังทุน (Break-even)</div>
                     </div>
                     <div style={{ fontSize: '15px', fontWeight: 900, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.decisionAssistant?.takeProfits?.tp1Price?.toLocaleString() || (detailedPlanCandidate.price * 1.06).toFixed(0)}
+                      ฿{formatThb(detailedPlanCandidate.decisionAssistant?.takeProfits?.tp1Price || detailedPlanCandidate.price * 1.06)}
                     </div>
                   </div>
 
@@ -3237,7 +3554,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       </div>
                     </div>
                     <div style={{ fontSize: '17px', fontWeight: 900, color: '#FFFFFF', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.price.toLocaleString()}
+                      ฿{formatThb(detailedPlanCandidate.price)}
                     </div>
                   </div>
 
@@ -3246,13 +3563,13 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', color: '#34D399', fontWeight: 800 }}>ENTRY ZONE (โซนเข้าซื้อ)</span>
                       <span style={{ fontSize: '13px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                        ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.min?.toLocaleString()} – ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.max?.toLocaleString()}
+                        ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.min)} – ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.max)}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Preferred Entry (จุดเข้าเหมาะสม):</span>
                       <span style={{ fontSize: '13px', fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
-                        ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.preferred?.toLocaleString()}
+                        ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.preferred)}
                       </span>
                     </div>
                   </div>
@@ -3264,7 +3581,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ยังไม่ขายทันที เฝ้าระวัง EMA20 / แนวรับย่อย</div>
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.decisionAssistant?.stops?.softWarningPrice?.toLocaleString()}
+                      ฿{formatThb(detailedPlanCandidate.decisionAssistant?.stops?.softWarningPrice)}
                     </div>
                   </div>
 
@@ -3275,7 +3592,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                       <div style={{ fontSize: '10px', color: '#FEE2E2' }}>หลุดโครงสร้าง 4H Swing Low &middot; Thesis ยกเลิก</div>
                     </div>
                     <div style={{ fontSize: '15px', fontWeight: 900, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
-                      ฿{detailedPlanCandidate.decisionAssistant?.stops?.hardStopPrice?.toLocaleString()}
+                      ฿{formatThb(detailedPlanCandidate.decisionAssistant?.stops?.hardStopPrice)}
                     </div>
                   </div>
 
@@ -3312,9 +3629,9 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                   </div>
                   <div style={{ fontSize: '12.5px', color: '#FFFFFF', fontWeight: 700, lineHeight: 1.5 }}>
                     {detailedPlanCandidate.decisionAssistant?.currentPriceZoneRelation === 'INSIDE_ENTRY_ZONE' ? (
-                      <>🟢 ราคาอยู่ใน Entry Zone (฿{detailedPlanCandidate.decisionAssistant?.entryZone?.min?.toLocaleString()} – ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.max?.toLocaleString()}) สามารถพิจารณาเข้าซื้อได้ตามแผน หลีกเลี่ยงการไล่ราคาเหนือ ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.max?.toLocaleString()}</>
+                      <>🟢 ราคาอยู่ใน Entry Zone (฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.min)} – ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.max)}) สามารถพิจารณาเข้าซื้อได้ตามแผน หลีกเลี่ยงการไล่ราคาเหนือ ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.max)}</>
                     ) : (
-                      <>🔵 ราคาสูงกว่า Entry Zone เล็กน้อย (+{detailedPlanCandidate.decisionAssistant?.zoneDistancePct}%) แนะนำให้รอย่อกลับสู่โซน ฿{detailedPlanCandidate.decisionAssistant?.entryZone?.min?.toLocaleString()}–฿{detailedPlanCandidate.decisionAssistant?.entryZone?.max?.toLocaleString()} แทนการไล่ซื้อ</>
+                      <>🔵 ราคาสูงกว่า Entry Zone เล็กน้อย (+{detailedPlanCandidate.decisionAssistant?.zoneDistancePct}%) แนะนำให้รอย่อกลับสู่โซน ฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.min)}–฿{formatThb(detailedPlanCandidate.decisionAssistant?.entryZone?.max)} แทนการไล่ซื้อ</>
                     )}
                   </div>
                 </div>
@@ -3351,9 +3668,9 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                     🚪 EXIT PLAN (แผนการออกที่ชัดเจน)
                   </div>
                   <div style={{ fontSize: '11.5px', color: '#FEE2E2', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <div>• <strong>&gt; ฿{detailedPlanCandidate.decisionAssistant?.takeProfits?.tp1Price?.toLocaleString()}</strong> → ขายทำกำไร 25% และขยับ Stop มาที่ Break-even</div>
-                    <div>• <strong>&gt; ฿{detailedPlanCandidate.decisionAssistant?.takeProfits?.tp2Price?.toLocaleString()}</strong> → ล็อกกำไรเพิ่ม 30% และยก Trailing Stop ปกป้องกำไรส่วนที่เหลือ</div>
-                    <div>• <strong>&lt; ฿{detailedPlanCandidate.decisionAssistant?.stops?.hardStopPrice?.toLocaleString()}</strong> → Thesis ถูกยกเลิก (Invalidation) ปิดสถานะทันทีโดยไม่มีข้อแม้</div>
+                    <div>• <strong>&gt; ฿{formatThb(detailedPlanCandidate.decisionAssistant?.takeProfits?.tp1Price)}</strong> → ขายทำกำไร 25% และขยับ Stop มาที่ Break-even</div>
+                    <div>• <strong>&gt; ฿{formatThb(detailedPlanCandidate.decisionAssistant?.takeProfits?.tp2Price)}</strong> → ล็อกกำไรเพิ่ม 30% และยก Trailing Stop ปกป้องกำไรส่วนที่เหลือ</div>
+                    <div>• <strong>&lt; ฿{formatThb(detailedPlanCandidate.decisionAssistant?.stops?.hardStopPrice)}</strong> → Thesis ถูกยกเลิก (Invalidation) ปิดสถานะทันทีโดยไม่มีข้อแม้</div>
                   </div>
                 </div>
 
