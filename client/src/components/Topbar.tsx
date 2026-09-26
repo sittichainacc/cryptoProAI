@@ -802,7 +802,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                 boxShadow: '0 0 10px rgba(245, 158, 11, 0.15)',
                 transition: 'all 0.15s ease',
               }}
-              title="เข้าสู่ระบบ Admin เพื่อเข้าถึงส่วนที่จำกัดสิทธิ์ (fuyu)"
+              title="เข้าสู่ระบบ Admin เพื่อเข้าถึงส่วนที่จำกัดสิทธิ์"
             >
               <Shield size={13} color="#F59E0B" />
               <span>เข้าสู่ระบบ Admin</span>
@@ -822,10 +822,10 @@ export const Topbar: React.FC<TopbarProps> = ({
               fontSize: '11px',
               fontWeight: 800,
             }}
-            title="เข้าสู่ระบบในฐานะ Admin: fuyu เรียบร้อยแล้ว"
+            title="เข้าสู่ระบบในฐานะ Admin เรียบร้อยแล้ว"
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-            <span>ADMIN: fuyu</span>
+            <span>ADMINISTRATOR</span>
           </div>
         )}
 

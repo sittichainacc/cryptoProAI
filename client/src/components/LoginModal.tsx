@@ -404,23 +404,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           </div>
 
-          {/* Fixed Credentials Hint Box */}
+          {/* Security Notice (no credentials displayed) */}
           <div
             style={{
               padding: '8px 10px',
               borderRadius: '7px',
-              backgroundColor: 'rgba(59, 130, 246, 0.06)',
-              border: '1px dashed rgba(59, 130, 246, 0.25)',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               fontSize: '11px',
-              color: 'var(--text-secondary)',
+              color: 'var(--text-muted)',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
             }}
           >
-            <Info size={13} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
+            <ShieldCheck size={13} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
             <span>
-              ข้อมูลล็อกอิน Admin: <strong>user : fuyu</strong> | <strong>password : haru</strong>
+              ระบบรักษาความปลอดภัย: กรุณากรอกข้อมูลบัญชีผู้ดูแลระบบที่ได้รับอนุญาต
             </span>
           </div>
 
