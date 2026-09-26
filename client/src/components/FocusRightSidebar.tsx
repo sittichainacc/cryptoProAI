@@ -162,7 +162,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
         style={{
           position: 'fixed',
           right: 0,
-          top: '46%',
+          top: '52%',
           transform: 'translateY(-50%)',
           background: 'linear-gradient(180deg, #F59E0B 0%, #D97706 35%, #8B5CF6 100%)',
           color: '#FFFFFF',
@@ -175,7 +175,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
           alignItems: 'center',
           gap: '8px',
           cursor: 'pointer',
-          zIndex: 10000,
+          zIndex: 40,
           boxShadow: '-4px 0 20px rgba(245, 158, 11, 0.4), 0 0 12px rgba(139, 92, 246, 0.3)',
           transition: 'all 0.25s ease',
         }}
@@ -238,11 +238,11 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
         borderLeft: '1px solid rgba(245, 158, 11, 0.25)',
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: 'calc(100vh - 68px)',
         position: isPinned ? 'sticky' : 'fixed',
-        top: 0,
+        top: '68px',
         right: 0,
-        zIndex: 10000,
+        zIndex: 40,
         boxShadow: isPinned ? 'none' : '-10px 0 35px rgba(0, 0, 0, 0.75)',
         transition: 'width 0.22s ease-in-out',
         flexShrink: 0,
@@ -412,8 +412,8 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                 cursor: 'pointer',
                 padding: '7px 4px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                border: '1px dashed rgba(239, 68, 68, 0.45)',
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.45)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -422,8 +422,8 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
               }}
               title="แนะนำ Top 5 Premium: ท่านไม่มีสิทธิ์ดูส่วนนี้ (เฉพาะ Admin คลิกเพื่อล็อกอิน)"
             >
-              <Lock size={15} color="#EF4444" />
-              <span style={{ fontSize: '8px', color: '#EF4444', fontWeight: 800 }}>LOCK</span>
+              <Crown size={14} color="#F59E0B" />
+              <span style={{ fontSize: '8px', color: '#FDE047', fontWeight: 900 }}>VIP</span>
             </div>
           ) : (
             premiumCandidates.map((c, idx) => (
@@ -692,60 +692,225 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                     {!isAdmin ? (
                       <div
                         style={{
-                          padding: '24px 14px',
-                          textAlign: 'center',
-                          backgroundColor: 'rgba(239, 68, 68, 0.06)',
-                          border: '1.5px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '10px',
+                          padding: '16px 14px',
+                          borderRadius: '12px',
+                          background: 'linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(245, 158, 11, 0.2)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px',
                         }}
                       >
+                        {/* Top Badge & Header */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                              color: '#FDE047',
+                              fontSize: '10px',
+                              fontWeight: 900,
+                              letterSpacing: '0.4px',
+                            }}
+                          >
+                            <Crown size={12} color="#F59E0B" />
+                            <span>QUANT ENGINE • 20-PHASE</span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                              border: '1px solid rgba(239, 68, 68, 0.35)',
+                              color: '#F87171',
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                            }}
+                          >
+                            <Lock size={10} />
+                            <span>เฉพาะ ADMIN</span>
+                          </div>
+                        </div>
+
+                        {/* Title & Subtitle */}
+                        <div>
+                          <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.2px' }}>
+                            ท่านไม่มีสิทธิ์ดูส่วนนี้
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '3px', lineHeight: 1.4 }}>
+                            แนะนำซื้อ <strong style={{ color: '#FDE047' }}>Top 5 Premium</strong> สงวนสิทธิ์สำหรับบัญชีผู้ดูแลระบบ (Admin) เท่านั้น
+                          </div>
+                        </div>
+
+                        {/* Frosted Glass Algorithmic Preview (Sneak Peek) */}
                         <div
                           style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '12px',
-                            margin: '0 auto 10px auto',
-                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(153, 27, 27, 0.4))',
-                            border: '1px solid rgba(239, 68, 68, 0.5)',
+                            borderRadius: '9px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '8px 10px',
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 0 16px rgba(239, 68, 68, 0.25)',
+                            flexDirection: 'column',
+                            gap: '6px',
                           }}
                         >
-                          <Lock size={22} color="#EF4444" />
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                            <span>ตัวอย่างสัญญาณ AI สด (คำนวณเรียลไทม์)</span>
+                            <span style={{ color: '#10B981' }}>● ระบบรันอยู่</span>
+                          </div>
+
+                          {/* Preview Row 1 */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(245, 158, 11, 0.06)',
+                              border: '1px solid rgba(245, 158, 11, 0.2)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#F59E0B' }}>#1</span>
+                              <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Lock size={10} color="#FDE047" />
+                              </div>
+                              <span style={{ filter: 'blur(3px)', fontSize: '11px', fontWeight: 800, color: '#FFF' }}>BTC/THB</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#34D399', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                +182 bps
+                              </span>
+                              <span style={{ filter: 'blur(3px)', fontSize: '10.5px', color: '#94A3B8' }}>฿2,8xx,xxx</span>
+                            </div>
+                          </div>
+
+                          {/* Preview Row 2 */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px solid rgba(255, 255, 255, 0.05)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#94A3B8' }}>#2</span>
+                              <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Lock size={10} color="#94A3B8" />
+                              </div>
+                              <span style={{ filter: 'blur(3px)', fontSize: '11px', fontWeight: 800, color: '#FFF' }}>ETH/THB</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#34D399', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                +164 bps
+                              </span>
+                              <span style={{ filter: 'blur(3px)', fontSize: '10.5px', color: '#94A3B8' }}>฿11x,xxx</span>
+                            </div>
+                          </div>
+
+                          {/* Preview Row 3 */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '6px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px solid rgba(255, 255, 255, 0.05)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#94A3B8' }}>#3</span>
+                              <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Lock size={10} color="#94A3B8" />
+                              </div>
+                              <span style={{ filter: 'blur(3px)', fontSize: '11px', fontWeight: 800, color: '#FFF' }}>SOL/THB</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#34D399', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                +145 bps
+                              </span>
+                              <span style={{ filter: 'blur(3px)', fontSize: '10.5px', color: '#94A3B8' }}>฿6,xxx</span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div style={{ fontSize: '14px', fontWeight: 900, color: '#FFFFFF', marginBottom: '5px' }}>
-                          ท่านไม่มีสิทธิ์ดูส่วนนี้
+                        {/* 3 Value Pillars */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '5px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                            borderRadius: '8px',
+                            padding: '8px 10px',
+                            fontSize: '10.5px',
+                            color: '#CBD5E1',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: '#F59E0B' }}>🎯</span>
+                            <span><strong>Trade Plan ชัดเจน:</strong> จุดเข้า + Take Profit + Stop Loss</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: '#10B981' }}>⚡</span>
+                            <span><strong>Quant 20 ขั้นตอน:</strong> กรอง CVD Flow, Regime & Slippage</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: '#8B5CF6' }}>🛡️</span>
+                            <span><strong>Risk Cutoff:</strong> ป้องกันสภาพคล่องต่ำและ False Breakout</span>
+                          </div>
                         </div>
 
-                        <div style={{ fontSize: '11.5px', color: '#CBD5E1', lineHeight: 1.5, marginBottom: '16px' }}>
-                          แท็บแนะนำซื้อ <strong style={{ color: '#FDE047' }}>Top 5 Premium</strong> (สูตร Quant 20 ขั้นตอน) สงวนสิทธิ์เฉพาะ <strong style={{ color: '#F59E0B' }}>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น
-                        </div>
-
+                        {/* CTA Login Button */}
                         {onOpenLogin && (
                           <button
                             onClick={onOpenLogin}
                             style={{
                               width: '100%',
-                              padding: '9px 14px',
+                              padding: '11px 14px',
                               borderRadius: '8px',
-                              background: 'linear-gradient(135deg, #F59E0B, #8B5CF6)',
+                              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 40%, #8B5CF6 100%)',
                               border: 'none',
-                              color: '#FFF',
+                              color: '#FFFFFF',
                               fontSize: '12px',
-                              fontWeight: 800,
+                              fontWeight: 900,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              gap: '6px',
-                              boxShadow: '0 0 12px rgba(245, 158, 11, 0.35)',
+                              gap: '8px',
+                              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
+                              transition: 'all 0.2s ease',
+                              marginTop: '2px',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 6px 20px rgba(245, 158, 11, 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'none';
+                              e.currentTarget.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.4)';
                             }}
                           >
-                            <LogIn size={14} />
-                            <span>เข้าสู่ระบบในฐานะ Admin</span>
+                            <LogIn size={15} />
+                            <span>เข้าสู่ระบบในฐานะ Admin เพื่อปลดล็อก</span>
                           </button>
                         )}
                       </div>

@@ -803,7 +803,7 @@ header nav {
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1300px) {
   .topbar-desktop-nav {
     display: none !important;
   }

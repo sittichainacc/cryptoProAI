@@ -172,12 +172,14 @@ export const Topbar: React.FC<TopbarProps> = ({
         padding: '0 24px',
         position: 'sticky',
         top: 0,
-        zIndex: 30,
+        zIndex: 50,
         backdropFilter: 'blur(10px)',
+        minWidth: 0,
+        gap: '12px',
       }}
     >
       {/* Left / Center: Hamburger (mobile) + Top Navigation Tabs */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
         {/* Mobile hamburger menu button — visible only on ≤768px via CSS */}
         <button
           className="mobile-menu-btn"
@@ -186,7 +188,18 @@ export const Topbar: React.FC<TopbarProps> = ({
         >
           <Menu size={18} />
         </button>
-        <div className="topbar-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div
+          className="topbar-desktop-nav"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            minWidth: 0,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {topTabs.map((tab) => {
             const isActive = activeTopTab === tab.id;
             return (
@@ -229,7 +242,17 @@ export const Topbar: React.FC<TopbarProps> = ({
       </nav>
 
       {/* Right Controls: Search, Currency, Notifications, Profile */}
-      <div className="topbar-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+      <div
+        className="topbar-right-controls"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
 
         {/* Real-time WebSocket Live Telemetry Indicator */}
         <div
