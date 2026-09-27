@@ -406,8 +406,8 @@ export class QuantPremiumEngine {
       const coinThb: TickerData = {
         ...coin,
         price: coinPriceThb,
-        high24h: coin.high24h ? Number((coin.high24h * usdThbRate).toFixed(2)) : undefined,
-        low24h: coin.low24h ? Number((coin.low24h * usdThbRate).toFixed(2)) : undefined,
+        high24h: coin.high24h ? Number((coin.high24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 1.02).toFixed(2)),
+        low24h: coin.low24h ? Number((coin.low24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 0.98).toFixed(2)),
         volume24h: (coin.volume24h || 1000000) * usdThbRate,
       };
 
@@ -1271,8 +1271,8 @@ export class QuantPremiumEngine {
     const coin: TickerData = {
       ...rawCoin,
       price: coinPriceThb,
-      high24h: rawCoin.high24h ? Number((rawCoin.high24h * usdThbRate).toFixed(2)) : undefined,
-      low24h: rawCoin.low24h ? Number((rawCoin.low24h * usdThbRate).toFixed(2)) : undefined,
+      high24h: rawCoin.high24h ? Number((rawCoin.high24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 1.02).toFixed(2)),
+      low24h: rawCoin.low24h ? Number((rawCoin.low24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 0.98).toFixed(2)),
       volume24h: (rawCoin.volume24h || 1000000) * usdThbRate,
     };
 

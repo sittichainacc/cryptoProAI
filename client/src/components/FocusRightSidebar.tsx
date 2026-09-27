@@ -102,8 +102,8 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
 
       if (premRes.status === 'fulfilled' && premRes.value?.candidates) {
         setPremiumCandidates(premRes.value.candidates.slice(0, 5));
-        if (premRes.value.marketRegime?.regime) {
-          setPremiumRegime(premRes.value.marketRegime.regime);
+        if ((premRes.value.marketRegime as any)?.directionRegime || (premRes.value.marketRegime as any)?.regime) {
+          setPremiumRegime((premRes.value.marketRegime as any).directionRegime || (premRes.value.marketRegime as any).regime);
         }
       }
 
@@ -923,8 +923,8 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                         const isSelected = selectedSymbol === c.symbol;
                         const edgeBps = c.tradableEdge?.expectedTradableEdgeBps || 164;
                         const edgePct = (edgeBps / 100).toFixed(2);
-                        const decision = c.decisionAssistant?.statusBadge || {
-                          labelTh: 'พร้อมเข้า',
+                        const decision = (c.decisionAssistant as any)?.statusBadge || {
+                          labelTh: c.decisionAssistant?.decisionLabelTh || 'พร้อมเข้า',
                           bg: 'rgba(16, 185, 129, 0.15)',
                           color: '#34D399',
                           border: '#10B981',
@@ -976,7 +976,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                                     <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>/THB</span>
                                   </div>
                                   <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                                    {c.role || 'LEADER'}
+                                    {(c as any).role || (c as any).academicCitation || 'LEADER'}
                                   </div>
                                 </div>
                               </div>
@@ -1032,7 +1032,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                             </div>
 
                             {/* Row 3: Entry Zone & SL / TP quick plan */}
-                            {c.decisionAssistant?.entryPlan && (
+                            {c.decisionAssistant?.entryZone && (
                               <div
                                 style={{
                                   display: 'flex',
@@ -1046,11 +1046,11 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                                 <div>
                                   <span style={{ color: 'var(--text-muted)' }}>โซน: </span>
                                   <span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
-                                    {prefix}{(c.decisionAssistant.entryPlan.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })} - {prefix}{(c.decisionAssistant.entryPlan.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })}
+                                    {prefix}{(c.decisionAssistant.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })} - {prefix}{(c.decisionAssistant.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })}
                                   </span>
                                 </div>
                                 <div style={{ color: 'var(--neon-green-light)', fontWeight: 700 }}>
-                                  TP1 +{c.decisionAssistant.entryPlan.rewardPct || 9.3}%
+                                  TP1 +{c.decisionAssistant.takeProfits?.tp1GainPct || 6.4}%
                                 </div>
                               </div>
                             )}

@@ -550,19 +550,14 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
           ...candidate.fibonacci,
           swingHigh: +(candidate.fibonacci.swingHigh * rate).toFixed(2),
           swingLow: +(candidate.fibonacci.swingLow * rate).toFixed(2),
-          atrDistance: +(candidate.fibonacci.atrDistance * rate).toFixed(2),
-          retracements: {
-            fib236: +(candidate.fibonacci.retracements.fib236 * rate).toFixed(2),
-            fib382: +(candidate.fibonacci.retracements.fib382 * rate).toFixed(2),
-            fib500: +(candidate.fibonacci.retracements.fib500 * rate).toFixed(2),
-            fib618: +(candidate.fibonacci.retracements.fib618 * rate).toFixed(2),
-            fib786: +(candidate.fibonacci.retracements.fib786 * rate).toFixed(2),
-          },
-          extensions: {
-            ext1272: +(candidate.fibonacci.extensions.ext1272 * rate).toFixed(2),
-            ext1618: +(candidate.fibonacci.extensions.ext1618 * rate).toFixed(2),
-            ext2000: +(candidate.fibonacci.extensions.ext2000 * rate).toFixed(2),
-          }
+          fib236: +(candidate.fibonacci.fib236 * rate).toFixed(2),
+          fib382: +(candidate.fibonacci.fib382 * rate).toFixed(2),
+          fib500: +(candidate.fibonacci.fib500 * rate).toFixed(2),
+          fib618: +(candidate.fibonacci.fib618 * rate).toFixed(2),
+          fib786: +(candidate.fibonacci.fib786 * rate).toFixed(2),
+          ext1272: +(candidate.fibonacci.ext1272 * rate).toFixed(2),
+          ext1618: +(candidate.fibonacci.ext1618 * rate).toFixed(2),
+          ext2000: +(candidate.fibonacci.ext2000 * rate).toFixed(2),
         };
 
         const assistant: TradeDecisionAssistant = isAlreadyThb ? candidate.decisionAssistant : {
@@ -1837,174 +1832,174 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                             </div>
                           </div>
 
-                          {/* 3-Column Execution Matrix */}
+                          {/* 2-Column Institutional Trade Execution Section: Left Ladder / Right Strategy */}
                           <div
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                              gap: '12px',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                              gap: '16px',
                               marginBottom: '14px'
                             }}
                           >
-                            {/* Col 1: โซนเข้า & จุดหยุดขาดทุน (Entry & Stops) */}
+                            {/* Left Column: Visual Price Ladder (บันไดราคา & จุดตัดสินใจ) */}
                             <div
                               style={{
-                                background: 'rgba(0, 0, 0, 0.35)',
-                                border: '1px solid rgba(255, 255, 255, 0.07)',
-                                borderRadius: '10px',
-                                padding: '12px 14px'
+                                background: 'rgba(0, 0, 0, 0.45)',
+                                border: '1px solid rgba(255, 255, 255, 0.09)',
+                                borderRadius: '14px',
+                                padding: '16px 18px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px'
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: '#38BDF8', marginBottom: '8px' }}>
-                                <Crosshair size={14} /> โซนเข้า & จุด Stop Loss 2 ระดับ
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Entry Zone (โซนเข้า):</span>
-                                <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                  ฿{formatThb(assistant.entryZone.min)} – ฿{formatThb(assistant.entryZone.max)}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Activity size={15} /> บันไดราคา & จุดตัดสินใจ (Price Ladder)
+                                </div>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
+                                  High → Low
                                 </span>
                               </div>
 
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>จุดเข้าที่เหมาะสม (Preferred):</span>
-                                <span style={{ fontSize: '14px', fontWeight: 900, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
-                                  ฿{formatThb(assistant.entryZone.preferred)}
-                                </span>
-                              </div>
-
-                              {/* Stops */}
-                              <div style={{ marginBottom: '6px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '11px', color: '#FBBF24', fontWeight: 700 }}>⚠️ Soft Warning (เริ่มเฝ้าระวัง):</span>
-                                  <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FCD34D', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{formatThb(assistant.stops.softWarningPrice)}
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                  {assistant.stops.softWarningRationaleTh}
-                                </div>
-                              </div>
-
-                              <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '11px', color: '#F87171', fontWeight: 700 }}>🛑 Hard Stop (Thesis เสีย/ออก):</span>
-                                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{formatThb(assistant.stops.hardStopPrice)} (-{assistant.stops.stopDistancePct}%)
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '10.5px', color: '#FDA4AF', marginTop: '2px' }}>
-                                  {assistant.stops.hardStopRationaleTh}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Col 2: เป้าหมายทำกำไร 3 ระดับ (3-Tier Take Profit) */}
-                            <div
-                              style={{
-                                background: 'rgba(0, 0, 0, 0.35)',
-                                border: '1px solid rgba(255, 255, 255, 0.07)',
-                                borderRadius: '10px',
-                                padding: '12px 14px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: '#34D399', marginBottom: '8px' }}>
-                                <Target size={14} /> แผนทำกำไร 3 ระดับ (Take Profit Plan)
-                              </div>
-
-                              <div style={{ marginBottom: '6px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#E2E8F0' }}>
-                                    TP1 ({assistant.takeProfits.tp1GainPct > 0 ? `+${assistant.takeProfits.tp1GainPct}%` : ''}):
-                                  </span>
-                                  <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{formatThb(assistant.takeProfits.tp1Price)}
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '10.5px', color: '#A7F3D0', marginTop: '2px' }}>
-                                  💡 {assistant.takeProfits.tp1ActionTh}
-                                </div>
-                              </div>
-
-                              <div style={{ marginBottom: '6px', paddingTop: '4px', borderTop: '1px dashed rgba(255, 255, 255, 0.06)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#E2E8F0' }}>
-                                    TP2 (+{assistant.takeProfits.tp2GainPct}%):
-                                  </span>
-                                  <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>
-                                    ฿{formatThb(assistant.takeProfits.tp2Price)}
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '10.5px', color: '#BFDBFE', marginTop: '2px' }}>
-                                  💡 {assistant.takeProfits.tp2ActionTh}
-                                </div>
-                              </div>
-
-                              <div style={{ paddingTop: '4px', borderTop: '1px dashed rgba(255, 255, 255, 0.06)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#E2E8F0' }}>
-                                    TP3 (+{assistant.takeProfits.tp3GainPct}%):
-                                  </span>
-                                  <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#C4B5FD', fontFamily: 'var(--font-mono)' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {/* TP3 */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.4)', padding: '7px 12px', borderRadius: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: '#C4B5FD', fontWeight: 700 }}>TP3 (+{assistant.takeProfits.tp3GainPct}%)</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Trailing remainder &middot; ปล่อยกำไรวิ่ง</div>
+                                  </div>
+                                  <div style={{ fontSize: '14.5px', fontWeight: 900, color: '#DDD6FE', fontFamily: 'var(--font-mono)' }}>
                                     ฿{formatThb(assistant.takeProfits.tp3Price)}
-                                  </span>
+                                  </div>
                                 </div>
-                                <div style={{ fontSize: '10.5px', color: '#DDD6FE', marginTop: '2px' }}>
-                                  💡 {assistant.takeProfits.tp3ActionTh}
+
+                                {/* TP2 */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.4)', padding: '7px 12px', borderRadius: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: '#93C5FD', fontWeight: 700 }}>TP2 (+{assistant.takeProfits.tp2GainPct}%)</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ขายเพิ่ม 25–35% &middot; ล็อกกำไรก้อนหลัก</div>
+                                  </div>
+                                  <div style={{ fontSize: '14.5px', fontWeight: 900, color: '#BFDBFE', fontFamily: 'var(--font-mono)' }}>
+                                    ฿{formatThb(assistant.takeProfits.tp2Price)}
+                                  </div>
+                                </div>
+
+                                {/* TP1 */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '7px 12px', borderRadius: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: '#6EE7B7', fontWeight: 700 }}>TP1 (+{assistant.takeProfits.tp1GainPct}%)</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ขาย 25% &middot; ยก Stop บังทุน (Break-even)</div>
+                                  </div>
+                                  <div style={{ fontSize: '14.5px', fontWeight: 900, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                                    ฿{formatThb(assistant.takeProfits.tp1Price)}
+                                  </div>
+                                </div>
+
+                                {/* Current Price Pointer */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(234, 179, 8, 0.25))', border: '1.5px solid #F59E0B', padding: '9px 12px', borderRadius: '9px', boxShadow: '0 0 14px rgba(245, 158, 11, 0.25)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B', animation: 'pulse 1.5s infinite' }} />
+                                    <div>
+                                      <div style={{ fontSize: '11px', color: '#FCD34D', fontWeight: 800 }}>ราคาปัจจุบัน (CURRENT PRICE)</div>
+                                      <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.8)' }}>
+                                        {assistant.currentPriceZoneRelation === 'INSIDE_ENTRY_ZONE' ? '🟢 อยู่ใน Entry Zone เข้าได้' : assistant.currentPriceZoneRelation === 'ABOVE_ENTRY_ZONE' ? '🔵 สูงกว่าโซนเข้ารอย่อ' : 'อยู่นอกโซน'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#FFFFFF', fontFamily: 'var(--font-mono)' }}>
+                                    ฿{formatThb(coin.price)}
+                                  </div>
+                                </div>
+
+                                {/* Entry Zone Box */}
+                                <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px dashed rgba(16, 185, 129, 0.5)', padding: '9px 12px', borderRadius: '9px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '11px', color: '#34D399', fontWeight: 800 }}>ENTRY ZONE (โซนเข้าซื้อ)</span>
+                                    <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                                      ฿{formatThb(assistant.entryZone.min)} – ฿{formatThb(assistant.entryZone.max)}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px' }}>
+                                    <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>จุดเข้าเหมาะสม (Preferred Entry):</span>
+                                    <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
+                                      ฿{formatThb(assistant.entryZone.preferred)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Soft Warning */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '6px 12px', borderRadius: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: '#FCD34D', fontWeight: 700 }}>Soft Warning (เฝ้าระวัง)</div>
+                                    <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>{assistant.stops.softWarningRationaleTh || 'ยังไม่ขายทันที เฝ้าระวัง EMA20'}</div>
+                                  </div>
+                                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#FBBF24', fontFamily: 'var(--font-mono)' }}>
+                                    ฿{formatThb(assistant.stops.softWarningPrice)}
+                                  </div>
+                                </div>
+
+                                {/* Hard Stop Loss */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', padding: '7px 12px', borderRadius: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: '#FCA5A5', fontWeight: 800 }}>Hard Stop / Invalidation (จุดตัดขาดทุน)</div>
+                                    <div style={{ fontSize: '9.5px', color: '#FEE2E2' }}>{assistant.stops.hardStopRationaleTh || 'หลุดโครงสร้าง 4H Swing Low'}</div>
+                                  </div>
+                                  <div style={{ fontSize: '14px', fontWeight: 900, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
+                                    ฿{formatThb(assistant.stops.hardStopPrice)} (-{assistant.stops.stopDistancePct}%)
+                                  </div>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Col 3: ดัชนีความเสี่ยง & Thesis Health (Twin Scores) */}
-                            <div
-                              style={{
-                                background: 'rgba(0, 0, 0, 0.35)',
-                                border: '1px solid rgba(255, 255, 255, 0.07)',
-                                borderRadius: '10px',
-                                padding: '12px 14px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: '#FBBF24', marginBottom: '8px' }}>
-                                <ShieldCheck size={14} /> Risk : Reward & ความมั่นคงของ Thesis
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Risk : Reward Ratio:</span>
-                                <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                  1 : {assistant.riskRewardRatio}
-                                </span>
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>ระยะเวลาถือแนะนำ:</span>
-                                <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#93C5FD' }}>
-                                  {assistant.recommendedHoldingDurationTh}
-                                </span>
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '6px', borderBottom: '1px dashed rgba(255, 255, 255, 0.1)' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>ความมั่นใจโมเดล:</span>
-                                <span style={{ fontSize: '13px', fontWeight: 800, color: '#FBBF24' }}>
-                                  {assistant.confidencePct}%
-                                </span>
-                              </div>
-
-                              {/* Twin Scores: BUY NOW vs THESIS HEALTH */}
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '6px 8px', textAlign: 'center' }}>
-                                  <div style={{ fontSize: '10px', color: '#6EE7B7', fontWeight: 700 }}>BUY NOW SCORE</div>
-                                  <div style={{ fontSize: '15px', fontWeight: 900, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
-                                    {coin.opportunityScore || 88} / 100
-                                  </div>
-                                  <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 700 }}>เข้าได้</div>
+                            {/* Right Column: Execution Strategy & Risk Control */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {/* Risk : Reward & Thesis Health Box */}
+                              <div
+                                style={{
+                                  background: 'rgba(0, 0, 0, 0.35)',
+                                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                                  borderRadius: '12px',
+                                  padding: '14px 16px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#FBBF24', marginBottom: '10px' }}>
+                                  <ShieldCheck size={15} /> สัดส่วนความเสี่ยง & ความมั่นคงของ Thesis
                                 </div>
 
-                                <div style={{ background: healthStyle.bg, border: `1px solid ${healthStyle.border}`, borderRadius: '8px', padding: '6px 8px', textAlign: 'center' }}>
-                                  <div style={{ fontSize: '10px', color: healthStyle.color, fontWeight: 700 }}>THESIS HEALTH</div>
-                                  <div style={{ fontSize: '15px', fontWeight: 900, color: healthStyle.color, fontFamily: 'var(--font-mono)' }}>
-                                    {assistant.thesisHealthScore} / 100
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                                  <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Risk : Reward Ratio</div>
+                                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                                      1 : {assistant.riskRewardRatio}
+                                    </div>
                                   </div>
-                                  <div style={{ fontSize: '10px', color: healthStyle.color, fontWeight: 700 }}>{healthStyle.shortLabel}</div>
+
+                                  <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ระยะเวลาถือแนะนำ</div>
+                                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#93C5FD' }}>
+                                      {assistant.recommendedHoldingDurationTh}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Twin Scores: BUY NOW vs THESIS HEALTH */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                  <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10.5px', color: '#6EE7B7', fontWeight: 700 }}>BUY NOW SCORE</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 900, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                                      {coin.opportunityScore || 88} <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/ 100</span>
+                                    </div>
+                                    <div style={{ fontSize: '10.5px', color: '#10B981', fontWeight: 700 }}>พร้อมเข้าตามระบบ</div>
+                                  </div>
+
+                                  <div style={{ background: healthStyle.bg, border: '1px solid ' + healthStyle.border, borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10.5px', color: healthStyle.color, fontWeight: 700 }}>THESIS HEALTH</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 900, color: healthStyle.color, fontFamily: 'var(--font-mono)' }}>
+                                      {assistant.thesisHealthScore} <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/ 100</span>
+                                    </div>
+                                    <div style={{ fontSize: '10.5px', color: healthStyle.color, fontWeight: 700 }}>{healthStyle.shortLabel}</div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
