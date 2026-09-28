@@ -195,7 +195,7 @@ export const ResizableTradingWorkspace: React.FC<ResizableTradingWorkspaceProps>
     >
       {/* Workspace Top Control Toolbar */}
       <div
-        className="workspace-toolbar"
+        className="workspace-toolbar workspace-header-bar"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -204,9 +204,11 @@ export const ResizableTradingWorkspace: React.FC<ResizableTradingWorkspaceProps>
           borderBottom: '1px solid var(--border-color)',
           backgroundColor: 'var(--bg-header)',
           fontSize: '12px',
+          flexWrap: 'wrap',
+          gap: '8px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
@@ -238,7 +240,7 @@ export const ResizableTradingWorkspace: React.FC<ResizableTradingWorkspaceProps>
         </div>
 
         {/* Right Toolbar Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="workspace-toolbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {/* Proportion Indicator */}
           <div
             style={{

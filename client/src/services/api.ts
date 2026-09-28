@@ -23,7 +23,10 @@ import {
   QuantV3ApiResponse,
   Phase20EvaluationResponse,
   Phase20Candidate,
-  SlippageSimulationResult
+  SlippageSimulationResult,
+  UltimateEvaluationResponse,
+  UltimateCandidate,
+  SimulatedPositionEvaluation
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -296,6 +299,47 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ symbol, capitalThb }),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  // Phase 21 Production Architecture: Top 5 Ultimate (Institutional No Weak Link)
+  async getTop5Ultimate(): Promise<UltimateEvaluationResponse> {
+    const res = await fetch(`${API_BASE}/market/top5-ultimate`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async recalculateTop5Ultimate(config?: any): Promise<UltimateEvaluationResponse> {
+    const res = await fetch(`${API_BASE}/market/top5-ultimate/recalculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  async getTop5UltimateFocus(symbol: string): Promise<UltimateCandidate> {
+    const res = await fetch(`${API_BASE}/market/top5-ultimate/focus/${encodeURIComponent(symbol)}`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async simulateUltimatePosition(params: {
+    symbol: string;
+    entryPrice: number;
+    currentPrice: number;
+    stopLossPrice?: number;
+    tp1Price?: number;
+    tp2Price?: number;
+    tp3Price?: number;
+  }): Promise<SimulatedPositionEvaluation> {
+    const res = await fetch(`${API_BASE}/market/top5-ultimate/position-sim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
     });
     const json = await res.json();
     return json.data;

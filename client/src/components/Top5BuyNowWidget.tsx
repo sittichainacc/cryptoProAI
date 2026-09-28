@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BuyNowCandidateItem } from '../types/index.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
 import { CryptoIcon } from './CryptoIcon.js';
-import { Zap, ShieldAlert, ArrowUpRight, BarChart2, Target, CheckCircle2, ChevronRight, TrendingUp } from 'lucide-react';
+import { Zap, ShieldAlert, ArrowUpRight, BarChart2, Target, CheckCircle2, ChevronRight, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Top5BuyNowWidgetProps {
   candidates: BuyNowCandidateItem[];
@@ -19,6 +19,25 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
   onOpenAnalysis,
   onRecalculate,
 }) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('cryptopro_top5buynow_expanded');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleExpanded = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('cryptopro_top5buynow_expanded', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   // RULE 1 & 22: If zero coins pass criteria, HIDE this widget completely on Dashboard!
   if (!candidates || candidates.length === 0) {
     return null;
@@ -40,15 +59,18 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
     >
       {/* Header Banner */}
       <div
+        onClick={toggleExpanded}
         style={{
           padding: '16px 20px',
-          borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+          borderBottom: isExpanded ? '1px solid rgba(16, 185, 129, 0.2)' : 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
           backgroundColor: 'rgba(16, 185, 129, 0.06)',
+          cursor: 'pointer',
+          userSelect: 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -91,41 +113,66 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
           </div>
         </div>
 
-        {onRecalculate && (
-          <button
-            onClick={onRecalculate}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onRecalculate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRecalculate();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#34D399',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.25)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)')}
+            >
+              <TrendingUp size={13} />
+              <span>คำนวณสดใหม่</span>
+            </button>
+          )}
+
+          <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34D399',
+              gap: '4px',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: '#CBD5E1',
               borderRadius: '8px',
-              padding: '6px 12px',
+              padding: '6px 10px',
               fontSize: '11.5px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              fontWeight: 600,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.25)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)')}
           >
-            <TrendingUp size={13} />
-            <span>คำนวณสดใหม่</span>
-          </button>
-        )}
+            <span>{isExpanded ? 'ย่อ' : 'ขยาย'}</span>
+            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </div>
+        </div>
       </div>
 
       {/* Candidates List / Grid */}
-      <div
-        style={{
-          padding: '16px 20px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      {isExpanded && (
+        <div
+          className="top5-buynow-grid custom-large-scrollbar"
+          style={{
+            padding: '16px 20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gap: '16px',
+          }}
+        >
         {candidates.map((item) => {
           const formattedPrice = (item.price * multiplier).toLocaleString(undefined, {
             maximumFractionDigits: item.price * multiplier < 1 ? 4 : 2,
@@ -152,43 +199,47 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
             <div
               key={item.symbol}
               style={{
-                borderRadius: '12px',
-                backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '16px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.09)',
+                padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
-                transition: 'all 0.2s ease',
+                height: '430px',
+                maxHeight: '430px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 position: 'relative',
+                overflow: 'hidden',
+                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.3)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.55)';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.18), 0 0 0 1px rgba(16, 185, 129, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.09)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.3)';
               }}
             >
-              {/* Header: Rank + Coin + Status Badge + Price */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Header: Rank + Coin + Status Badge + Price (Fixed, flexShrink: 0) */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div
                     style={{
-                      width: '26px',
-                      height: '26px',
+                      width: '28px',
+                      height: '28px',
                       borderRadius: '8px',
                       backgroundColor: 'rgba(16, 185, 129, 0.2)',
                       color: '#34D399',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 800,
+                      fontWeight: 900,
                       fontSize: '12px',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      flexShrink: 0,
                     }}
                   >
                     #{item.rank}
@@ -205,7 +256,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
                     {currencyPrefix}{formattedPrice}
                   </div>
@@ -215,7 +266,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 </div>
               </div>
 
-              {/* Status Badge & Score Bar */}
+              {/* Status Badge & Score Bar (Fixed, flexShrink: 0) */}
               <div
                 style={{
                   display: 'flex',
@@ -225,6 +276,9 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   borderRadius: '8px',
                   backgroundColor: 'rgba(16, 185, 129, 0.1)',
                   border: '1px solid rgba(16, 185, 129, 0.2)',
+                  flexShrink: 0,
+                  marginTop: '8px',
+                  marginBottom: '8px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -271,53 +325,82 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 </div>
               </div>
 
-              {/* Trade Levels Plan Box */}
+              {/* Scrollable Content Body with Custom Large Scrollbar (flex: 1, minHeight: 0) */}
               <div
+                className="custom-large-scrollbar"
                 style={{
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '8px',
-                  fontSize: '11px',
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  paddingRight: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
                 }}
               >
-                <div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🎯 โซนเข้าซื้อ (Entry)</div>
-                  <div style={{ fontWeight: 700, color: '#34D399', marginTop: '2px' }}>
-                    {currencyPrefix}{formattedEntryMin} – {formattedEntryMax}
+                {/* Trade Levels Plan Box (Safe wrapping with minWidth 0) */}
+                <div
+                  style={{
+                    padding: '9px 11px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                    gap: '8px',
+                    fontSize: '11px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🎯 โซนเข้า (Entry)</div>
+                    <div style={{ fontWeight: 700, color: '#34D399', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
+                      {currencyPrefix}{formattedEntryMin} – {formattedEntryMax}
+                    </div>
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🛑 ตัดขาดทุน (SL)</div>
+                    <div style={{ fontWeight: 700, color: '#F87171', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
+                      {currencyPrefix}{formattedSL} (-{item.riskPct}%)
+                    </div>
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🚀 เป้าแรก (TP1)</div>
+                    <div style={{ fontWeight: 700, color: '#60A5FA', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
+                      {currencyPrefix}{formattedTP1} (+{item.rewardPct}%)
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🛑 จุดตัดขาดทุน (SL)</div>
-                  <div style={{ fontWeight: 700, color: '#F87171', marginTop: '2px' }}>
-                    {currencyPrefix}{formattedSL} (-{item.riskPct}%)
+                {/* Why Buy Now Quant Bullet Points (Shows full reasons, scrollable) */}
+                <div style={{ fontSize: '11px', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--neon-green-light)', letterSpacing: '0.2px' }}>
+                    เหตุผลเชิงปริมาณ ({item.whyBuyNow.length} ข้อ):
                   </div>
-                </div>
-
-                <div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🚀 เป้าแรก (TP1)</div>
-                  <div style={{ fontWeight: 700, color: '#60A5FA', marginTop: '2px' }}>
-                    {currencyPrefix}{formattedTP1} (+{item.rewardPct}%)
-                  </div>
+                  {item.whyBuyNow.map((reason, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                      <span style={{ color: '#10B981', flexShrink: 0, marginTop: '2px', fontSize: '12px' }}>•</span>
+                      <span style={{ lineHeight: '1.45', wordBreak: 'break-word' }}>{reason}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Why Buy Now Quant Bullet Points */}
-              <div style={{ fontSize: '11px', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                {item.whyBuyNow.slice(0, 3).map((reason, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                    <span style={{ color: '#10B981', flexShrink: 0, marginTop: '1px' }}>•</span>
-                    <span style={{ lineHeight: '1.4' }}>{reason}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
+              {/* Action Buttons (Fixed at bottom - separated by border, NEVER overlaps text) */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: 'auto',
+                  paddingTop: '10px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  flexShrink: 0,
+                }}
+              >
                 <button
                   onClick={() => onSelectCoin(item.symbol)}
                   style={{
@@ -329,12 +412,12 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                     backgroundColor: 'rgba(59, 130, 246, 0.15)',
                     border: '1px solid rgba(59, 130, 246, 0.3)',
                     color: '#60A5FA',
-                    borderRadius: '6px',
-                    padding: '6px 10px',
+                    borderRadius: '7px',
+                    padding: '7px 10px',
                     fontSize: '11px',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    transition: 'all 0.15s',
+                    transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.25)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.15)')}
@@ -354,12 +437,12 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                       backgroundColor: 'rgba(16, 185, 129, 0.15)',
                       border: '1px solid rgba(16, 185, 129, 0.3)',
                       color: '#34D399',
-                      borderRadius: '6px',
-                      padding: '6px 12px',
+                      borderRadius: '7px',
+                      padding: '7px 12px',
                       fontSize: '11px',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      transition: 'all 0.15s',
+                      transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.25)')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)')}
@@ -372,7 +455,8 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

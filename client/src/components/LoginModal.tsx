@@ -225,7 +225,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
             {isLocked
               ? 'ไอพีเครื่องนี้พยายามล็อกอินผิดพลาดเกิน 3 ครั้ง'
-              : 'เข้าถึงเมนู แนะนำ Top 5 Premium, วิเคราะห์เชิงลึก, และรายการเฝ้าดู'}
+              : 'เข้าถึงเมนู Top 5 Premium, วิเคราะห์เชิงลึก, และรายการเฝ้าดู'}
           </p>
         </div>
 

@@ -1015,7 +1015,7 @@ export const Top5PremiumPage: React.FC<Top5PremiumPageProps> = ({
                 <Crown size={22} color="#FFFFFF" />
               </div>
               <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                แนะนำ Top 5 <span style={{ color: '#F59E0B' }}>Premium</span>
+                Top 5 <span style={{ color: '#F59E0B' }}>Premium</span>
               </h1>
               <span 
                 style={{

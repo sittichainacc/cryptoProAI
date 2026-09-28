@@ -7,6 +7,7 @@ import { MarketStructureEngine } from '../engines/structure.engine.js';
 import { RiskEngine } from '../engines/risk.engine.js';
 import { TradingPlanEngine } from '../engines/trading_plan.engine.js';
 import { QuantPremiumEngine, DEFAULT_PHASE20_CONFIG } from '../engines/quant_premium.engine.js';
+import { UltimateQualificationEngine, ULTIMATE_POLICY_V1 } from '../engines/ultimate_qualification.engine.js';
 
 export const apiRouter = Router();
 
@@ -637,6 +638,131 @@ apiRouter.post('/market/top5-premium/slippage-sim', (req, res) => {
   const result = QuantPremiumEngine.simulateCapitalSlippage({
     coin: coinThb,
     capitalThb: Number(capitalThb) || 50000,
+  });
+
+  res.json({ success: true, data: result });
+});
+
+/**
+ * Top 5 Ultimate — Perfect-Setup Low-Risk Opportunities
+ * Institutional Multi-Factor Decision Engine (15 Gates / 10 Pillars / No Weak Link)
+ */
+let cachedUltimateTop5: any = null;
+let lastUltimateCalcTime = 0;
+
+apiRouter.get('/market/top5-ultimate', (_req, res) => {
+  const now = Date.now();
+  if (cachedUltimateTop5 && (now - lastUltimateCalcTime < 10000)) {
+    return res.json({ success: true, data: cachedUltimateTop5 });
+  }
+
+  const allCoins = marketStore.getAllTickers();
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
+
+  const response = UltimateQualificationEngine.evaluateUniverse({
+    coins: allCoins,
+    btcTicker,
+    ethTicker,
+    kpis,
+    news,
+    usdThbRate,
+  });
+
+  cachedUltimateTop5 = response;
+  lastUltimateCalcTime = now;
+
+  res.json({ success: true, data: response });
+});
+
+apiRouter.post('/market/top5-ultimate/recalculate', (req, res) => {
+  const allCoins = marketStore.getAllTickers();
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+  const customConfig = req.body?.config || {};
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
+
+  const response = UltimateQualificationEngine.evaluateUniverse({
+    coins: allCoins,
+    btcTicker,
+    ethTicker,
+    kpis,
+    news,
+    config: customConfig,
+    usdThbRate,
+  });
+
+  cachedUltimateTop5 = response;
+  lastUltimateCalcTime = Date.now();
+
+  res.json({ success: true, data: response });
+});
+
+apiRouter.get('/market/top5-ultimate/focus/:symbol', (req, res) => {
+  const { symbol } = req.params;
+  const allCoins = marketStore.getAllTickers();
+  const coin = marketStore.getTicker(symbol);
+  if (!coin) {
+    return res.status(404).json({ success: false, error: `Coin ${symbol} not found` });
+  }
+
+  const btcTicker = marketStore.getTicker('BTC');
+  const ethTicker = marketStore.getTicker('ETH');
+  const kpis = marketStore.getMarketOverviewKPIs();
+  const news = marketStore.getNews();
+  const usdThbRate = marketStore.getUsdThbRate() || 33.39;
+
+  const coinPriceThb = Number((coin.price * usdThbRate).toFixed(coin.price * usdThbRate < 0.01 ? 6 : coin.price * usdThbRate < 1 ? 4 : 2));
+  const coinThb = {
+    ...coin,
+    price: coinPriceThb,
+    high24h: coin.high24h ? Number((coin.high24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 1.02).toFixed(2)),
+    low24h: coin.low24h ? Number((coin.low24h * usdThbRate).toFixed(2)) : Number((coinPriceThb * 0.98).toFixed(2)),
+    volume24h: (coin.volume24h || 1000000) * usdThbRate,
+  };
+
+  const btcTickerThb = btcTicker ? {
+    ...btcTicker,
+    price: Number((btcTicker.price * usdThbRate).toFixed(2)),
+  } : undefined;
+
+  const positiveCoins = allCoins.filter(c => (c.change24h || 0) > 0).length;
+  const breadthPct = allCoins.length > 0 ? Math.round((positiveCoins / allCoins.length) * 100) : 50;
+
+  const candidate = UltimateQualificationEngine.evaluateSingleAsset({
+    coin: coinThb,
+    btcTicker: btcTickerThb,
+    ethChange: ethTicker?.change24h || 0,
+    btcChange: btcTicker?.change24h || 0,
+    breadthPct,
+    kpis,
+    news,
+    config: ULTIMATE_POLICY_V1,
+    usdThbRate,
+  });
+
+  res.json({ success: true, data: candidate });
+});
+
+apiRouter.post('/market/top5-ultimate/position-sim', (req, res) => {
+  const { symbol, entryPrice, currentPrice, stopLossPrice, tp1Price, tp2Price, tp3Price } = req.body;
+  if (!symbol || !entryPrice || !currentPrice) {
+    return res.status(400).json({ success: false, error: 'Missing required parameters: symbol, entryPrice, currentPrice' });
+  }
+
+  const result = UltimateQualificationEngine.evaluateExistingPosition({
+    symbol,
+    entryPrice: Number(entryPrice),
+    currentPrice: Number(currentPrice),
+    stopLossPrice: Number(stopLossPrice || entryPrice * 0.95),
+    tp1Price: Number(tp1Price || entryPrice * 1.06),
+    tp2Price: Number(tp2Price || entryPrice * 1.12),
+    tp3Price: Number(tp3Price || entryPrice * 1.18),
   });
 
   res.json({ success: true, data: result });

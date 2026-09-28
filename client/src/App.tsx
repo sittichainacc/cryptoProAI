@@ -52,12 +52,14 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { StrategyPage } from './pages/StrategyPage.js';
 import { NewsPage } from './pages/NewsPage.js';
+import { Top5UltimatePage } from './pages/Top5UltimatePage.js';
 import { Top5PremiumPage } from './pages/Top5PremiumPage.js';
 import { Top5Page } from './pages/Top5Page.js';
 import { FocusPage } from './pages/FocusPage.js';
 import { WatchlistPage } from './pages/WatchlistPage.js';
 import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
 import { LoginModal } from './components/LoginModal.js';
+import { MobileBottomNav } from './components/MobileBottomNav.js';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -373,6 +375,40 @@ export const App: React.FC = () => {
 
   // Render Page Content based on active navigation
   const renderMainContent = () => {
+    // RESTRICTION: Non-admin users are strictly restricted to the 'Home' menu only
+    if (activeSidebarTab !== 'dashboard' && userRole !== 'admin') {
+      const getFeatureInfo = (tab: string) => {
+        switch (tab) {
+          case 'focus': return { title: 'FOCUS (เรดาร์ตรวจจับเหรียญเด่น)', desc: 'ระบบเรดาร์ตรวจจับเหรียญเด่นและสัญญาณเจาะลึก' };
+          case 'top5-ultimate': return { title: 'Top 5 Ultimate', desc: 'Institutional Multi-Factor Decision Engine ตรวจสอบ 15 ด่านเข้มงวด' };
+          case 'top5-premium': return { title: 'Top 5 Premium', desc: 'สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก' };
+          case 'top5': return { title: 'แนะนำ Top 5', desc: 'ระบบแนะนำเหรียญ AI Top 5' };
+          case 'market': return { title: 'ตลาดคริปโต (Market Overview)', desc: 'ภาพรวมตลาดและการวิเคราะห์ Real-Time Market Breadth' };
+          case 'screener': return { title: 'สแกนเหรียญ (Coin Screener)', desc: 'ระบบคัดกรองเหรียญ Multi-Filter Screener' };
+          case 'analysis': return { title: 'วิเคราะห์เชิงลึก (In-Depth Analysis)', desc: 'โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง' };
+          case 'technical': return { title: 'วิเคราะห์กราฟ (Chart & Technical Analysis)', desc: 'เครื่องมือกราฟเทคนิคอลและอินดิเคเตอร์ระดับสถาบัน' };
+          case 'signals': return { title: 'สัญญาณ AI (AI Quant Signals)', desc: 'สัญญาณอัลกอริทึม Real-Time AI Signal Feeds' };
+          case 'watchlist': return { title: 'รายการเฝ้าดู (Watchlist Tracking)', desc: 'ระบบติดตามความเคลื่อนไหวเหรียญส่วนตัว' };
+          case 'portfolio': return { title: 'วิเคราะห์พอร์ต & เสี่ยง (Portfolio & Risk)', desc: 'ระบบวิเคราะห์การจัดสรรพอร์ตและการประเมินความเสี่ยง VaR' };
+          case 'alerts': return { title: 'การแจ้งเตือน (Smart Alerts)', desc: 'ระบบแจ้งเตือนราคาและความผิดปกติของ Order Book' };
+          case 'reports': return { title: 'รายงาน & สถิติ (Reports & Analytics)', desc: 'รายงานสรุปประสิทธิภาพและการวิเคราะห์ข้อมูลเชิงสถิติ' };
+          case 'strategy': return { title: 'เครื่องมือ & กลยุทธ์ (Trading Tools & Strategies)', desc: 'เครื่องคำนวณขนาดไม้ Position Sizing และแบบจำลองกลยุทธ์' };
+          case 'settings': return { title: 'ตั้งค่าระบบ (System Settings)', desc: 'การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys' };
+          case 'news': return { title: 'ข่าวสาร & Sentiment (Crypto News)', desc: 'ฟีดข่าวสารกรองพิเศษและการวิเคราะห์ Sentiment' };
+          default: return { title: 'ฟีเจอร์ระดับ Admin', desc: 'ส่วนนี้สงวนสิทธิ์เฉพาะผู้ดูแลระบบ' };
+        }
+      };
+      const info = getFeatureInfo(activeSidebarTab);
+      return (
+        <PermissionDeniedGuard
+          featureTitle={info.title}
+          description={`${info.desc} สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น — ผู้ใช้งานทั่วไปสามารถใช้งานหน้า Home ได้ตามปกติ`}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+          onGoBack={() => setActiveSidebarTab('dashboard')}
+        />
+      );
+    }
+
     switch (activeSidebarTab) {
       case 'focus':
         return (
@@ -386,11 +422,19 @@ export const App: React.FC = () => {
             allCoins={allCoins}
           />
         );
+      case 'top5-ultimate':
+        return (
+          <Top5UltimatePage
+            currency={currency}
+            onSelectCoin={handleSelectCoin}
+            onOpenAnalysis={handleOpenAnalysis}
+          />
+        );
       case 'top5-premium':
         if (userRole !== 'admin') {
           return (
             <PermissionDeniedGuard
-              featureTitle="แนะนำ Top 5 Premium"
+              featureTitle="Top 5 Premium"
               description="สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
@@ -560,6 +604,26 @@ export const App: React.FC = () => {
               onViewAllWatchlist={() => setActiveSidebarTab('watchlist')}
             />
 
+            {/* Complete Crypto Ranking Table - Section 7 */}
+            <CollapsibleSection
+              id="coin_ranking"
+              title="ตารางจัดอันดับเหรียญคริปโตทั้งหมด (Crypto Screener & Ranking)"
+              subtitle="ข้อมูลสตรีมมิ่งสด 100% พร้อมตัวชี้วัดทางเทคนิค RSI, EMA, AI Score และสัญญาณการลงทุน"
+              badge={`${allCoins.length} เหรียญ`}
+              badgeColor="var(--neon-green)"
+              icon={<BarChart3 size={18} color="var(--neon-green)" />}
+              defaultOpen={true}
+            >
+              <CoinRankingTable
+                coins={allCoins}
+                onSelectCoin={handleSelectCoin}
+                onToggleWatchlist={handleToggleWatchlist}
+                currency={currency}
+                hideCardWrapper={true}
+                watchlist={watchlist}
+              />
+            </CollapsibleSection>
+
             {/* Special Module: Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ (ซ่อนอัตโนมัติหากไม่มีเหรียญผ่านเกณฑ์) */}
             <Top5BuyNowWidget
               candidates={buyNowCandidates}
@@ -655,26 +719,6 @@ export const App: React.FC = () => {
                 hideHeader={true}
               />
             </CollapsibleSection>
-
-            {/* Row 6: Complete Crypto Ranking Table - Section 7 */}
-            <CollapsibleSection
-              id="coin_ranking"
-              title="ตารางจัดอันดับเหรียญคริปโตทั้งหมด (Crypto Screener & Ranking)"
-              subtitle="ข้อมูลสตรีมมิ่งสด 100% พร้อมตัวชี้วัดทางเทคนิค RSI, EMA, AI Score และสัญญาณการลงทุน"
-              badge={`${allCoins.length} เหรียญ`}
-              badgeColor="var(--neon-green)"
-              icon={<BarChart3 size={18} color="var(--neon-green)" />}
-              defaultOpen={true}
-            >
-              <CoinRankingTable
-                coins={allCoins}
-                onSelectCoin={handleSelectCoin}
-                onToggleWatchlist={handleToggleWatchlist}
-                currency={currency}
-                hideCardWrapper={true}
-                watchlist={watchlist}
-              />
-            </CollapsibleSection>
           </>
         );
     }
@@ -697,6 +741,9 @@ export const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        userRole={userRole}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       {/* Main Content Viewport */}
@@ -759,6 +806,7 @@ export const App: React.FC = () => {
           {/* Admin Mode Telemetry Banner */}
           {userRole === 'admin' && (
             <div
+              className="admin-telemetry-banner"
               style={{
                 marginBottom: '16px',
                 padding: '10px 16px',
@@ -769,9 +817,11 @@ export const App: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 fontSize: '12.5px',
+                flexWrap: 'wrap',
+                gap: '10px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '15px' }}>⚡</span>
                 <span style={{ fontWeight: 700, color: '#A78BFA' }}>โหมดผู้ดูแลระบบ (Admin Mode):</span>
                 <span style={{ color: '#CBD5E1' }}>
@@ -781,8 +831,8 @@ export const App: React.FC = () => {
               <button
                 onClick={handleManualSync}
                 disabled={isSyncing}
-                className="btn-secondary"
-                style={{ padding: '4px 12px', fontSize: '11.5px', backgroundColor: 'rgba(139, 92, 246, 0.2)', borderColor: '#8B5CF6' }}
+                className="btn-secondary admin-telemetry-sync-btn"
+                style={{ padding: '4px 12px', fontSize: '11.5px', backgroundColor: 'rgba(139, 92, 246, 0.2)', borderColor: '#8B5CF6', whiteSpace: 'nowrap' }}
               >
                 {isSyncing ? 'กำลังซิงค์...' : '🔄 ซิงค์ข้อมูล Bitkub/Binance เดี๋ยวนี้'}
               </button>
@@ -825,6 +875,10 @@ export const App: React.FC = () => {
         onNavigateToAnalysis={(sym) => {
           handleSelectCoin(sym);
           setActiveSidebarTab('analysis');
+        }}
+        onNavigateToTop5Ultimate={(sym) => {
+          if (sym) handleSelectCoin(sym);
+          setActiveSidebarTab('top5-ultimate');
         }}
         onNavigateToTop5Premium={(sym) => {
           if (sym) handleSelectCoin(sym);
@@ -870,6 +924,16 @@ export const App: React.FC = () => {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Mobile Bottom Navigation Bar (Visible only on mobile devices <=768px) */}
+      <MobileBottomNav
+        activeTab={activeSidebarTab}
+        onSelectTab={handleSidebarNavigation}
+        onToggleMobileMenu={() => setIsMobileSidebarOpen((prev) => !prev)}
+        onToggleFocusSidebar={() => setIsFocusSidebarOpen((prev) => !prev)}
+        isFocusSidebarOpen={isFocusSidebarOpen}
+        recommendationCount={buyNowCandidates.length || 5}
       />
     </div>
   );

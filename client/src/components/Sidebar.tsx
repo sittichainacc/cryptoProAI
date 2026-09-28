@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+  Home,
   LayoutDashboard, 
   TrendingUp, 
   ScanLine, 
@@ -19,7 +20,10 @@ import {
   Activity,
   Award,
   Crown,
-  Target
+  Target,
+  Gem,
+  Lock,
+  X,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +32,9 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+  userRole?: 'admin' | 'analyst' | 'investor';
+  onOpenLogin?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -36,11 +43,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   setIsCollapsed,
   isMobileOpen = false,
+  onCloseMobile,
+  userRole = 'analyst',
+  onOpenLogin,
 }) => {
   const menuItems = [
-    { id: 'dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Home', icon: Home },
     { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE' },
-    { id: 'top5-premium', label: 'แนะนำ top 5 Premium', icon: Crown, badge: 'PRO' },
+    { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW' },
+    { id: 'top5-premium', label: 'Top 5 Premium', icon: Award, badge: 'PRO' },
     { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI' },
     { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
@@ -64,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={isMobileOpen ? '' : 'sidebar-mobile-hidden'}
+      className={`app-sidebar ${isMobileOpen ? 'is-mobile-open' : 'sidebar-mobile-hidden'}`}
       style={{
         width: isCollapsed && !isMobileOpen ? '72px' : '250px',
         backgroundColor: 'var(--bg-sidebar)',
@@ -76,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         height: '100vh',
         position: 'sticky',
         top: 0,
-        zIndex: 40,
+        zIndex: 90,
         overflowY: 'auto',
         overflowX: 'hidden',
       }}
@@ -87,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           padding: '20px 16px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: isCollapsed ? 'center' : 'space-between',
+          justifyContent: isCollapsed && !isMobileOpen ? 'center' : 'space-between',
           borderBottom: '1px solid var(--border-color)',
         }}
       >
@@ -107,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Sparkles size={20} color="#FFFFFF" />
           </div>
-          {!isCollapsed && (
+          {(!isCollapsed || isMobileOpen) && (
             <div>
               <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '-0.3px', color: '#FFFFFF' }}>
                 CryptoPro <span style={{ color: 'var(--neon-cyan)' }}>AI</span>
@@ -119,25 +130,110 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-secondary)',
-            borderRadius: '6px',
-            width: '26px',
-            height: '26px',
-            display: isCollapsed ? 'none' : 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-          title={isCollapsed ? 'ขยายแถบเมนู' : 'ย่อแถบเมนู'}
-        >
-          <ChevronLeft size={16} />
-        </button>
+        {isMobileOpen ? (
+          <button
+            onClick={onCloseMobile}
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#F87171',
+              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title="ปิดเมนู"
+          >
+            <X size={18} />
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-secondary)',
+              borderRadius: '6px',
+              width: '26px',
+              height: '26px',
+              display: isCollapsed ? 'none' : 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+            title={isCollapsed ? 'ขยายแถบเมนู' : 'ย่อแถบเมนู'}
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
+
+      {/* Mobile User Role Banner */}
+      {isMobileOpen && (
+        <div
+          style={{
+            padding: '10px 14px',
+            margin: '10px 12px 2px',
+            borderRadius: '10px',
+            backgroundColor: userRole === 'admin' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+            border: userRole === 'admin' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: userRole === 'admin' ? '#F59E0B' : 'rgba(255, 255, 255, 0.1)',
+                color: userRole === 'admin' ? '#000' : '#FFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '11px',
+                fontWeight: 800,
+              }}
+            >
+              {userRole === 'admin' ? '👑' : '👤'}
+            </div>
+            <div>
+              <div style={{ fontSize: '11.5px', fontWeight: 800, color: userRole === 'admin' ? '#FDE047' : '#FFF' }}>
+                {userRole === 'admin' ? 'Admin Mode' : 'Guest / Analyst'}
+              </div>
+              <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
+                {userRole === 'admin' ? 'เข้าถึงได้ทุกฟังก์ชัน' : 'เข้าถึงเฉพาะหน้า Home'}
+              </div>
+            </div>
+          </div>
+          {userRole !== 'admin' && onOpenLogin && (
+            <button
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+                onOpenLogin();
+              }}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                border: '1px solid #F59E0B',
+                color: '#FDE047',
+                fontSize: '10.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              ล็อกอิน
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Navigation Menu */}
       <div
@@ -153,31 +249,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const isHome = item.id === 'dashboard';
+          const isLocked = userRole !== 'admin' && !isHome;
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                if (onCloseMobile) onCloseMobile();
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
                 width: '100%',
-                padding: isCollapsed ? '12px 0' : '10px 14px',
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                padding: isCollapsed && !isMobileOpen ? '12px 0' : '11px 14px',
+                justifyContent: isCollapsed && !isMobileOpen ? 'center' : 'flex-start',
                 borderRadius: '10px',
-                border: 'none',
+                border: isHome
+                  ? (isActive ? '1px solid rgba(245, 158, 11, 0.7)' : '1px solid rgba(245, 158, 11, 0.35)')
+                  : (isActive ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'),
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
-                backgroundColor: isActive
-                  ? 'rgba(59, 130, 246, 0.18)'
-                  : 'transparent',
-                color: isActive ? '#60A5FA' : 'var(--text-secondary)',
-                fontWeight: isActive ? 700 : 500,
+                background: isHome
+                  ? (isActive
+                      ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.18))'
+                      : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(180, 83, 9, 0.04))')
+                  : (isActive
+                      ? 'rgba(59, 130, 246, 0.18)'
+                      : 'transparent'),
+                color: isHome
+                  ? (isActive ? '#FDE047' : '#FBBF24')
+                  : (isActive ? '#60A5FA' : 'var(--text-secondary)'),
+                fontWeight: isHome ? 800 : (isActive ? 700 : 500),
                 fontSize: '13.5px',
                 position: 'relative',
-                boxShadow: isActive ? 'inset 0 0 12px rgba(59, 130, 246, 0.25)' : 'none',
+                opacity: isLocked && !isActive ? 0.72 : 1,
+                boxShadow: isHome
+                  ? (isActive
+                      ? '0 0 16px rgba(245, 158, 11, 0.35), inset 0 0 12px rgba(245, 158, 11, 0.2)'
+                      : '0 2px 10px rgba(245, 158, 11, 0.12), inset 0 0 6px rgba(245, 158, 11, 0.05)')
+                  : (isActive ? 'inset 0 0 12px rgba(59, 130, 246, 0.25)' : 'none'),
               }}
-              title={isCollapsed ? item.label : undefined}
+              title={isCollapsed ? `${item.label}${isLocked ? ' (เฉพาะ Admin)' : ''}` : (isLocked ? `${item.label} (เฉพาะ Admin)` : undefined)}
             >
               {isActive && (
                 <div
@@ -187,16 +301,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     top: '18%',
                     bottom: '18%',
                     width: '3.5px',
-                    backgroundColor: 'var(--neon-cyan)',
+                    backgroundColor: isHome ? '#F59E0B' : 'var(--neon-cyan)',
                     borderRadius: '0 4px 4px 0',
-                    boxShadow: '0 0 8px var(--neon-cyan)',
+                    boxShadow: isHome ? '0 0 10px #F59E0B, 0 0 4px #FDE047' : '0 0 8px var(--neon-cyan)',
                   }}
                 />
               )}
-              <Icon size={18} color={isActive ? 'var(--neon-cyan)' : 'currentColor'} />
+              <Icon 
+                size={18} 
+                color={isHome ? (isActive ? '#FDE047' : '#F59E0B') : (isActive ? 'var(--neon-cyan)' : 'currentColor')} 
+                style={isHome ? { filter: isActive ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.4))' } : undefined}
+              />
               {!isCollapsed && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
-                  <span>{item.label}</span>
+                  <span style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    color: isHome ? (isActive ? '#FDE047' : '#FBBF24') : undefined,
+                    letterSpacing: isHome ? '0.4px' : undefined 
+                  }}>
+                    {item.label}
+                    {isHome && (
+                      <Sparkles 
+                        size={12} 
+                        color={isActive ? '#FDE047' : '#F59E0B'} 
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))' }} 
+                      />
+                    )}
+                  </span>
                   {'badge' in item && item.badge && (
                     <span
                       style={{
@@ -204,17 +337,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         fontWeight: 800,
                         padding: '1px 6px',
                         borderRadius: '6px',
-                        background: item.id === 'focus' 
+                        background: item.id === 'top5-ultimate'
+                          ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.35), rgba(168, 85, 247, 0.35))'
+                          : item.id === 'focus' 
                           ? 'rgba(16, 185, 129, 0.2)' 
                           : item.id === 'top5-premium'
                           ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(168, 85, 247, 0.3))'
                           : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
-                        color: item.id === 'focus' 
+                        color: item.id === 'top5-ultimate'
+                          ? '#38BDF8'
+                          : item.id === 'focus' 
                           ? '#34D399' 
                           : item.id === 'top5-premium'
                           ? '#FDE047'
                           : '#FBBF24',
-                        border: item.id === 'focus' 
+                        border: item.id === 'top5-ultimate'
+                          ? '1px solid rgba(34, 211, 238, 0.6)'
+                          : item.id === 'focus' 
                           ? '1px solid rgba(16, 185, 129, 0.4)' 
                           : item.id === 'top5-premium'
                           ? '1px solid rgba(245, 158, 11, 0.6)'
@@ -223,9 +362,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px',
-                        boxShadow: item.id === 'top5-premium' ? '0 0 10px rgba(245, 158, 11, 0.35)' : 'none'
+                        boxShadow: item.id === 'top5-ultimate' 
+                          ? '0 0 10px rgba(6, 182, 212, 0.45)' 
+                          : item.id === 'top5-premium' 
+                          ? '0 0 10px rgba(245, 158, 11, 0.35)' 
+                          : 'none'
                       }}
                     >
+                      {item.id === 'top5-ultimate' && <Gem size={9} color="#38BDF8" />}
                       {item.id === 'top5-premium' && <Sparkles size={9} color="#FDE047" />}
                       {item.id === 'focus' && (
                         <span
@@ -242,9 +386,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {item.badge}
                     </span>
                   )}
+                  {isLocked && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#94A3B8',
+                        opacity: 0.75,
+                        marginLeft: 'auto',
+                      }}
+                      title="เฉพาะ Admin"
+                    >
+                      <Lock size={12} />
+                    </span>
+                  )}
                 </div>
               )}
-              {isCollapsed && item.id === 'focus' && (
+              {isCollapsed && isLocked && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    opacity: 0.65,
+                  }}
+                  title="เฉพาะ Admin"
+                >
+                  <Lock size={9} color="#94A3B8" />
+                </div>
+              )}
+              {isCollapsed && item.id === 'focus' && !isLocked && (
                 <span
                   className="live-green-pulse"
                   style={{

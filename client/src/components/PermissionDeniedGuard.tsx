@@ -149,7 +149,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
-              { text: 'แนะนำ Top 5 Premium (สูตรอัลกอริทึม 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก)', active: featureTitle.includes('Top 5 Premium') },
+              { text: 'Top 5 Premium (สูตรอัลกอริทึม 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก)', active: featureTitle.includes('Top 5 Premium') },
               { text: 'วิเคราะห์เชิงลึก (โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix)', active: featureTitle.includes('วิเคราะห์เชิงลึก') },
               { text: 'รายการเฝ้าดู (Watchlist & Real-time Institutional Tracking)', active: featureTitle.includes('เฝ้าดู') || featureTitle.includes('Watchlist') },
               { text: 'วิเคราะห์พอร์ต & เสี่ยง (Portfolio Risk & VaR Stress Test)', active: featureTitle.includes('พอร์ต') },

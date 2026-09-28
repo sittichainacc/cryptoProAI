@@ -1036,26 +1036,30 @@ export const Top5Page: React.FC<Top5PageProps> = ({
 
                   {/* Why Top 5 Quant Bullet Points & AI Summary */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.015)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.015)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                         <CheckCircle2 size={13} color="var(--neon-green)" />
                         <span>เหตุผลเชิงปริมาณที่ติด Top Overall (Section 35):</span>
                       </div>
-                      <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '11.5px', color: '#CBD5E1', lineHeight: 1.55 }}>
-                        {coin.whyTop5.map((reason, idx) => (
-                          <li key={idx}>{reason}</li>
-                        ))}
-                      </ul>
+                      <div className="custom-large-scrollbar" style={{ maxHeight: '140px', overflowY: 'auto', paddingRight: '6px' }}>
+                        <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '11.5px', color: '#CBD5E1', lineHeight: 1.55 }}>
+                          {coin.whyTop5.map((reason, idx) => (
+                            <li key={idx} style={{ marginBottom: '4px' }}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
 
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.015)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.015)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '11px', fontWeight: 800, color: '#C084FC', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                         <Sparkles size={13} color="#C084FC" />
                         <span>บทวิเคราะห์สรุป AI (Quantitative Explanation Only - Section 58):</span>
                       </div>
-                      <p style={{ margin: 0, fontSize: '11.5px', color: '#94A3B8', lineHeight: 1.55 }}>
-                        {coin.aiSummaryTh}
-                      </p>
+                      <div className="custom-large-scrollbar" style={{ maxHeight: '140px', overflowY: 'auto', paddingRight: '6px' }}>
+                        <p style={{ margin: 0, fontSize: '11.5px', color: '#94A3B8', lineHeight: 1.55 }}>
+                          {coin.aiSummaryTh}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

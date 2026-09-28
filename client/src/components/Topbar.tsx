@@ -162,6 +162,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
   return (
     <header
+      className="app-topbar"
       style={{
         height: '68px',
         backgroundColor: 'var(--bg-header)',
@@ -179,7 +180,7 @@ export const Topbar: React.FC<TopbarProps> = ({
       }}
     >
       {/* Left / Center: Hamburger (mobile) + Top Navigation Tabs */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
+      <nav className="topbar-left-nav" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
         {/* Mobile hamburger menu button — visible only on ≤768px via CSS */}
         <button
           className="mobile-menu-btn"
@@ -188,6 +189,29 @@ export const Topbar: React.FC<TopbarProps> = ({
         >
           <Menu size={18} />
         </button>
+
+        {/* Mobile Brand Title — visible on ≤768px */}
+        <div className="mobile-brand-title" style={{ display: 'none', alignItems: 'center', gap: '6px' }}>
+          <div
+            style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '7px',
+              background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 10px rgba(6, 182, 212, 0.4)',
+              flexShrink: 0,
+            }}
+          >
+            <Sparkles size={14} color="#FFFFFF" />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '-0.2px', color: '#FFFFFF' }}>
+            CryptoPro <span style={{ color: 'var(--neon-cyan)' }}>AI</span>
+          </span>
+        </div>
+
         <div
           className="topbar-desktop-nav"
           style={{
@@ -303,11 +327,11 @@ export const Topbar: React.FC<TopbarProps> = ({
           >
 
 
-            <Search size={16} color="var(--text-muted)" style={{ marginRight: '8px', flexShrink: 0 }} />
+            <Search size={16} color="var(--text-muted)" style={{ marginRight: '6px', flexShrink: 0 }} />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="ค้นหาเหรียญ (เช่น BTC, SOL...)"
+              placeholder="ค้นหา..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
@@ -318,13 +342,15 @@ export const Topbar: React.FC<TopbarProps> = ({
                 border: 'none',
                 outline: 'none',
                 color: 'var(--text-primary)',
-                fontSize: '12.5px',
+                fontSize: '12px',
                 width: '100%',
                 fontFamily: 'inherit',
+                minWidth: '35px',
               }}
             />
             {!searchQuery && (
               <span
+                className="topbar-search-shortcut-badge"
                 style={{
                   fontSize: '9.5px',
                   color: 'var(--text-muted)',
@@ -442,6 +468,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
         {/* Currency Switcher */}
         <div
+          className="topbar-currency-switcher"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -453,6 +480,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         >
           <button
             onClick={() => setCurrency('THB')}
+            className="topbar-currency-btn"
             style={{
               background: currency === 'THB' ? 'var(--neon-blue)' : 'transparent',
               color: currency === 'THB' ? '#FFFFFF' : 'var(--text-secondary)',
@@ -469,6 +497,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           </button>
           <button
             onClick={() => setCurrency('USDT')}
+            className="topbar-currency-btn"
             style={{
               background: currency === 'USDT' ? 'var(--neon-blue)' : 'transparent',
               color: currency === 'USDT' ? '#FFFFFF' : 'var(--text-secondary)',
@@ -539,6 +568,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
         {/* Dark/Light Mode toggle */}
         <button
+          className="topbar-theme-toggle-btn"
           onClick={() => {
             const next = !isDark;
             setIsDark(next);
@@ -570,6 +600,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* Notifications */}
         <div style={{ position: 'relative' }}>
           <button
+            className="topbar-bell-btn"
             onClick={() => setShowNotifications(!showNotifications)}
             style={{
               background: showNotifications ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.04)',
@@ -613,11 +644,13 @@ export const Topbar: React.FC<TopbarProps> = ({
           {/* Notifications Dropdown Popover */}
           {showNotifications && (
             <div
+              className="topbar-notifications-popover"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
                 right: 0,
                 width: '340px',
+                maxWidth: 'calc(100vw - 24px)',
                 backgroundColor: '#0F172A',
                 border: '1px solid rgba(59, 130, 246, 0.35)',
                 borderRadius: '12px',
@@ -810,6 +843,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           onOpenLogin && (
             <button
               onClick={onOpenLogin}
+              className="topbar-admin-login-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -828,11 +862,12 @@ export const Topbar: React.FC<TopbarProps> = ({
               title="เข้าสู่ระบบ Admin เพื่อเข้าถึงส่วนที่จำกัดสิทธิ์"
             >
               <Shield size={13} color="#F59E0B" />
-              <span>เข้าสู่ระบบ Admin</span>
+              <span className="topbar-admin-login-text">เข้าสู่ระบบ Admin</span>
             </button>
           )
         ) : (
           <div
+            className="topbar-admin-status-badge"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -848,7 +883,7 @@ export const Topbar: React.FC<TopbarProps> = ({
             title="เข้าสู่ระบบในฐานะ Admin เรียบร้อยแล้ว"
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-            <span>ADMINISTRATOR</span>
+            <span className="topbar-admin-status-text">ADMINISTRATOR</span>
           </div>
         )}
 

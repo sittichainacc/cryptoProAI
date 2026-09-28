@@ -1675,5 +1675,308 @@ export interface SlippageSimulationResult {
   tier: string;
 }
 
+// ==========================================
+// PHASE 21: TOP 5 ULTIMATE QUANT ARCHITECTURE
+// (10 Pillars / 15 Critical Gates / No Weak Link)
+// ==========================================
+
+export type UltimateState = 
+  | 'ULTIMATE_PERFECT'   // 🟣 ทุกด้านผ่าน + Entry Ready
+  | 'ULTIMATE_READY'     // 🟢 ทุกด้านผ่าน แต่มี minor caution
+  | 'ULTIMATE_WATCH'     // 🟡 คุณภาพผ่าน แต่ Entry ยังไม่เหมาะ
+  | 'ULTIMATE_REJECTED'  // ⚪ มีอย่างน้อยหนึ่ง Pillar ไม่ผ่าน
+  | 'ULTIMATE_BLOCKED';  // 🔴 Critical Risk / Extreme Crash
+
+export interface UltimatePolicyConfig {
+  policyVersion: string;
+  minPillarScore: number;
+  criticalGateCount: number;
+  minRiskReward: number;
+  maxSlippageLimitPct: number;
+  maxSpreadBps: number;
+  safetyMarginBps: number;
+  maxRiskScore: number;
+  maxPortfolioCorrelation: number;
+  signalTtlSeconds: number;
+  maxCandidateLimit: number;
+}
+
+export interface UltimateGateResult {
+  id: string;
+  gateIndex: number;
+  name: string;
+  nameTh: string;
+  passed: boolean;
+  score: number;
+  detailTh: string;
+  pillar: string;
+  isCritical: boolean;
+}
+
+export interface UltimatePillarScore {
+  name: string;
+  nameTh: string;
+  score: number;
+  passed: boolean;
+  statusText: string;
+  keyMetrics: Record<string, string | number>;
+  highlights: string[];
+  cautions: string[];
+}
+
+export interface Ultimate10Pillars {
+  marketRegime: UltimatePillarScore & {
+    regimeType: string;
+    confidence: number;
+    btcAligned: boolean;
+    ethAligned: boolean;
+    breadthPositive: boolean;
+    liquidityHealthy: boolean;
+    volatilityAcceptable: boolean;
+    hmmProbabilities: { bull: number; sideways: number; bear: number };
+  };
+  technicalStructure: UltimatePillarScore & {
+    timeframes: {
+      tf5m: { trend: string; rsi: number; status: string };
+      tf15m: { trend: string; rsi: number; status: string };
+      tf1h: { trend: string; rsi: number; status: string };
+      tf4h: { trend: string; rsi: number; status: string };
+      tf1d: { trend: string; rsi: number; status: string };
+      tf1w: { trend: string; rsi: number; status: string };
+    };
+    emaAlignment: 'BULLISH_STACK' | 'NEUTRAL' | 'BEARISH_STACK';
+    bosChochStatus: string;
+    donchianChannelState: string;
+    bollingerCompression: 'SQUEEZE' | 'EXPANSION' | 'NORMAL';
+    vwapRelation: string;
+    relativeVolume: number;
+  };
+  momentumRelativeStrength: UltimatePillarScore & {
+    returns: { d1: number; d3: number; d7: number; d14: number; d28: number };
+    accelerationState: 'HEALTHY_ACCELERATION' | 'STEADY_CLIMB' | 'OVEREXTENDED_FOMO' | 'DECELERATING';
+    btcRelativeStrengthPct: number;
+    ethRelativeStrengthPct: number;
+    sectorRank: string;
+    bitkubMomentumPercentile: string;
+    globalRank: string;
+  };
+  orderFlowMicrostructure: UltimatePillarScore & {
+    cvdDirection: 'ACCUMULATION' | 'DISTRIBUTION' | 'NEUTRAL';
+    aggressiveBuyPct: number;
+    aggressiveSellPct: number;
+    orderBookImbalance: number;
+    micropricePremiumBps: number;
+    vpinToxicity: 'NORMAL' | 'ELEVATED' | 'TOXIC';
+    bidWallThb: number;
+    sellWallThb: number;
+    absorptionState: string;
+    bitkubFlow: 'BUY' | 'NEUTRAL' | 'SELL';
+    globalFlow: 'BUY' | 'NEUTRAL' | 'SELL';
+    flowConfirmation: boolean;
+    divergenceWarning: string | null;
+  };
+  liquidityExecution: UltimatePillarScore & {
+    spreadBps: number;
+    spreadPct: number;
+    depthPlusMinus05Thb: number;
+    depthPlusMinus10Thb: number;
+    expectedSlippagePct: number;
+    marketImpactBps: number;
+    allInRoundtripCostBps: number;
+    fillProbabilityPct: number;
+    maxSafeOrderThb: number;
+    localPremiumPct: number;
+  };
+  fundamentalOnChain: UltimatePillarScore & {
+    networkActivityStatus: string;
+    activeAddressesChange24hPct: number;
+    exchangeNetFlow: 'NET_OUTFLOW_ACCUMULATION' | 'BALANCED' | 'NET_INFLOW_DEPOSIT';
+    mvrvRatio: number;
+    whaleAccumulationState: string;
+    protocolRevenueTrend: string;
+    valuationContext: string;
+  };
+  tokenomics: UltimatePillarScore & {
+    circulatingSupplyPct: number;
+    fdvThb: number;
+    annualInflationPct: number;
+    nextMajorUnlockDays: number;
+    nextMajorUnlockPct: number;
+    unlockRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    vestingStatus: string;
+    insiderConcentration: string;
+  };
+  newsCatalystIntelligence: UltimatePillarScore & {
+    sentimentState: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+    catalystState: string;
+    priceInPct: number;
+    recentEvents: { title: string; impact: 'HIGH' | 'MEDIUM' | 'LOW'; freshness: string; type: string }[];
+    criticalNegativeEvents: string[];
+    hasCriticalRisk: boolean;
+  };
+  riskSafety: UltimatePillarScore & {
+    safetyScore: number;
+    riskScore: number;
+    tailRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    drawdownRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    liquidityRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    extensionRiskLevel: 'NORMAL' | 'SLIGHT_EXTENSION' | 'EXTREME_EXTENSION';
+    fundingCrowdingLevel: 'NORMAL' | 'CROWDED_LONG' | 'CROWDED_SHORT';
+    cvar95Pct: number;
+  };
+  entryQuality: UltimatePillarScore & {
+    entryDecision: 'ENTRY_READY' | 'WAIT_FOR_PULLBACK' | 'WAIT_FOR_BREAKOUT' | 'CHASE_WARNING';
+    entryDecisionLabelTh: string;
+    entryZone: { min: number; max: number; preferred: number };
+    doNotChaseAbove: number;
+    stopLossPrice: number;
+    invalidationReasonTh: string;
+    target1: { price: number; gainPct: number; actionTh: string };
+    target2: { price: number; gainPct: number; actionTh: string };
+    target3: { price: number; gainPct: number; actionTh: string };
+    riskRewardRatio: number;
+    expectedHoldingPeriodTh: string;
+    tradableEdgeBps: number;
+  };
+}
+
+export interface UltimateScenarioPlan {
+  bullCase: {
+    probabilityPct: number;
+    targetPrice: number;
+    expectedReturnPct: number;
+    triggerDescriptionTh: string;
+  };
+  baseCase: {
+    probabilityPct: number;
+    targetPrice: number;
+    expectedReturnPct: number;
+    triggerDescriptionTh: string;
+  };
+  bearCase: {
+    probabilityPct: number;
+    invalidationPrice: number;
+    expectedLossPct: number;
+    triggerDescriptionTh: string;
+  };
+}
+
+export interface SetupInvalidationTriggers {
+  triggers: {
+    id: string;
+    conditionTh: string;
+    currentObservedValue: string;
+    invalidationThreshold: string;
+    impactDescriptionTh: string;
+  }[];
+}
+
+export interface SimulatedPositionEvaluation {
+  userEntryPrice: number;
+  currentPrice: number;
+  pnlPct: number;
+  pnlAmountThb: number;
+  status: 'HOLD' | 'TAKE_PARTIAL_PROFIT' | 'PROTECT_PROFIT' | 'EXIT' | 'INVALIDATED';
+  statusLabelTh: string;
+  thesisHealthScore: number;
+  profitProtectionActive: boolean;
+  trailingStopPrice: number;
+  nextTargetPrice: number;
+  actionNowTh: string;
+  guidanceNotesTh: string[];
+}
+
+export interface PortfolioGuardReport {
+  totalUltimateOpportunitiesFound: number;
+  recommendedPortfolioSymbols: string[];
+  withheldSymbols: {
+    symbol: string;
+    reasonTh: string;
+    correlatedWith: string;
+    correlationScore: number;
+    sector: string;
+  }[];
+  portfolioDiversificationScore: number;
+  maxCorrelationObserved: number;
+  summaryTh: string;
+}
+
+export interface UltimateCandidate {
+  rank: number;
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  change7d: number;
+  volume24h: number;
+  sector: string;
+  state: UltimateState;
+  stateBadge: { label: string; color: string; bg: string; icon: string; descriptionTh: string };
+  ultimateScore: number;
+  safetyScore: number;
+  confidencePct: number;
+  lowestPillarScore: { name: string; score: number };
+  gates: UltimateGateResult[];
+  passedGatesCount: number;
+  totalGatesCount: number;
+  isUltimateEligible: boolean;
+  pillars: Ultimate10Pillars;
+  whyNowTh: string;
+  keyDriversTh: string[];
+  riskWarningsTh: string[];
+  entryPlan: {
+    status: 'ENTRY_READY' | 'WAIT_FOR_PULLBACK' | 'WAIT_FOR_BREAKOUT';
+    statusLabelTh: string;
+    entryZone: { min: number; max: number; preferred: number };
+    doNotChaseAbove: number;
+    stopLossPrice: number;
+    target1: number;
+    target2: number;
+    target3: number;
+    riskRewardRatio: number;
+    holdingPeriodTh: string;
+    tradableEdgeBps: number;
+    maxSafeOrderThb: number;
+  };
+  scenarios: UltimateScenarioPlan;
+  whatChangesMyMind: SetupInvalidationTriggers;
+  simulatedPosition: SimulatedPositionEvaluation;
+  signalGeneratedAt: string;
+  signalValidUntil: string;
+  ttlSecondsRemaining: number;
+}
+
+export interface UltimateEvaluationResponse {
+  scoreRunId: string;
+  policyVersion: string;
+  timestamp: string;
+  denominatedCurrency: 'THB';
+  usdThbRate: number;
+  marketStatus: {
+    regime: string;
+    regimeLabelTh: string;
+    riskLevel: 'LOW' | 'NORMAL' | 'HIGH' | 'EXTREME';
+    liquidityState: 'HEALTHY' | 'NORMAL' | 'STRESSED';
+    btcStructure: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+    breadthPct: number;
+    totalCoinsEvaluated: number;
+    ultimateEligibleCount: number;
+    isMarketBlocked: boolean;
+    blockReasonTh?: string;
+  };
+  status: 'SUCCESS' | 'NO_ULTIMATE_OPPORTUNITY' | 'MARKET_CRITICAL_BLOCKED';
+  statusMessageTh: string;
+  candidates: UltimateCandidate[];
+  portfolioGuard: PortfolioGuardReport;
+  universeGateStats: {
+    totalEvaluated: number;
+    passed15Gates: number;
+    rejectedGateSummary: Record<string, number>;
+  };
+  signalTtlSeconds: number;
+  expiresAt: string;
+}
+
+
 
 

@@ -49,6 +49,7 @@ interface FocusRightSidebarProps {
   currency: 'THB' | 'USDT';
   buyCandidates?: BuyNowCandidateItem[];
   onNavigateToAnalysis?: (symbol: string) => void;
+  onNavigateToTop5Ultimate?: (symbol?: string) => void;
   onNavigateToTop5Premium?: (symbol?: string) => void;
   onNavigateToTop5?: (symbol?: string) => void;
   userRole?: 'admin' | 'analyst' | 'investor';
@@ -69,6 +70,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
   currency,
   buyCandidates: initialBuyCandidates = [],
   onNavigateToAnalysis,
+  onNavigateToTop5Ultimate,
   onNavigateToTop5Premium,
   onNavigateToTop5,
   userRole = 'analyst',
@@ -159,6 +161,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
     return (
       <button
         onClick={onToggleOpen}
+        className="focus-floating-trigger"
         style={{
           position: 'fixed',
           right: 0,
@@ -232,6 +235,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
   // 2. Expanded / Collapsed Drawer
   return (
     <aside
+      className="focus-right-sidebar"
       style={{
         width: isCollapsed ? '68px' : '350px',
         backgroundColor: '#0B1120',
@@ -274,7 +278,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
               flexShrink: 0,
             }}
             onClick={() => onNavigateToTop5Premium && onNavigateToTop5Premium()}
-            title="เปิดหน้าจอ แนะนำ Top 5 Premium"
+            title="เปิดหน้าจอ Top 5 Premium"
           >
             <Crown size={17} color="#FFFFFF" />
           </div>
@@ -366,21 +370,24 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
             {isCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
 
-          {!isPinned && !isCollapsed && (
-            <button
-              onClick={onToggleOpen}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '4px',
-              }}
-              title="ปิดแถบแนะนำ"
-            >
-              <X size={16} />
-            </button>
-          )}
+          <button
+            onClick={onToggleOpen}
+            className="focus-close-btn"
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '5px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="ปิดแถบแนะนำ"
+          >
+            <X size={16} />
+          </button>
         </div>
       </div>
 
@@ -420,7 +427,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                 justifyContent: 'center',
                 gap: '2px',
               }}
-              title="แนะนำ Top 5 Premium: ท่านไม่มีสิทธิ์ดูส่วนนี้ (เฉพาะ Admin คลิกเพื่อล็อกอิน)"
+              title="Top 5 Premium: ท่านไม่มีสิทธิ์ดูส่วนนี้ (เฉพาะ Admin คลิกเพื่อล็อกอิน)"
             >
               <Crown size={14} color="#F59E0B" />
               <span style={{ fontSize: '8px', color: '#FDE047', fontWeight: 900 }}>VIP</span>
@@ -613,10 +620,11 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
 
           {/* Scrollable Container with 2 Sections */}
           <div
+            className="custom-large-scrollbar"
             style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '10px',
+              padding: '10px 8px 10px 10px',
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
@@ -919,195 +927,217 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                         กำลังโหลดข้อมูล Top 5 Premium...
                       </div>
                     ) : (
-                      filteredPremium.map((c, idx) => {
-                        const isSelected = selectedSymbol === c.symbol;
-                        const edgeBps = c.tradableEdge?.expectedTradableEdgeBps || 164;
-                        const edgePct = (edgeBps / 100).toFixed(2);
-                        const decision = (c.decisionAssistant as any)?.statusBadge || {
-                          labelTh: c.decisionAssistant?.decisionLabelTh || 'พร้อมเข้า',
-                          bg: 'rgba(16, 185, 129, 0.15)',
-                          color: '#34D399',
-                          border: '#10B981',
-                        };
+                      <div
+                        className="custom-large-scrollbar-amber"
+                        style={{
+                          maxHeight: activeFilter === 'all' ? '360px' : 'calc(100vh - 250px)',
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          paddingRight: '6px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                        }}
+                      >
+                        {filteredPremium.map((c, idx) => {
+                          const isSelected = selectedSymbol === c.symbol;
+                          const edgeBps = c.tradableEdge?.expectedTradableEdgeBps || 164;
+                          const edgePct = (edgeBps / 100).toFixed(2);
+                          const decision = (c.decisionAssistant as any)?.statusBadge || {
+                            labelTh: c.decisionAssistant?.decisionLabelTh || 'พร้อมเข้า',
+                            bg: 'rgba(16, 185, 129, 0.15)',
+                            color: '#34D399',
+                            border: '#10B981',
+                          };
 
-                        return (
-                          <div
-                            key={`prem-${c.symbol}`}
-                            onClick={() => onSelectCoin(c.symbol)}
-                            style={{
-                              padding: '10px',
-                              borderRadius: '9px',
-                              backgroundColor: isSelected ? 'rgba(245, 158, 11, 0.14)' : 'rgba(255, 255, 255, 0.025)',
-                              border: isSelected ? '1.5px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.06)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '6px',
-                              transition: 'all 0.15s ease',
-                              boxShadow: isSelected ? '0 0 12px rgba(245, 158, 11, 0.25)' : 'none',
-                            }}
-                          >
-                            {/* Row 1: Rank Badge, Icon, Symbol, Price, Edge */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                <div
-                                  style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '5px',
-                                    backgroundColor: idx === 0 ? '#F59E0B' : idx === 1 ? '#CBD5E1' : '#B45309',
-                                    color: '#000',
-                                    fontWeight: 900,
-                                    fontSize: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  #{idx + 1}
-                                </div>
-                                <CryptoIcon symbol={c.symbol} size={22} />
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ fontWeight: 900, fontSize: '12.5px', color: '#FFF' }}>
-                                      {c.symbol}
-                                    </span>
-                                    <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>/THB</span>
-                                  </div>
-                                  <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                                    {(c as any).role || (c as any).academicCitation || 'LEADER'}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFF' }}>
-                                  <PriceCell price={c.price * multiplier} prefix={prefix} />
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: '9.5px',
-                                    fontWeight: 700,
-                                    color: c.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
-                                  }}
-                                >
-                                  {c.change24h >= 0 ? '+' : ''}{c.change24h.toFixed(2)}%
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Row 2: Expected Edge Strip & Status */}
+                          return (
                             <div
+                              key={`prem-${c.symbol}`}
+                              onClick={() => onSelectCoin(c.symbol)}
                               style={{
+                                padding: '10px',
+                                borderRadius: '9px',
+                                backgroundColor: isSelected ? 'rgba(245, 158, 11, 0.14)' : 'rgba(255, 255, 255, 0.025)',
+                                border: isSelected ? '1.5px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.06)',
+                                cursor: 'pointer',
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '4px 6px',
-                                borderRadius: '6px',
-                                backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                                fontSize: '10px',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                transition: 'all 0.15s ease',
+                                boxShadow: isSelected ? '0 0 12px rgba(245, 158, 11, 0.25)' : 'none',
+                                flexShrink: 0,
+                                minHeight: 'fit-content',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Edge:</span>
-                                <span style={{ fontWeight: 800, color: 'var(--neon-green-light)' }}>
-                                  +{edgeBps} bps (+{edgePct}%)
-                                </span>
+                              {/* Row 1: Rank Badge, Icon, Symbol, Price, Edge */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '5px',
+                                      backgroundColor: idx === 0 ? '#F59E0B' : idx === 1 ? '#CBD5E1' : '#B45309',
+                                      color: '#000',
+                                      fontWeight: 900,
+                                      fontSize: '10px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    #{idx + 1}
+                                  </div>
+                                  <CryptoIcon symbol={c.symbol} size={22} />
+                                  <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <span style={{ fontWeight: 900, fontSize: '12.5px', color: '#FFF', whiteSpace: 'nowrap' }}>
+                                        {c.symbol}
+                                      </span>
+                                      <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>/THB</span>
+                                    </div>
+                                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {(c as any).role || (c as any).academicCitation || 'LEADER'}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFF', whiteSpace: 'nowrap' }}>
+                                    <PriceCell price={c.price * multiplier} prefix={prefix} />
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '9.5px',
+                                      fontWeight: 700,
+                                      color: c.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {c.change24h >= 0 ? '+' : ''}{c.change24h.toFixed(2)}%
+                                  </div>
+                                </div>
                               </div>
 
-                              <span
-                                style={{
-                                  fontSize: '9px',
-                                  fontWeight: 800,
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  backgroundColor: decision.bg || 'rgba(16, 185, 129, 0.15)',
-                                  color: decision.color || '#34D399',
-                                  border: `1px solid ${decision.border || '#10B981'}`,
-                                }}
-                              >
-                                {decision.labelTh || 'พร้อมเข้า'}
-                              </span>
-                            </div>
-
-                            {/* Row 3: Entry Zone & SL / TP quick plan */}
-                            {c.decisionAssistant?.entryZone && (
+                              {/* Row 2: Expected Edge Strip & Status */}
                               <div
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'space-between',
-                                  fontSize: '9.5px',
-                                  color: '#CBD5E1',
-                                  padding: '0 2px',
+                                  padding: '4px 6px',
+                                  borderRadius: '6px',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                                  fontSize: '10px',
+                                  gap: '6px',
                                 }}
                               >
-                                <div>
-                                  <span style={{ color: 'var(--text-muted)' }}>โซน: </span>
-                                  <span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
-                                    {prefix}{(c.decisionAssistant.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })} - {prefix}{(c.decisionAssistant.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, flex: 1 }}>
+                                  <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>Edge:</span>
+                                  <span style={{ fontWeight: 800, color: 'var(--neon-green-light)', whiteSpace: 'nowrap' }}>
+                                    +{edgeBps} bps (+{edgePct}%)
                                   </span>
                                 </div>
-                                <div style={{ color: 'var(--neon-green-light)', fontWeight: 700 }}>
-                                  TP1 +{c.decisionAssistant.takeProfits?.tp1GainPct || 6.4}%
-                                </div>
-                              </div>
-                            )}
 
-                            {/* Row 4: Action Buttons */}
-                            <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectCoin(c.symbol);
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: '4px 6px',
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  color: '#FFF',
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '3px',
-                                }}
-                              >
-                                <Eye size={11} /> ดูกราฟ
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectCoin(c.symbol);
-                                  if (onNavigateToTop5Premium) onNavigateToTop5Premium(c.symbol);
-                                }}
-                                style={{
-                                  flex: 1.3,
-                                  padding: '4px 6px',
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                                  color: '#FDE047',
-                                  fontSize: '10px',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '3px',
-                                }}
-                              >
-                                <span>แผนเต็ม</span> <ExternalLink size={10} />
-                              </button>
+                                <span
+                                  style={{
+                                    fontSize: '9px',
+                                    fontWeight: 800,
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: decision.bg || 'rgba(16, 185, 129, 0.15)',
+                                    color: decision.color || '#34D399',
+                                    border: `1px solid ${decision.border || '#10B981'}`,
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {decision.labelTh || 'พร้อมเข้า'}
+                                </span>
+                              </div>
+
+                              {/* Row 3: Entry Zone & SL / TP quick plan */}
+                              {c.decisionAssistant?.entryZone && (
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    fontSize: '9.5px',
+                                    color: '#CBD5E1',
+                                    padding: '0 2px',
+                                    gap: '6px',
+                                  }}
+                                >
+                                  <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>โซน: </span>
+                                    <span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
+                                      {prefix}{(c.decisionAssistant.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })} - {prefix}{(c.decisionAssistant.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: c.price < 1 ? 3 : 1 })}
+                                    </span>
+                                  </div>
+                                  <div style={{ color: 'var(--neon-green-light)', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                    TP1 +{c.decisionAssistant.takeProfits?.tp1GainPct || 6.4}%
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Row 4: Action Buttons */}
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexShrink: 0 }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectCoin(c.symbol);
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    padding: '4px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    color: '#FFF',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '3px',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Eye size={11} /> ดูกราฟ
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectCoin(c.symbol);
+                                    if (onNavigateToTop5Premium) onNavigateToTop5Premium(c.symbol);
+                                  }}
+                                  style={{
+                                    flex: 1.3,
+                                    padding: '4px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                                    color: '#FDE047',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '3px',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <span>แผนเต็ม</span> <ExternalLink size={10} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
                     )}
 
                     {/* Section 1 Footer Banner */}
@@ -1130,8 +1160,33 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                       }}
                     >
                       <Crown size={12} />
-                      <span>เปิดหน้าจอ แนะนำ Top 5 Premium เต็มรูปแบบ →</span>
+                      <span>เปิดหน้าจอ Top 5 Premium เต็มรูปแบบ →</span>
                     </button>
+
+                    {onNavigateToTop5Ultimate && (
+                      <button
+                        onClick={() => onNavigateToTop5Ultimate()}
+                        style={{
+                          padding: '7px 10px',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.4)',
+                          color: '#38BDF8',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          marginTop: '6px',
+                          boxShadow: '0 0 10px rgba(6, 182, 212, 0.25)',
+                        }}
+                      >
+                        <Crown size={12} color="#38BDF8" />
+                        <span>👑 เปิดหน้าจอ Top 5 Ultimate (No Weak Link) →</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1209,193 +1264,215 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                         กำลังโหลดข้อมูล แนะนำซื้อ Top 5...
                       </div>
                     ) : (
-                      filteredStandard.map((c, idx) => {
-                        const isSelected = selectedSymbol === c.symbol;
+                      <div
+                        className="custom-large-scrollbar"
+                        style={{
+                          maxHeight: activeFilter === 'all' ? '360px' : 'calc(100vh - 250px)',
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          paddingRight: '6px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                        }}
+                      >
+                        {filteredStandard.map((c, idx) => {
+                          const isSelected = selectedSymbol === c.symbol;
 
-                        return (
-                          <div
-                            key={`std-${c.symbol}`}
-                            onClick={() => onSelectCoin(c.symbol)}
-                            style={{
-                              padding: '10px',
-                              borderRadius: '9px',
-                              backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.14)' : 'rgba(255, 255, 255, 0.025)',
-                              border: isSelected ? '1.5px solid #10B981' : '1px solid rgba(255, 255, 255, 0.06)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '6px',
-                              transition: 'all 0.15s ease',
-                              boxShadow: isSelected ? '0 0 12px rgba(16, 185, 129, 0.25)' : 'none',
-                            }}
-                          >
-                            {/* Row 1: Rank, Icon, Symbol, Price, Change */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                <div
+                          return (
+                            <div
+                              key={`std-${c.symbol}`}
+                              onClick={() => onSelectCoin(c.symbol)}
+                              style={{
+                                padding: '10px',
+                                borderRadius: '9px',
+                                backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.14)' : 'rgba(255, 255, 255, 0.025)',
+                                border: isSelected ? '1.5px solid #10B981' : '1px solid rgba(255, 255, 255, 0.06)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                transition: 'all 0.15s ease',
+                                boxShadow: isSelected ? '0 0 12px rgba(16, 185, 129, 0.25)' : 'none',
+                                flexShrink: 0,
+                                minHeight: 'fit-content',
+                              }}
+                            >
+                              {/* Row 1: Rank, Icon, Symbol, Price, Change */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '5px',
+                                      backgroundColor: '#10B981',
+                                      color: '#000',
+                                      fontWeight: 900,
+                                      fontSize: '10px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    #{idx + 1}
+                                  </div>
+                                  <CryptoIcon symbol={c.symbol} size={22} />
+                                  <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <span style={{ fontWeight: 900, fontSize: '12.5px', color: '#FFF', whiteSpace: 'nowrap' }}>
+                                        {c.symbol}
+                                      </span>
+                                      <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>/THB</span>
+                                    </div>
+                                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {c.setup}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFF', whiteSpace: 'nowrap' }}>
+                                    <PriceCell price={c.price * multiplier} prefix={prefix} />
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '9.5px',
+                                      fontWeight: 700,
+                                      color: c.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {c.change24h >= 0 ? '+' : ''}{c.change24h.toFixed(2)}%
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Row 2: Score, R:R, Status Badge */}
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '4px 6px',
+                                  borderRadius: '6px',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                                  fontSize: '10px',
+                                  gap: '6px',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                    <Star size={10} color="#F59E0B" fill="#F59E0B" />
+                                    <span style={{ fontWeight: 800, color: '#FBBF24', whiteSpace: 'nowrap' }}>
+                                      {c.buyNowScore}p
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                    <ShieldCheck size={10} color="#06B6D4" />
+                                    <span style={{ fontWeight: 700, color: '#22D3EE', whiteSpace: 'nowrap' }}>
+                                      R:R {c.riskReward}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <span
                                   style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '5px',
-                                    backgroundColor: '#10B981',
-                                    color: '#000',
-                                    fontWeight: 900,
-                                    fontSize: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
+                                    fontSize: '9px',
+                                    fontWeight: 800,
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+                                    color: '#34D399',
+                                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                                    whiteSpace: 'nowrap',
                                     flexShrink: 0,
                                   }}
                                 >
-                                  #{idx + 1}
-                                </div>
-                                <CryptoIcon symbol={c.symbol} size={22} />
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ fontWeight: 900, fontSize: '12.5px', color: '#FFF' }}>
-                                      {c.symbol}
-                                    </span>
-                                    <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>/THB</span>
-                                  </div>
-                                  <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                                    {c.setup}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFF' }}>
-                                  <PriceCell price={c.price * multiplier} prefix={prefix} />
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: '9.5px',
-                                    fontWeight: 700,
-                                    color: c.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)',
-                                  }}
-                                >
-                                  {c.change24h >= 0 ? '+' : ''}{c.change24h.toFixed(2)}%
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Row 2: Score, R:R, Status Badge */}
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '4px 6px',
-                                borderRadius: '6px',
-                                backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                                fontSize: '10px',
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                  <Star size={10} color="#F59E0B" fill="#F59E0B" />
-                                  <span style={{ fontWeight: 800, color: '#FBBF24' }}>
-                                    {c.buyNowScore}p
-                                  </span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                  <ShieldCheck size={10} color="#06B6D4" />
-                                  <span style={{ fontWeight: 700, color: '#22D3EE' }}>
-                                    R:R {c.riskReward}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <span
-                                style={{
-                                  fontSize: '9px',
-                                  fontWeight: 800,
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  backgroundColor: 'rgba(16, 185, 129, 0.18)',
-                                  color: '#34D399',
-                                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                                }}
-                              >
-                                {c.status}
-                              </span>
-                            </div>
-
-                            {/* Row 3: Entry Zone */}
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                fontSize: '9.5px',
-                                color: '#CBD5E1',
-                                padding: '0 2px',
-                              }}
-                            >
-                              <div>
-                                <span style={{ color: 'var(--text-muted)' }}>Entry: </span>
-                                <span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
-                                  {c.entryZone.text}
+                                  {c.status}
                                 </span>
                               </div>
-                              <div style={{ color: 'var(--neon-green-light)', fontWeight: 700 }}>
-                                {c.currentTrend}
+
+                              {/* Row 3: Entry Zone */}
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  fontSize: '9.5px',
+                                  color: '#CBD5E1',
+                                  padding: '0 2px',
+                                  gap: '6px',
+                                }}
+                              >
+                                <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Entry: </span>
+                                  <span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
+                                    {c.entryZone.text}
+                                  </span>
+                                </div>
+                                <div style={{ color: 'var(--neon-green-light)', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                  {c.currentTrend}
+                                </div>
+                              </div>
+
+                              {/* Row 4: Action Buttons */}
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexShrink: 0 }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectCoin(c.symbol);
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    padding: '4px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    color: '#FFF',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '3px',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Eye size={11} /> ดูกราฟ
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectCoin(c.symbol);
+                                    if (onNavigateToTop5) onNavigateToTop5(c.symbol);
+                                  }}
+                                  style={{
+                                    flex: 1.3,
+                                    padding: '4px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                                    color: '#34D399',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '3px',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <span>วิเคราะห์</span> <ExternalLink size={10} />
+                                </button>
                               </div>
                             </div>
-
-                            {/* Row 4: Action Buttons */}
-                            <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectCoin(c.symbol);
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: '4px 6px',
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  color: '#FFF',
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '3px',
-                                }}
-                              >
-                                <Eye size={11} /> ดูกราฟ
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectCoin(c.symbol);
-                                  if (onNavigateToTop5) onNavigateToTop5(c.symbol);
-                                }}
-                                style={{
-                                  flex: 1.3,
-                                  padding: '4px 6px',
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                                  color: '#34D399',
-                                  fontSize: '10px',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '3px',
-                                }}
-                              >
-                                <span>วิเคราะห์</span> <ExternalLink size={10} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
                     )}
 
                     {/* Section 2 Footer Banner */}
