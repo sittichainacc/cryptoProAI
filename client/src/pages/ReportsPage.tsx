@@ -111,7 +111,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1000px' }}>
       {/* Header & Report Actions */}
-      <div className="card-header-row" style={{ marginBottom: '0' }}>
+      <div className="card-header-row" style={{ marginBottom: '0', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FileText size={22} color="var(--neon-cyan)" />
@@ -140,9 +140,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
         </div>
       </div>
 
-
       {/* Report Type Selector */}
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {[
           { id: 'daily', label: 'รายงานประจำวัน (Daily Briefing)' },
           { id: 'weekly', label: 'รายงานแนวโน้มรายสัปดาห์ (Weekly Macro)' },
@@ -170,9 +169,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
 
       {/* Report Paper Container */}
       <div
-        className="crypto-card"
+        className="crypto-card report-paper-card"
         style={{
-          padding: '28px',
+          padding: '24px',
           backgroundColor: '#0F172A',
           border: '1px solid rgba(59, 130, 246, 0.25)',
           display: 'flex',
@@ -181,7 +180,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
         }}
       >
         {/* Report Top Meta */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '16px' }}>
+        <div className="report-top-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ fontSize: '18px', fontWeight: 900, color: '#FFF', letterSpacing: '0.3px' }}>
               {currentMeta.title}
@@ -226,7 +225,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
         </div>
 
         {/* Section 2: Macro Metrics Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        <div className="report-metrics-grid">
           <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>BTC Dominance</div>
             <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>{kpis?.btcDominance}%</div>
@@ -273,7 +272,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
               : '2. โอกาสการลงทุนที่โดดเด่นประจำวัน (Top AI Opportunities)'}
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          <div className="report-opportunities-grid">
             {(selectedReportType === 'risk' && lowestRiskCoins.length > 0 ? lowestRiskCoins : topAI).map((coin, idx) => (
               <div
                 key={coin.symbol}

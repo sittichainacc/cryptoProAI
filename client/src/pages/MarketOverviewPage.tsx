@@ -122,7 +122,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Top Header */}
-      <div className="card-header-row" style={{ marginBottom: '0' }}>
+      <div className="card-header-row" style={{ marginBottom: '0', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
             ภาพรวมตลาดคริปโต (Crypto Market Overview)
@@ -132,7 +132,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((tf) => (
             <button
               key={tf}
@@ -155,8 +155,8 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Row 1: Total Market Cap Curve & Sector Donut Breakdown (Image 2) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '16px' }}>
+      {/* Row 1: Total Market Cap Curve & Sector Donut Breakdown */}
+      <div className="market-overview-grid-2col">
         {/* Total Market Cap Chart Widget */}
         <div className="crypto-card">
           <div className="card-header-row">
@@ -217,9 +217,9 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
             สัดส่วนตลาดรายหมวด (Sector Share)
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="sector-donut-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             {/* Donut representation */}
-            <div style={{ position: 'relative', width: '130px', height: '130px', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: '130px', height: '130px', flexShrink: 0, margin: '0 auto' }}>
               <svg viewBox="0 0 100 100" width="130" height="130">
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#F59E0B" strokeWidth="12" strokeDasharray="128 110" strokeDashoffset="0" />
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#3B82F6" strokeWidth="12" strokeDasharray="33 205" strokeDashoffset="-128" />
@@ -247,7 +247,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
             </div>
 
             {/* Shares List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, fontSize: '11px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '140px', fontSize: '11px' }}>
               {sectorShares.map((sec) => (
                 <div key={sec.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -262,11 +262,11 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Row 2: Heatmap & Sector Performance Bars (Image 3) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '16px' }}>
+      {/* Row 2: Heatmap & Sector Performance Bars */}
+      <div className="market-overview-grid-2col">
         {/* Heatmap (Market Performance) */}
         <div className="crypto-card">
-          <div className="card-header-row" style={{ marginBottom: '14px' }}>
+          <div className="card-header-row" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div className="card-title" style={{ fontSize: '15px' }}>
               Heatmap (Market Performance)
             </div>
@@ -275,14 +275,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gridAutoRows: '80px',
-              gap: '8px',
-            }}
-          >
+          <div className="market-heatmap-grid">
             {heatmap.map((item) => {
               const isPositive = item.change24h >= 0;
               const bg = isPositive
@@ -378,8 +371,8 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
       {/* Whale Alert & On-Chain Flow Radar */}
       <WhaleRadarWidget currency={currency} onSelectCoin={onSelectCoin} />
 
-      {/* Row 3: AI Strategy Suggestions (Image 3) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      {/* Row 3: AI Strategy Suggestions */}
+      <div className="market-strategy-grid">
         <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 24, 43, 0.9))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

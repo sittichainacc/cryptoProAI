@@ -97,7 +97,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="alerts-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
             Alert Center (ศูนย์ควบคุมการแจ้งเตือนอัจฉริยะ)
@@ -138,7 +138,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '16px' }}>
+      <div className="alerts-center-grid">
         {/* Create Alert Form */}
         <div className="crypto-card">
           <div className="card-title" style={{ fontSize: '15px', marginBottom: '14px' }}>
@@ -243,6 +243,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
             {alerts.map((a) => (
               <div
                 key={a.id}
+                className="alert-feed-item"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -251,6 +252,8 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
                   borderRadius: '8px',
                   backgroundColor: 'rgba(255, 255, 255, 0.02)',
                   border: '1px solid rgba(255, 255, 255, 0.04)',
+                  flexWrap: 'wrap',
+                  gap: '8px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

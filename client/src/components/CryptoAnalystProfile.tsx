@@ -242,26 +242,38 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
 
       {/* ─── Profile Popover Card Hub ─── */}
       {isOpen && (
-        <div
-          className="crypto-analyst-popover"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 10px)',
-            right: 0,
-            width: '375px',
-            maxWidth: 'calc(100vw - 20px)',
-            maxHeight: 'calc(100vh - 80px)',
-            overflowY: 'auto',
-            overscrollBehavior: 'contain',
-            backgroundColor: '#0B132B',
-            border: isAdmin ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)',
-            borderRadius: '16px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.15)',
-            zIndex: 150,
-            backdropFilter: 'blur(16px)',
-            animation: 'fadeInSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        >
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99998,
+            }}
+            onClick={() => {
+              setIsOpen(false);
+              setIsEditingName(false);
+            }}
+          />
+          <div
+            className="crypto-analyst-popover"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 10px)',
+              right: 0,
+              width: '375px',
+              maxWidth: 'calc(100vw - 20px)',
+              maxHeight: 'calc(100vh - 80px)',
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              backgroundColor: '#0B132B',
+              border: isAdmin ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)',
+              borderRadius: '16px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.15)',
+              zIndex: 99999,
+              backdropFilter: 'blur(16px)',
+              animation: 'fadeInSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
           {/* Card Header Ambient Gradient */}
           <div
             style={{
@@ -1039,6 +1051,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );

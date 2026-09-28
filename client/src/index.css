@@ -1008,7 +1008,7 @@ header nav {
     padding: 0 8px !important;
     height: 56px !important;
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
     gap: 6px !important;
   }
   .topbar-left-nav {
@@ -1389,3 +1389,147 @@ div[style*="position: fixed"][style*="z-index: 100000"],
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #CBD5E1;
 }
+
+/* ─────────────────────────────────────────────────────────
+   Mobile Popovers & Modals (Notifications & Profile)
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar-notifications-popover {
+    position: fixed !important;
+    top: 60px !important;
+    right: 8px !important;
+    left: auto !important;
+    width: min(360px, calc(100vw - 16px)) !important;
+    max-height: calc(100vh - 75px) !important;
+    z-index: 99999 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+  }
+
+  .crypto-analyst-popover {
+    position: fixed !important;
+    top: 60px !important;
+    right: 8px !important;
+    left: auto !important;
+    width: min(360px, calc(100vw - 16px)) !important;
+    max-height: calc(100vh - 75px) !important;
+    z-index: 99999 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Market Overview Grids & Components
+   ───────────────────────────────────────────────────────── */
+.market-overview-grid-2col {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+}
+
+.sector-donut-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.market-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.market-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .market-overview-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+  .market-heatmap-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .market-strategy-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .market-heatmap-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .market-heatmap-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Alert Center Grids & Components
+   ───────────────────────────────────────────────────────── */
+.alerts-center-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: 16px;
+}
+
+.alert-feed-item {
+  transition: background-color 0.15s ease;
+}
+.alert-feed-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+@media (max-width: 960px) {
+  .alerts-center-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Reports Page Grids & Components
+   ───────────────────────────────────────────────────────── */
+.report-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.report-opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .report-opportunities-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .report-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .report-paper-card {
+    padding: 14px !important;
+  }
+  .report-top-meta {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .report-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

@@ -643,85 +643,112 @@ export const Topbar: React.FC<TopbarProps> = ({
 
           {/* Notifications Dropdown Popover */}
           {showNotifications && (
-            <div
-              className="topbar-notifications-popover"
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                width: '340px',
-                maxWidth: 'calc(100vw - 24px)',
-                backgroundColor: '#0F172A',
-                border: '1px solid rgba(59, 130, 246, 0.35)',
-                borderRadius: '12px',
-                padding: '12px',
-                boxShadow: '0 14px 32px rgba(0, 0, 0, 0.7)',
-                zIndex: 120,
-              }}
-            >
-              {/* Popover Header */}
+            <>
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingBottom: '10px',
-                  borderBottom: '1px solid var(--border-color)',
-                  marginBottom: '10px',
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 99998,
+                }}
+                onClick={() => setShowNotifications(false)}
+              />
+              <div
+                className="topbar-notifications-popover"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '340px',
+                  maxWidth: 'calc(100vw - 24px)',
+                  backgroundColor: '#0F172A',
+                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.7)',
+                  zIndex: 99999,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Radio size={14} color="var(--neon-cyan)" />
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFF' }}>
-                    สัญญาณ AI ล่าสุด
-                  </span>
-                </div>
+                {/* Popover Header */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingBottom: '10px',
+                    borderBottom: '1px solid var(--border-color)',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Radio size={14} color="var(--neon-cyan)" />
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFF' }}>
+                      สัญญาณ AI ล่าสุด
+                    </span>
+                  </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <button
-                    onClick={() => {
-                      const next = !soundEnabled;
-                      setSoundEnabled(next);
-                      if (next) playNotificationChime();
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      background: soundEnabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                      border: soundEnabled ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      padding: '3px 7px',
-                      fontSize: '11px',
-                      color: soundEnabled ? 'var(--neon-green-light)' : 'var(--text-muted)',
-                      cursor: 'pointer',
-                    }}
-                    title="เปิด/ปิดเสียงแจ้งเตือนอัตโนมัติ"
-                  >
-                    {soundEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
-                    <span>{soundEnabled ? 'เสียงเปิด' : 'เสียงปิด'}</span>
-                  </button>
-                  {soundEnabled && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <button
-                      onClick={playNotificationChime}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--neon-blue)',
-                        fontSize: '10.5px',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                        padding: 0,
+                      onClick={() => {
+                        const next = !soundEnabled;
+                        setSoundEnabled(next);
+                        if (next) playNotificationChime();
                       }}
-                      title="ทดสอบเสียงกริ่ง"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        background: soundEnabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                        border: soundEnabled ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        padding: '3px 7px',
+                        fontSize: '11px',
+                        color: soundEnabled ? 'var(--neon-green-light)' : 'var(--text-muted)',
+                        cursor: 'pointer',
+                      }}
+                      title="เปิด/ปิดเสียงแจ้งเตือนอัตโนมัติ"
                     >
-                      ทดสอบ
+                      {soundEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
+                      <span>{soundEnabled ? 'เสียงเปิด' : 'เสียงปิด'}</span>
                     </button>
-                  )}
+                    {soundEnabled && (
+                      <button
+                        onClick={playNotificationChime}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--neon-blue)',
+                          fontSize: '10.5px',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          padding: '0 2px',
+                        }}
+                        title="ทดสอบเสียงกริ่ง"
+                      >
+                        ทดสอบ
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '22px',
+                        height: '22px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                      }}
+                      title="ปิด"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Notification Items */}
+                {/* Notification Items */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
                   {
@@ -835,7 +862,8 @@ export const Topbar: React.FC<TopbarProps> = ({
                 เปิดศูนย์แจ้งเตือนเต็มรูปแบบ (Alerts Center) →
               </button>
             </div>
-          )}
+          </>
+        )}
         </div>
 
         {/* Admin Login or Status Badge Button */}
