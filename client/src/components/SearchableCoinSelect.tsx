@@ -175,14 +175,14 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: '#0B1222',
-          border: isOpen ? '1.5px solid var(--neon-blue)' : '1px solid rgba(59, 130, 246, 0.4)',
+          backgroundColor: 'var(--bg-card-inner)',
+          border: isOpen ? '1.5px solid var(--neon-blue)' : '1px solid var(--border-color)',
           borderRadius: '8px',
           padding: '6px 12px',
-          color: '#F8FAFC',
+          color: 'var(--text-primary)',
           cursor: 'pointer',
           outline: 'none',
-          boxShadow: isOpen ? '0 0 14px rgba(59, 130, 246, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.35)',
+          boxShadow: isOpen ? '0 0 14px rgba(59, 130, 246, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
           transition: 'all 0.15s ease',
         }}
         title="คลิกเพื่อค้นหาและเลือกเหรียญทั้งหมด (355+ เหรียญ)"
@@ -193,7 +193,7 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
           <CryptoIcon symbol={currentCoin.symbol} size={24} />
           <div style={{ textAlign: 'left', lineHeight: 1.2, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFF' }}>{currentCoin.symbol}</span>
+              <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{currentCoin.symbol}</span>
               {currentCoin.price > 0 && (
                 <span style={{ fontSize: '12px', color: 'var(--neon-cyan)', fontFamily: 'monospace' }}>
                   {formatPrice(currentCoin.price)}
@@ -241,10 +241,10 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
             ...(alignRight ? { right: 0 } : { left: 0 }),
             width: '390px',
             maxWidth: 'calc(100vw - 32px)',
-            backgroundColor: '#0F172A',
-            border: '1.5px solid rgba(59, 130, 246, 0.5)',
+            backgroundColor: 'var(--bg-card)',
+            border: '1.5px solid var(--border-color)',
             borderRadius: '12px',
-            boxShadow: '0 20px 48px rgba(0, 0, 0, 0.85), 0 0 25px rgba(59, 130, 246, 0.25)',
+            boxShadow: 'var(--shadow-card)',
             zIndex: 9999,
             overflow: 'hidden',
             display: 'flex',
@@ -252,14 +252,14 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
           }}
         >
           {/* Search Box Header */}
-          <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', backgroundColor: '#0B1222' }}>
+          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card-inner)' }}>
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 padding: '6px 10px',
               }}
@@ -274,7 +274,7 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#FFF',
+                  color: 'var(--text-primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   outline: 'none',
@@ -319,9 +319,9 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                   borderRadius: '12px',
                   fontSize: '11px',
                   fontWeight: 700,
-                  border: selectedSector === 'all' ? '1px solid var(--neon-blue)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  backgroundColor: selectedSector === 'all' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                  color: selectedSector === 'all' ? '#FFF' : 'var(--text-secondary)',
+                  border: selectedSector === 'all' ? '1px solid var(--neon-blue)' : '1px solid var(--border-color)',
+                  backgroundColor: selectedSector === 'all' ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-card-inner)',
+                  color: selectedSector === 'all' ? 'var(--neon-blue-light)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
@@ -340,9 +340,9 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                       borderRadius: '12px',
                       fontSize: '11px',
                       fontWeight: 700,
-                      border: isAct ? '1px solid var(--neon-blue)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      backgroundColor: isAct ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                      color: isAct ? '#FFF' : 'var(--text-secondary)',
+                      border: isAct ? '1px solid var(--neon-blue)' : '1px solid var(--border-color)',
+                      backgroundColor: isAct ? 'rgba(59, 130, 246, 0.25)' : 'var(--bg-card-inner)',
+                      color: isAct ? 'var(--neon-blue-light)' : 'var(--text-secondary)',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
                     }}
@@ -362,8 +362,8 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
               color: 'var(--text-muted)',
               display: 'flex',
               justifyContent: 'space-between',
-              backgroundColor: 'rgba(0, 0, 0, 0.2)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+              backgroundColor: 'var(--bg-card-inner)',
+              borderBottom: '1px solid var(--border-color)',
             }}
           >
             <span>
@@ -451,7 +451,7 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                               width: '13px',
                               height: '13px',
                               borderRadius: '50%',
-                              backgroundColor: '#10B981',
+                              backgroundColor: 'var(--neon-green)',
                               color: '#FFF',
                               display: 'flex',
                               alignItems: 'center',
@@ -466,13 +466,13 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
 
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFF' }}>{coin.symbol}</span>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{coin.symbol}</span>
                           <span
                             style={{
                               fontSize: '10px',
                               padding: '1px 5px',
                               borderRadius: '4px',
-                              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                              backgroundColor: 'var(--bg-card-inner)',
                               color: 'var(--text-secondary)',
                             }}
                           >
@@ -499,14 +499,14 @@ export const SearchableCoinSelect: React.FC<SearchableCoinSelectProps> = ({
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFF', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'monospace' }}>
                         {formatPrice(coin.price)}
                       </div>
                       <div
                         style={{
                           fontSize: '11px',
                           fontWeight: 700,
-                          color: coin.change24h >= 0 ? '#10B981' : '#EF4444',
+                          color: coin.change24h >= 0 ? 'var(--neon-green)' : 'var(--neon-red)',
                         }}
                       >
                         {coin.change24h >= 0 ? `+${coin.change24h.toFixed(2)}%` : `${coin.change24h.toFixed(2)}%`}

@@ -163,10 +163,9 @@ export const CoinScreenerPage: React.FC<CoinScreenerPageProps> = ({
                 value={selectedSector}
                 onChange={(e) => setSelectedSector(e.target.value)}
                 style={{
-                  backgroundColor: '#0F182B',
+                  backgroundColor: 'var(--bg-card-inner)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-primary)',
-                  colorScheme: 'dark',
                   borderRadius: '6px',
                   padding: '6px 10px',
                   fontSize: '12px',
@@ -174,15 +173,15 @@ export const CoinScreenerPage: React.FC<CoinScreenerPageProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <option value="all" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>ทั้งหมด (8 Sectors)</option>
-                <option value="core" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Core</option>
-                <option value="layer1_2" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>L1 / L2</option>
-                <option value="defi" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>DeFi</option>
-                <option value="ai_depin" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>AI / DePIN</option>
-                <option value="rwa_oracle" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>RWA / Oracle</option>
-                <option value="meme" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Meme</option>
-                <option value="gamefi" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>GameFi</option>
-                <option value="emerging" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>Emerging</option>
+                <option value="all">ทั้งหมด (8 Sectors)</option>
+                <option value="core">Core</option>
+                <option value="layer1_2">L1 / L2</option>
+                <option value="defi">DeFi</option>
+                <option value="ai_depin">AI / DePIN</option>
+                <option value="rwa_oracle">RWA / Oracle</option>
+                <option value="meme">Meme</option>
+                <option value="gamefi">GameFi</option>
+                <option value="emerging">Emerging</option>
               </select>
             </div>
 
@@ -192,10 +191,9 @@ export const CoinScreenerPage: React.FC<CoinScreenerPageProps> = ({
                 value={minVolume}
                 onChange={(e) => setMinVolume(Number(e.target.value))}
                 style={{
-                  backgroundColor: '#0F182B',
+                  backgroundColor: 'var(--bg-card-inner)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-primary)',
-                  colorScheme: 'dark',
                   borderRadius: '6px',
                   padding: '6px 10px',
                   fontSize: '12px',
@@ -203,10 +201,10 @@ export const CoinScreenerPage: React.FC<CoinScreenerPageProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <option value="0" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>ทุกขนาดสภาพคล่อง</option>
-                <option value="50000000" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>&gt; $50M</option>
-                <option value="100000000" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>&gt; $100M</option>
-                <option value="500000000" style={{ backgroundColor: '#0B101E', color: '#F8FAFC' }}>&gt; $500M</option>
+                <option value="0">ทุกขนาดสภาพคล่อง</option>
+                <option value="50000000">&gt; $50M</option>
+                <option value="100000000">&gt; $100M</option>
+                <option value="500000000">&gt; $500M</option>
               </select>
             </div>
           </div>

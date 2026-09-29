@@ -265,10 +265,10 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
               maxHeight: 'calc(100vh - 80px)',
               overflowY: 'auto',
               overscrollBehavior: 'contain',
-              backgroundColor: '#0B132B',
-              border: isAdmin ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)',
+              backgroundColor: 'var(--bg-card)',
+              border: isAdmin ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
               borderRadius: '16px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.15)',
+              boxShadow: 'var(--shadow-card)',
               zIndex: 99999,
               backdropFilter: 'blur(16px)',
               animation: 'fadeInSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -330,7 +330,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#FFFFFF',
-                    border: '3px solid #0B132B',
+                    border: '3px solid var(--bg-card)',
                     boxShadow: isAdmin ? '0 0 16px rgba(6, 182, 212, 0.5)' : 'none',
                     fontWeight: 900,
                     fontSize: '20px',
@@ -347,7 +347,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                     height: '12px',
                     backgroundColor: wsStatus === 'connected' ? '#10B981' : '#F59E0B',
                     borderRadius: '50%',
-                    border: '2px solid #0B132B',
+                    border: '2px solid var(--bg-card)',
                     boxShadow: '0 0 6px #10B981',
                   }}
                   title={wsStatus === 'connected' ? 'เชื่อมต่อระบบสตรีมสดสมบูรณ์' : 'กำลังเชื่อมต่อ'}
@@ -470,7 +470,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                       {analystName}
                     </h4>
                     <button
@@ -481,7 +481,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: '#64748B',
+                        color: 'var(--text-muted)',
                         cursor: 'pointer',
                         padding: '2px',
                       }}
@@ -493,13 +493,13 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                 )
               ) : (
                 <div style={{ marginBottom: '2px' }}>
-                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                     Guest (ผู้ใช้งานทั่วไป)
                   </h4>
                 </div>
               )}
 
-              <div style={{ fontSize: '11.5px', color: '#94A3B8', fontWeight: 500 }}>
+              <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: 500 }}>
                 {isAdmin
                   ? 'Senior Quantitative Crypto Analyst & Strategist'
                   : 'โหมดผู้เยี่ยมชม • สิทธิ์เข้าถึงหน้า Home'}
@@ -518,16 +518,16 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
               >
                 <div
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '10px',
                     padding: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                   }}
                 >
-                  <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>ความแม่นยำ AI (Win Rate)</div>
-                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#34D399', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>ความแม่นยำ AI (Win Rate)</div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#10B981', marginTop: '2px' }}>
                     84.6%
                   </div>
                   <div style={{ fontSize: '9px', color: '#10B981', marginTop: '1px', fontWeight: 700 }}>
@@ -537,57 +537,57 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
 
                 <div
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '10px',
                     padding: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                   }}
                 >
-                  <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>บทวิเคราะห์ทั้งหมด</div>
-                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#60A5FA', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>บทวิเคราะห์ทั้งหมด</div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#3B82F6', marginTop: '2px' }}>
                     1,420+
                   </div>
-                  <div style={{ fontSize: '9px', color: '#94A3B8', marginTop: '1px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '1px' }}>
                     17 อินดิเคเตอร์ต่อเหรียญ
                   </div>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '10px',
                     padding: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                   }}
                 >
-                  <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>เหรียญ FOCUS เฝ้าระวัง</div>
-                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#A78BFA', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>เหรียญ FOCUS เฝ้าระวัง</div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#8B5CF6', marginTop: '2px' }}>
                     12 เหรียญ
                   </div>
-                  <div style={{ fontSize: '9px', color: '#A78BFA', marginTop: '1px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '1px' }}>
                     Realtime High-Frequency
                   </div>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '10px',
                     padding: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                   }}
                 >
-                  <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>ประสิทธิภาพ (Sharpe)</div>
-                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#FBBF24', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>ประสิทธิภาพ (Sharpe)</div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#F59E0B', marginTop: '2px' }}>
                     2.48
                   </div>
-                  <div style={{ fontSize: '9px', color: '#FBBF24', marginTop: '1px', fontWeight: 700 }}>
+                  <div style={{ fontSize: '9px', color: '#F59E0B', marginTop: '1px', fontWeight: 700 }}>
                     เกรด A+ (ความเสี่ยงต่ำ)
                   </div>
                 </div>
@@ -601,7 +601,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                   style={{
                     fontSize: '11px',
                     fontWeight: 700,
-                    color: '#94A3B8',
+                    color: 'var(--text-secondary)',
                     marginBottom: '8px',
                     display: 'flex',
                     alignItems: 'center',
@@ -647,8 +647,8 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                           padding: '9px 12px',
                           borderRadius: '10px',
                           cursor: 'pointer',
-                          backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.16)' : 'rgba(255, 255, 255, 0.025)',
-                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(255, 255, 255, 0.05)',
+                          backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.16)' : 'var(--bg-card-inner)',
+                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid var(--border-color)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
@@ -657,7 +657,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingRight: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: isSelected ? '#FFFFFF' : '#CBD5E1' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
                               {r.title}
                             </span>
                             <span
@@ -674,7 +674,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                               {r.badge}
                             </span>
                           </div>
-                          <span style={{ fontSize: '10px', color: '#94A3B8', lineHeight: 1.3 }}>{r.desc}</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.3 }}>{r.desc}</span>
                         </div>
                         {isSelected ? (
                           <div
@@ -780,7 +780,7 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
               style={{
                 marginTop: '14px',
                 paddingTop: '12px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+                borderTop: '1px solid var(--border-color)',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '8px',
@@ -790,8 +790,8 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
               <button
                 onClick={() => setCurrency(currency === 'THB' ? 'USDT' : 'THB')}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--bg-card-inner)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '8px',
                   padding: '7px 4px',
                   cursor: 'pointer',
@@ -799,11 +799,11 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '3px',
-                  color: '#CBD5E1',
+                  color: 'var(--text-primary)',
                 }}
                 title="คลิกเพื่อสลับสกุลเงิน"
               >
-                <span style={{ fontSize: '10px', color: '#94A3B8' }}>สกุลเงิน</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>สกุลเงิน</span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--neon-cyan)' }}>
                   {currency === 'THB' ? '฿ THB' : '$ USDT'}
                 </span>
@@ -822,8 +822,8 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                   }
                 }}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--bg-card-inner)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '8px',
                   padding: '7px 4px',
                   cursor: 'pointer',
@@ -831,14 +831,14 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '3px',
-                  color: '#CBD5E1',
+                  color: 'var(--text-primary)',
                 }}
                 title="เปลี่ยนธีมหน้าจอ"
               >
-                <span style={{ fontSize: '10px', color: '#94A3B8' }}>โหมดธีม</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>โหมดธีม</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {isDark ? <Moon size={12} color="#60A5FA" /> : <Sun size={12} color="#FBBF24" />}
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFF' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     {isDark ? 'Dark Pro' : 'Light'}
                   </span>
                 </div>

@@ -121,6 +121,105 @@
   background-color: rgba(37, 99, 235, 0.1) !important;
 }
 
+/* Light mode card, inputs, popovers and badges enhancement */
+.light .crypto-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+}
+
+.light .crypto-card:hover {
+  border-color: rgba(37, 99, 235, 0.35) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.light input[type="text"],
+.light input[type="number"],
+.light input[type="password"],
+.light input[type="search"],
+.light textarea {
+  color-scheme: light;
+  background-color: var(--bg-card-inner) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+.light select {
+  color-scheme: light;
+  background-color: var(--bg-card-inner) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.light select option,
+.light select optgroup {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+.light .docked-workspace-container {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .badge-strong-buy {
+  background: rgba(5, 150, 105, 0.12) !important;
+  color: #047857 !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
+}
+
+.light .badge-buy {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.light .badge-watch {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1D4ED8 !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+.light .badge-retest {
+  background: rgba(8, 145, 178, 0.1) !important;
+  color: #0E7490 !important;
+  border-color: rgba(8, 145, 178, 0.25) !important;
+}
+
+.light .badge-neutral {
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #475569 !important;
+  border-color: rgba(100, 116, 139, 0.25) !important;
+}
+
+.light .badge-sell {
+  background: rgba(220, 38, 38, 0.1) !important;
+  color: #B91C1C !important;
+  border-color: rgba(220, 38, 38, 0.25) !important;
+}
+
+.light .badge-warning {
+  background: rgba(217, 119, 6, 0.12) !important;
+  color: #B45309 !important;
+  border-color: rgba(217, 119, 6, 0.3) !important;
+}
+
+.light .mobile-menu-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.light .mobile-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

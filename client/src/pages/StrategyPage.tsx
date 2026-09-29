@@ -849,7 +849,7 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
                 style={{
                   width: '100%',
                   maxWidth: '520px',
-                  backgroundColor: '#0F172A',
+                  backgroundColor: 'var(--bg-card)',
                   borderColor: 'rgba(59, 130, 246, 0.4)',
                   padding: '24px',
                 }}

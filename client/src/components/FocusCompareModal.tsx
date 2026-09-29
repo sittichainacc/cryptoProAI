@@ -57,10 +57,10 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
           width: '100%',
           maxWidth: '1100px',
           maxHeight: '92vh',
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--bg-card)',
           border: '1px solid rgba(139, 92, 246, 0.35)',
           borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -71,7 +71,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
         <div
           style={{
             padding: '18px 24px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -93,7 +93,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
               <Layers size={18} color="#FFFFFF" />
             </div>
             <div>
-              <div style={{ fontSize: '17px', fontWeight: 800, color: '#FFFFFF' }}>
+              <div style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 เปรียบเทียบเหรียญ FOCUS (Compare 2–5 Coins)
               </div>
               <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
@@ -119,8 +119,8 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
         <div
           style={{
             padding: '12px 24px',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+            backgroundColor: 'var(--bg-card-inner)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -139,9 +139,9 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 style={{
                   padding: '4px 12px',
                   borderRadius: '20px',
-                  border: isSelected ? '1px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.15)',
-                  backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                  color: isSelected ? '#A78BFA' : '#94A3B8',
+                  border: isSelected ? '1px solid #8B5CF6' : '1px solid var(--border-color)',
+                  backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.25)' : 'var(--bg-card)',
+                  color: isSelected ? '#A78BFA' : 'var(--text-secondary)',
                   fontSize: '12px',
                   fontWeight: isSelected ? 700 : 500,
                   cursor: 'pointer',
@@ -163,7 +163,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>
+                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
                   <th
                     style={{
                       padding: '12px',
@@ -181,7 +181,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                       style={{
                         padding: '12px',
                         textAlign: 'center',
-                        color: '#FFFFFF',
+                        color: 'var(--text-primary)',
                         minWidth: '160px',
                       }}
                     >
@@ -193,7 +193,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
               </thead>
               <tbody>
                 {/* 1. Focus Score */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
                   <td style={{ padding: '12px', fontWeight: 700, color: '#A78BFA' }}>
                     FOCUS SCORE (0–100)
                   </td>
@@ -210,7 +210,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 2. Current Price */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>ราคาปัจจุบัน</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 700 }}>
@@ -225,7 +225,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 3. Trend & MTF Agreement */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Trend & MTF Agreement</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center' }}>
@@ -238,7 +238,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 4. Entry Status & Setup */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>สัญญาณเข้าซื้อ (Entry Status)</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center' }}>
@@ -269,7 +269,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 5. Exit Status & Trailing Stop */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>คำแนะนำ Exit / Trailing Stop</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center' }}>
@@ -284,7 +284,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 6. Risk / Reward */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Risk / Reward Ratio</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: 'var(--neon-green)' }}>
@@ -294,7 +294,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                 </tr>
 
                 {/* 7. Sub-Scores (Tech, Entry, Fund, News, Risk) */}
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Technical Score (30%)</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>
@@ -303,7 +303,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                   ))}
                 </tr>
 
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Entry Quality Score (20%)</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>
@@ -312,7 +312,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                   ))}
                 </tr>
 
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Profit Protection (Exit Risk)</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: c.exitIntelligence.profitProtectionScore > 80 ? '#F97316' : 'inherit' }}>
@@ -321,7 +321,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
                   ))}
                 </tr>
 
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>Order Book Buy Pressure</td>
                   {comparedCoins.map((c) => (
                     <td key={c.symbol} style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: c.volumeOrderBook.buyPressurePct > 50 ? 'var(--neon-green)' : 'var(--neon-red)' }}>

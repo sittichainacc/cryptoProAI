@@ -308,9 +308,9 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <CryptoIcon symbol={item.symbol} size={18} />
-                      <span style={{ fontWeight: 800, fontSize: '14px', color: '#FFF' }}>{item.symbol}</span>
+                      <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-primary)' }}>{item.symbol}</span>
                     </div>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                       {prefix}{(item.price * multiplier).toLocaleString(undefined, { maximumFractionDigits: item.price < 1 ? 4 : 2 })}
                     </span>
                   </div>
@@ -318,7 +318,7 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
                     style={{
                       fontSize: '13px',
                       fontWeight: 800,
-                      color: isPositive ? '#34D399' : '#F87171',
+                      color: isPositive ? 'var(--neon-green)' : 'var(--neon-red)',
                       textAlign: 'right',
                     }}
                   >
@@ -341,8 +341,8 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
               <div key={sec.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                   <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{sec.name}</span>
-                  <span style={{ fontWeight: 700, color: sec.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
-                    +{sec.change24h}%
+                  <span style={{ fontWeight: 700, color: sec.change24h >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
+                    {sec.change24h >= 0 ? `+${sec.change24h}%` : `${sec.change24h}%`}
                   </span>
                 </div>
                 <div
@@ -373,36 +373,36 @@ export const MarketOverviewPage: React.FC<MarketOverviewPageProps> = ({ onSelect
 
       {/* Row 3: AI Strategy Suggestions */}
       <div className="market-strategy-grid">
-        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 24, 43, 0.9))' }}>
+        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), var(--bg-card))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrendingUp size={18} color="#10B981" />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '15px' }}>Follow Trend</div>
+            <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>Follow Trend</div>
           </div>
           <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             เหมาะกับตลาดขาขึ้น เน้นเหรียญที่มีโครงสร้าง Higher High และยืนเหนือเส้น EMA 20/50/200 เช่น SOL, LINK, AAVE
           </p>
         </div>
 
-        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 24, 43, 0.9))' }}>
+        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), var(--bg-card))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Compass size={18} color="#F59E0B" />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '15px' }}>Swing Trade</div>
+            <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>Swing Trade</div>
           </div>
           <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             จับจังหวะสวิงสั้น-กลาง จากการทดสอบแนวรับ (Retest) หรือเบรคเอาท์พร้อม Volume สูง เหมาะสำหรับตลาด Sideway Up
           </p>
         </div>
 
-        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 24, 43, 0.9))' }}>
+        <div className="crypto-card" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12), var(--bg-card))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Shield size={18} color="#3B82F6" />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '15px' }}>DCA (Dollar Cost Averaging)</div>
+            <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>DCA (Dollar Cost Averaging)</div>
           </div>
           <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             สะสมระยะยาวในกลุ่ม Core Large Cap (BTC, ETH, SOL) ลดความเสี่ยงจากความผันผวนของตลาดระยะสั้น

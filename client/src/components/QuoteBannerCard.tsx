@@ -5,7 +5,7 @@ export const QuoteBannerCard: React.FC = () => {
     <div
       className="crypto-card"
       style={{
-        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.08), rgba(11, 16, 29, 0.95))',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(239, 68, 68, 0.08), var(--bg-card))',
         border: '1px solid rgba(245, 158, 11, 0.25)',
         display: 'flex',
         flexDirection: 'column',
@@ -15,10 +15,10 @@ export const QuoteBannerCard: React.FC = () => {
       }}
     >
       <div>
-        <div style={{ fontSize: '15px', fontWeight: 800, color: '#FBBF24', marginBottom: '4px' }}>
+        <div style={{ fontSize: '15px', fontWeight: 800, color: '#F59E0B', marginBottom: '4px' }}>
           Better Analysis
         </div>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>
           A Brighter Tomorrow
         </div>
       </div>
@@ -27,7 +27,7 @@ export const QuoteBannerCard: React.FC = () => {
         style={{
           fontSize: '12.5px',
           fontStyle: 'italic',
-          color: '#E2E8F0',
+          color: 'var(--text-secondary)',
           lineHeight: 1.5,
           marginTop: '10px',
         }}

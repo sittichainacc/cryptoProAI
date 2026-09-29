@@ -473,7 +473,7 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <ShieldCheck size={16} color="#F59E0B" />
-            <strong style={{ fontSize: '13px', color: '#F8FAFC' }}>Position Management Mode:</strong>
+            <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Position Management Mode:</strong>
           </div>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
             ต้นทุนที่ซื้อ:
@@ -485,10 +485,10 @@ export const CoinAnalysisPage: React.FC<CoinAnalysisPageProps> = ({
             value={boughtPriceInput}
             onChange={(e) => setBoughtPriceInput(e.target.value)}
             style={{
-              backgroundColor: '#0B101E',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
               borderRadius: '6px',
-              color: '#FFF',
+              color: 'var(--text-primary)',
               padding: '4px 10px',
               fontSize: '12px',
               width: '130px',

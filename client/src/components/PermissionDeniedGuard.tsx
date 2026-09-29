@@ -31,7 +31,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
         style={{
           width: '100%',
           maxWidth: '540px',
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--bg-card)',
           border: '1px solid rgba(239, 68, 68, 0.35)',
           borderRadius: '16px',
           boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.15)',
@@ -100,7 +100,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
           style={{
             fontSize: '24px',
             fontWeight: 900,
-            color: '#FFFFFF',
+            color: 'var(--text-primary)',
             margin: '0 0 10px 0',
             letterSpacing: '-0.3px',
           }}
@@ -111,7 +111,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
         <div
           style={{
             fontSize: '13.5px',
-            color: '#CBD5E1',
+            color: 'var(--text-secondary)',
             lineHeight: 1.6,
             marginBottom: '20px',
             maxWidth: '440px',
@@ -126,8 +126,8 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
         {/* Admin privileges included in this access */}
         <div
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: 'var(--bg-card-inner)',
+            border: '1px solid var(--border-color)',
             borderRadius: '12px',
             padding: '14px 16px',
             marginBottom: '26px',
@@ -211,10 +211,10 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
               padding: '11px 18px',
               fontSize: '13px',
               fontWeight: 600,
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              backgroundColor: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
               borderRadius: '9px',
-              color: '#CBD5E1',
+              color: 'var(--text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',

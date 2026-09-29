@@ -105,7 +105,7 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: '#0F182B',
+                backgroundColor: 'var(--bg-card-inner)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 padding: '6px 12px',
@@ -126,7 +126,7 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: '#FFF',
+                  color: 'var(--text-primary)',
                   fontSize: '12px',
                   width: '100%',
                 }}
@@ -143,10 +143,10 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
                 right: 0,
                 marginTop: '6px',
                 width: '280px',
-                backgroundColor: '#0B101E',
+                backgroundColor: 'var(--bg-card)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                 zIndex: 90,
                 maxHeight: '260px',
                 overflowY: 'auto',
@@ -178,11 +178,11 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
                       cursor: 'pointer',
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-card-inner)')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <strong style={{ fontSize: '13px', color: '#FFF' }}>{c.symbol}</strong>
+                      <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{c.symbol}</strong>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.name}</span>
                     </div>
                     <button

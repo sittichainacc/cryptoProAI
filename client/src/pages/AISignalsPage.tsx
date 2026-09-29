@@ -442,9 +442,9 @@ export const AISignalsPage: React.FC<AISignalsPageProps> = ({ onSelectCoin, curr
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'var(--bg-card-inner)',
                 border: '1px solid var(--border-color)',
-                color: '#FFF',
+                color: 'var(--text-primary)',
                 borderRadius: '8px',
                 padding: '6px 10px',
                 fontSize: '12px',
@@ -453,15 +453,9 @@ export const AISignalsPage: React.FC<AISignalsPageProps> = ({ onSelectCoin, curr
                 cursor: 'pointer',
               }}
             >
-              <option value="aiScore" style={{ backgroundColor: '#0F172A', color: '#FFF' }}>
-                👑 คะแนน AI สูงสุด (1 → N)
-              </option>
-              <option value="techScore" style={{ backgroundColor: '#0F172A', color: '#FFF' }}>
-                ⚡ Technical Score สูงสุด
-              </option>
-              <option value="change24h" style={{ backgroundColor: '#0F172A', color: '#FFF' }}>
-                📈 % เพิ่มขึ้นสูงสุด 24h
-              </option>
+              <option value="aiScore">👑 คะแนน AI สูงสุด (1 → N)</option>
+              <option value="techScore">⚡ Technical Score สูงสุด</option>
+              <option value="change24h">📈 % เพิ่มขึ้นสูงสุด 24h</option>
             </select>
           </div>
         </div>

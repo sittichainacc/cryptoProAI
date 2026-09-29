@@ -241,7 +241,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
                 value={bitkubKey}
                 onChange={(e) => setBitkubKey(e.target.value)}
                 placeholder="ระบุ Bitkub API Key"
-                style={{ width: '100%', padding: '7px 10px', background: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+                style={{ width: '100%', padding: '7px 10px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
               />
             </div>
             <div>
@@ -253,7 +253,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
                 value={bitkubSecret}
                 onChange={(e) => setBitkubSecret(e.target.value)}
                 placeholder="ระบุ Bitkub API Secret"
-                style={{ width: '100%', padding: '7px 10px', background: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+                style={{ width: '100%', padding: '7px 10px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
               />
             </div>
           </div>
@@ -269,8 +269,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
           style={{
             padding: '14px',
             borderRadius: '10px',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
+            backgroundColor: 'var(--bg-card-inner)',
+            border: '1px solid var(--border-color)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
@@ -304,7 +304,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
                 value={binanceKey}
                 onChange={(e) => setBinanceKey(e.target.value)}
                 placeholder="ระบุ Binance API Key"
-                style={{ width: '100%', padding: '7px 10px', background: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+                style={{ width: '100%', padding: '7px 10px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
               />
             </div>
             <div>
@@ -316,7 +316,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
                 value={binanceSecret}
                 onChange={(e) => setBinanceSecret(e.target.value)}
                 placeholder="ระบุ Binance API Secret"
-                style={{ width: '100%', padding: '7px 10px', background: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+                style={{ width: '100%', padding: '7px 10px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
               />
             </div>
           </div>
@@ -367,12 +367,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
             <select
               value={defaultTf}
               onChange={(e) => setDefaultTf(e.target.value)}
-              style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', colorScheme: 'dark', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+              style={{ width: '100%', padding: '8px 12px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
             >
-              <option value="1D" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>1D (Daily - Main Trend)</option>
-              <option value="4H" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>4H (4 Hours - Trading Setup)</option>
-              <option value="1H" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>1H (1 Hour - Entry Timing)</option>
-              <option value="15m" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>15m (15 Minutes - Fine Entry)</option>
+              <option value="1D">1D (Daily - Main Trend)</option>
+              <option value="4H">4H (4 Hours - Trading Setup)</option>
+              <option value="1H">1H (1 Hour - Entry Timing)</option>
+              <option value="15m">15m (15 Minutes - Fine Entry)</option>
             </select>
           </div>
 
@@ -387,7 +387,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
               step="0.5"
               value={defaultRiskPct}
               onChange={(e) => setDefaultRiskPct(Number(e.target.value))}
-              style={{ width: '100%', padding: '8px 12px', background: '#0F182B', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+              style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
             />
           </div>
 
@@ -398,10 +398,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currency, setCurrenc
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as any)}
-              style={{ width: '100%', padding: '8px 12px', backgroundColor: '#0F182B', colorScheme: 'dark', border: '1px solid var(--border-color)', color: '#FFF', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+              style={{ width: '100%', padding: '8px 12px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
             >
-              <option value="th" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>ไทย (Thai - แนะนำ)</option>
-              <option value="en" style={{ backgroundColor: '#0B101E', color: '#FFF' }}>English</option>
+              <option value="th">ไทย (Thai - แนะนำ)</option>
+              <option value="en">English</option>
             </select>
           </div>
         </div>

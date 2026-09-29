@@ -75,10 +75,10 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           cursor: 'pointer',
           userSelect: 'none',
           backgroundColor: isHovered
-            ? 'rgba(255, 255, 255, 0.04)'
+            ? 'var(--bg-card-hover)'
             : isOpen
-            ? '#0c1322'
-            : 'rgba(255, 255, 255, 0.02)',
+            ? 'var(--bg-card-inner)'
+            : 'transparent',
           borderBottom: isOpen ? '1px solid var(--border-color)' : 'none',
           transition: 'all 0.18s ease',
         }}

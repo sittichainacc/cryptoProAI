@@ -51,7 +51,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
       style={{
         marginBottom: '20px',
         borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.04) 50%, rgba(15, 23, 42, 0.6) 100%)',
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.04) 50%, var(--bg-card) 100%)',
         border: '1px solid rgba(16, 185, 129, 0.35)',
         boxShadow: '0 8px 32px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         overflow: 'hidden',
@@ -90,7 +90,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.2px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
                 Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้
               </h3>
               <span
@@ -107,7 +107,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 {candidates.length} เหรียญผ่านเกณฑ์บังคับ
               </span>
             </div>
-            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '3px 0 0 0' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '3px 0 0 0' }}>
               คัดกรองเฉพาะเหรียญที่ R:R ≥ 1:2, สัญญาณกราฟไม่ Overextended, ไม่ใช่การไล่ราคา และอยู่ในตำแหน่ง Entry ที่เหมาะสม
             </p>
           </div>
@@ -147,9 +147,9 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              color: '#CBD5E1',
+              backgroundColor: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-secondary)',
               borderRadius: '8px',
               padding: '6px 10px',
               fontSize: '11.5px',
@@ -200,8 +200,8 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
               key={item.symbol}
               style={{
                 borderRadius: '14px',
-                backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.09)',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -210,7 +210,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 position: 'relative',
                 overflow: 'hidden',
-                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.3)',
+                boxShadow: 'var(--shadow-card)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.55)';
@@ -218,9 +218,9 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.18), 0 0 0 1px rgba(16, 185, 129, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.09)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.3)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-card)';
               }}
             >
               {/* Header: Rank + Coin + Status Badge + Price (Fixed, flexShrink: 0) */}
@@ -247,7 +247,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   <CryptoIcon symbol={item.symbol} size={28} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{item.symbol}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{item.symbol}</span>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.name}</span>
                     </div>
                     <div style={{ fontSize: '10.5px', color: '#10B981', fontWeight: 600 }}>
@@ -257,7 +257,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
                     {currencyPrefix}{formattedPrice}
                   </div>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: item.change24h >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
@@ -344,8 +344,8 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   style={{
                     padding: '9px 11px',
                     borderRadius: '8px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                     gap: '8px',
@@ -376,7 +376,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 </div>
 
                 {/* Why Buy Now Quant Bullet Points (Shows full reasons, scrollable) */}
-                <div style={{ fontSize: '11px', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--neon-green-light)', letterSpacing: '0.2px' }}>
                     เหตุผลเชิงปริมาณ ({item.whyBuyNow.length} ข้อ):
                   </div>
@@ -397,7 +397,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   gap: '8px',
                   marginTop: 'auto',
                   paddingTop: '10px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderTop: '1px solid var(--border-color)',
                   flexShrink: 0,
                 }}
               >

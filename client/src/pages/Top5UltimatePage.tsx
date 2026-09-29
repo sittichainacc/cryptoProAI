@@ -1225,7 +1225,7 @@ export const Top5UltimatePage: React.FC<Top5UltimatePageProps> = ({
           <div
             className="modal-content"
             style={{
-              background: '#0B132B',
+              background: 'var(--bg-card)',
               border: '1px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '20px',
               width: '100%',
@@ -1241,11 +1241,11 @@ export const Top5UltimatePage: React.FC<Top5UltimatePageProps> = ({
             <div 
               style={{
                 padding: '20px 28px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(11, 19, 43, 0.95))',
+                background: 'var(--bg-card-inner)',
                 position: 'sticky',
                 top: 0,
                 zIndex: 20,
@@ -1255,14 +1255,14 @@ export const Top5UltimatePage: React.FC<Top5UltimatePageProps> = ({
                 <Crown size={24} color="#38BDF8" />
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#FFFFFF' }}>
+                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
                       {selectedCandidate.symbol} / THB — Ultimate Deep Dive
                     </h2>
                     <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.2)', color: '#38BDF8', fontWeight: 700 }}>
                       Score: {selectedCandidate.ultimateScore}/100
                     </span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                     Institutional Multi-Factor Intelligence · Bitkub Live THB Execution
                   </div>
                 </div>
@@ -1271,9 +1271,9 @@ export const Top5UltimatePage: React.FC<Top5UltimatePageProps> = ({
               <button
                 onClick={() => setSelectedCandidate(null)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
+                  background: 'var(--bg-card-hover)',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--text-muted)',
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
@@ -1292,11 +1292,11 @@ export const Top5UltimatePage: React.FC<Top5UltimatePageProps> = ({
             <div 
               style={{
                 padding: '12px 28px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 gap: '8px',
                 overflowX: 'auto',
-                background: 'rgba(15, 23, 42, 0.5)',
+                background: 'var(--bg-card-inner)',
               }}
             >
               {[

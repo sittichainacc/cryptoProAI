@@ -167,11 +167,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         style={{
           width: '100%',
           maxWidth: '440px',
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--bg-card)',
           borderColor: isLocked ? 'rgba(239, 68, 68, 0.5)' : 'rgba(245, 158, 11, 0.4)',
           boxShadow: isLocked
-            ? '0 20px 40px rgba(239, 68, 68, 0.25), 0 0 30px rgba(0, 0, 0, 0.8)'
-            : '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.2)',
+            ? '0 20px 40px rgba(239, 68, 68, 0.25), 0 0 30px rgba(0, 0, 0, 0.4)'
+            : 'var(--shadow-card)',
           padding: '28px',
           position: 'relative',
         }}
@@ -187,7 +187,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             right: '16px',
             background: 'none',
             border: 'none',
-            color: isLocked ? 'rgba(255, 255, 255, 0.15)' : 'var(--text-muted)',
+            color: isLocked ? 'var(--text-muted)' : 'var(--text-muted)',
             cursor: isLocked ? 'not-allowed' : 'pointer',
             padding: '4px',
             borderRadius: '6px',
@@ -219,7 +219,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             {isLocked ? <Ban size={28} color="#FFFFFF" /> : <Lock size={28} color="#FFFFFF" />}
           </div>
 
-          <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF', margin: 0 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
             {isLocked ? 'ระบบระงับการเข้าสู่ระบบ (IP Locked)' : 'เข้าสู่ระบบผู้ดูแลระบบ (Admin Login)'}
           </h2>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
@@ -248,7 +248,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <ShieldAlert size={16} />
               <span>ตรวจพบการกรอกรหัสผ่านผิดพลาดครบ 3/3 ครั้ง</span>
             </div>
-            <div style={{ fontSize: '11px', color: '#CBD5E1', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
               ระบบได้ทำการบันทึกและระงับไอพีเครื่องของท่าน ({ipAddress || 'Client IP'}) เรียบร้อยแล้ว <strong>ปุ่มและแบบฟอร์มทั้งหมดถูกปิดการใช้งาน (Disabled)</strong> เพื่อความปลอดภัยสูงสุด
             </div>
           </div>
@@ -345,11 +345,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 gap: '8px',
                 padding: '9px 12px',
                 borderRadius: '8px',
-                backgroundColor: isLocked ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.04)',
-                border: isLocked ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'var(--bg-card-inner)',
+                border: isLocked ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid var(--border-color)',
               }}
             >
-              <User size={15} color={isLocked ? 'rgba(255, 255, 255, 0.2)' : 'var(--text-muted)'} />
+              <User size={15} color={isLocked ? 'var(--text-muted)' : 'var(--text-muted)'} />
               <input
                 type="text"
                 value={username}
@@ -360,7 +360,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: isLocked ? 'rgba(255, 255, 255, 0.3)' : '#FFFFFF',
+                  color: isLocked ? 'var(--text-muted)' : 'var(--text-primary)',
                   fontSize: '13px',
                   width: '100%',
                   cursor: isLocked ? 'not-allowed' : 'text',
@@ -380,11 +380,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 gap: '8px',
                 padding: '9px 12px',
                 borderRadius: '8px',
-                backgroundColor: isLocked ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.04)',
-                border: isLocked ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'var(--bg-card-inner)',
+                border: isLocked ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid var(--border-color)',
               }}
             >
-              <Key size={15} color={isLocked ? 'rgba(255, 255, 255, 0.2)' : 'var(--text-muted)'} />
+              <Key size={15} color={isLocked ? 'var(--text-muted)' : 'var(--text-muted)'} />
               <input
                 type="password"
                 value={password}
@@ -395,7 +395,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: isLocked ? 'rgba(255, 255, 255, 0.3)' : '#FFFFFF',
+                  color: isLocked ? 'var(--text-muted)' : 'var(--text-primary)',
                   fontSize: '13px',
                   width: '100%',
                   cursor: isLocked ? 'not-allowed' : 'text',
@@ -409,8 +409,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             style={{
               padding: '8px 10px',
               borderRadius: '7px',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
               fontSize: '11px',
               color: 'var(--text-muted)',
               display: 'flex',

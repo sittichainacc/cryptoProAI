@@ -59,9 +59,9 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
           maxWidth: '680px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#0F172A',
-          borderColor: 'rgba(59, 130, 246, 0.4)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(59, 130, 246, 0.2)',
+          backgroundColor: 'var(--bg-card)',
+          borderColor: 'var(--border-color)',
+          boxShadow: 'var(--shadow-card)',
           padding: '24px',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -73,7 +73,7 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
             <CryptoIcon symbol={coin.symbol} size={42} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 800 }}>{coin.symbol}</span>
+                <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>{coin.symbol}</span>
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{coin.name}</span>
                 <span className="badge badge-strong-buy">{coin.signalLabelTh}</span>
               </div>
@@ -86,8 +86,8 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: 'none',
+              background: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
               borderRadius: '8px',
               width: '32px',
               height: '32px',
@@ -131,11 +131,11 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
               <ShieldAlert size={32} color="#EF4444" />
             </div>
 
-            <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF', margin: '0 0 8px 0' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
               ท่านไม่มีสิทธิ์ดูส่วนนี้
             </h3>
 
-            <p style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: 1.5, maxWidth: '440px', margin: '0 auto 20px auto' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '440px', margin: '0 auto 20px auto' }}>
               การวิเคราะห์เชิงลึกเหรียญ <strong style={{ color: 'var(--neon-cyan)' }}>{coin.symbol}</strong> (โมเดล AI Score, Technical Score, Trade Levels, AI Thai Rationale) สงวนสิทธิ์เฉพาะ <strong style={{ color: '#F59E0B' }}>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น
             </p>
 
@@ -170,9 +170,9 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
                 style={{
                   padding: '10px 18px',
                   borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#CBD5E1',
+                  background: 'var(--bg-card-inner)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -193,9 +193,9 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
                 marginBottom: '20px',
               }}
             >
-              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
+              <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ราคาปัจจุบัน</div>
-                <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '4px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '4px', color: 'var(--text-primary)' }}>
                   {prefix}{displayPrice}
                 </div>
                 <div
@@ -224,7 +224,7 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
                 </div>
               </div>
 
-              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '10px' }}>
+              <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ความเสี่ยง (Risk)</div>
                 <div
                   style={{
@@ -242,8 +242,8 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
             {/* AI Thai Rationale Box (Section 14 & 47) */}
             <div
               style={{
-                backgroundColor: 'rgba(16, 24, 43, 0.8)',
-                border: '1px solid rgba(59, 130, 246, 0.25)',
+                backgroundColor: 'var(--bg-card-inner)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '12px',
                 padding: '16px',
                 marginBottom: '18px',
@@ -263,7 +263,7 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
                 <Sparkles size={16} />
                 บทวิเคราะห์และเหตุผลประกอบจาก AI (Human-Readable)
               </div>
-              <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#E2E8F0', marginBottom: '10px' }}>
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', marginBottom: '10px' }}>
                 {coin.signalReasonTh}
               </p>
             </div>

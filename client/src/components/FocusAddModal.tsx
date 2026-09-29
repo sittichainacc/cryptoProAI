@@ -90,10 +90,10 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
           width: '100%',
           maxWidth: '560px',
           maxHeight: '90vh',
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--bg-card)',
           border: '1px solid rgba(139, 92, 246, 0.3)',
           borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px rgba(139, 92, 246, 0.2)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(139, 92, 246, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -104,7 +104,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
         <div
           style={{
             padding: '18px 20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -126,7 +126,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
               <Target size={18} color="#FFFFFF" />
             </div>
             <div>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF' }}>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 เพิ่มเหรียญเข้าสู่ระบบ FOCUS
               </div>
               <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
@@ -149,14 +149,14 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
         </div>
 
         {/* Search input */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              backgroundColor: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
               borderRadius: '10px',
               padding: '8px 12px',
             }}
@@ -171,7 +171,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                color: '#FFFFFF',
+                color: 'var(--text-primary)',
                 fontSize: '13px',
                 width: '100%',
               }}
@@ -242,20 +242,20 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                         width: '28px',
                         height: '28px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        backgroundColor: 'var(--bg-card-inner)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 800,
                         fontSize: '11px',
-                        color: isSelected ? 'var(--neon-cyan)' : '#FFFFFF',
+                        color: isSelected ? 'var(--neon-cyan)' : 'var(--text-primary)',
                       }}
                     >
                       {coin.symbol.slice(0, 3)}
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                           {coin.symbol}
                         </span>
                         <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
@@ -270,7 +270,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#FFFFFF' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {currency === 'THB'
                           ? `฿${(coin.price * 33.24).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
                           : `$${coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`}
@@ -319,7 +319,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          border: '1px solid var(--border-color)',
                         }}
                       />
                     )}
@@ -335,8 +335,8 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
           <div
             style={{
               padding: '16px 20px',
-              backgroundColor: 'rgba(0, 0, 0, 0.25)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              backgroundColor: 'var(--bg-card-inner)',
+              borderTop: '1px solid var(--border-color)',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
@@ -353,10 +353,10 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                   onChange={(e) => setPriority(e.target.value as FocusPriority)}
                   style={{
                     width: '100%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: '#FFFFFF',
+                    color: 'var(--text-primary)',
                     padding: '6px 8px',
                     fontSize: '12px',
                     outline: 'none',
@@ -379,10 +379,10 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                   onChange={(e) => setMode(e.target.value as FocusMode)}
                   style={{
                     width: '100%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: '#FFFFFF',
+                    color: 'var(--text-primary)',
                     padding: '6px 8px',
                     fontSize: '12px',
                     outline: 'none',
@@ -404,10 +404,10 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                   onChange={(e) => setPositionStatus(e.target.value as FocusPositionStatus)}
                   style={{
                     width: '100%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: '#FFFFFF',
+                    color: 'var(--text-primary)',
                     padding: '6px 8px',
                     fontSize: '12px',
                     outline: 'none',
@@ -434,10 +434,10 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
                 onChange={(e) => setUserNotes(e.target.value)}
                 style={{
                   width: '100%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '8px',
-                  color: '#FFFFFF',
+                  color: 'var(--text-primary)',
                   padding: '7px 10px',
                   fontSize: '12px',
                   outline: 'none',
@@ -451,7 +451,7 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
         <div
           style={{
             padding: '14px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            borderTop: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -467,8 +467,8 @@ export const FocusAddModal: React.FC<FocusAddModalProps> = ({
               style={{
                 padding: '7px 14px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                backgroundColor: 'var(--bg-card-inner)',
+                border: '1px solid var(--border-color)',
                 color: 'var(--text-secondary)',
                 fontSize: '12.5px',
                 cursor: 'pointer',

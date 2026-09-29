@@ -184,7 +184,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
         flexDirection: 'row',
         height: '100%',
         width: '100%',
-        backgroundColor: '#0F172A',
+        backgroundColor: 'var(--bg-card)',
         color: 'var(--text-primary)',
         overflow: 'hidden',
         borderLeft: '1px solid var(--border-color)',
@@ -208,7 +208,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
             flex: '1 1 56%',
             display: 'flex',
             flexDirection: 'column',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             overflow: 'hidden',
             minHeight: '280px',
           }}
@@ -222,8 +222,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 12px 8px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  backgroundColor: '#0C1322',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card-inner)',
                 }}
               >
                 {/* Category Dropdown Selector */}
@@ -296,8 +296,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                   fontSize: '11px',
                   fontWeight: 600,
                   color: 'var(--text-muted)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card-inner)',
                 }}
               >
                 <span style={{ textAlign: 'center' }}></span>
@@ -367,7 +367,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                             transition: 'background-color 0.12s ease',
                           }}
                           onMouseEnter={(e) => {
-                            if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                            if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-card-hover)';
                           }}
                           onMouseLeave={(e) => {
                             if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
@@ -382,7 +382,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                               style={{
                                 fontWeight: 800,
                                 fontSize: '12px',
-                                color: isSelected ? 'var(--neon-cyan)' : '#FFFFFF',
+                                color: isSelected ? 'var(--neon-cyan)' : 'var(--text-primary)',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -396,7 +396,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                           </div>
 
                           {/* Last Price */}
-                          <div style={{ textAlign: 'right', fontWeight: 600, fontSize: '11.5px', color: '#F8FAFC' }}>
+                          <div style={{ textAlign: 'right', fontWeight: 600, fontSize: '11.5px', color: 'var(--text-primary)' }}>
                             <PriceCell price={priceFormatted} prefix="" style={{ fontSize: '11.5px' }} />
                           </div>
 
@@ -466,8 +466,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 12px 8px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  backgroundColor: '#0C1322',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card-inner)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -554,8 +554,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 12px 8px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  backgroundColor: '#0C1322',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card-inner)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -654,8 +654,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 12px 8px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  backgroundColor: '#0C1322',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card-inner)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -688,8 +688,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                         justifyContent: 'space-between',
                         padding: '7px 10px',
                         borderRadius: '6px',
-                        backgroundColor: sig.symbol === selectedSymbol ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.02)',
-                        border: sig.symbol === selectedSymbol ? '1px solid var(--neon-blue)' : '1px solid rgba(255, 255, 255, 0.04)',
+                        backgroundColor: sig.symbol === selectedSymbol ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-card-inner)',
+                        border: sig.symbol === selectedSymbol ? '1px solid var(--neon-blue)' : '1px solid var(--border-color)',
                         cursor: 'pointer',
                       }}
                     >
@@ -711,7 +711,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                           {meta.label}
                         </div>
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{sig.symbol}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>{sig.symbol}</div>
                           <div style={{ fontSize: '10px', color: isPos ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
                             {isPos ? `+${sig.change24h.toFixed(2)}%` : `${sig.change24h.toFixed(2)}%`}
                           </div>
@@ -719,7 +719,7 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
                       </div>
 
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#fff' }}>
+                        <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary)' }}>
                           <PriceCell price={sig.price * multiplier} prefix={prefix} />
                         </div>
                         <span
@@ -864,28 +864,28 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>ปริมาณการซื้อขาย (24h)</div>
                 <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
                   {formatLargeNum(coin.volume24h * multiplier)}
                 </div>
               </div>
 
-              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>ปริมาณเฉลี่ย (30 วัน)</div>
                 <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
                   {formatLargeNum(coin.volume24h * 1.45 * multiplier)}
                 </div>
               </div>
 
-              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>สูงสุด 24 ชม.</div>
                 <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--neon-green-light)', marginTop: '2px' }}>
                   {prefix}{(coin.high24h * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.high24h < 1 ? 4 : 2 })}
                 </div>
               </div>
 
-              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ padding: '6px 8px', borderRadius: '6px', backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>ต่ำสุด 24 ชม.</div>
                 <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--neon-red)', marginTop: '2px' }}>
                   {prefix}{(coin.low24h * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.low24h < 1 ? 4 : 2 })}
@@ -902,8 +902,8 @@ export const RightTradingSidebar: React.FC<RightTradingSidebarProps> = ({
           width: '38px',
           minWidth: '38px',
           height: '100%',
-          backgroundColor: '#090D1A',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+          backgroundColor: 'var(--bg-card-inner)',
+          borderLeft: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

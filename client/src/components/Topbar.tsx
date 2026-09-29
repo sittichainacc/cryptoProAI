@@ -377,10 +377,10 @@ export const Topbar: React.FC<TopbarProps> = ({
                 top: 'calc(100% + 8px)',
                 left: 0,
                 width: '320px',
-                backgroundColor: '#0F172A',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '12px',
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.6)',
+                boxShadow: 'var(--shadow-card)',
                 zIndex: 100,
                 overflow: 'hidden',
               }}
@@ -388,7 +388,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               <div
                 style={{
                   padding: '8px 12px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderBottom: '1px solid var(--border-color)',
                   fontSize: '11px',
                   color: 'var(--text-muted)',
                   display: 'flex',
@@ -413,7 +413,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       cursor: 'pointer',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                      borderBottom: '1px solid var(--border-color)',
                       transition: 'background 0.15s ease',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)')}
@@ -437,7 +437,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                         {coin.symbol.slice(0, 3)}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '13px', color: '#FFF' }}>{coin.symbol}</div>
+                        <div style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{coin.symbol}</div>
                         <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{coin.name}</div>
                       </div>
                     </div>
@@ -660,11 +660,11 @@ export const Topbar: React.FC<TopbarProps> = ({
                   right: 0,
                   width: '340px',
                   maxWidth: 'calc(100vw - 24px)',
-                  backgroundColor: '#0F172A',
-                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '12px',
                   padding: '12px',
-                  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.7)',
+                  boxShadow: 'var(--shadow-card)',
                   zIndex: 99999,
                 }}
               >
@@ -681,7 +681,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Radio size={14} color="var(--neon-cyan)" />
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFF' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
                       สัญญาณ AI ล่าสุด
                     </span>
                   </div>
@@ -795,8 +795,8 @@ export const Topbar: React.FC<TopbarProps> = ({
                       setShowNotifications(false);
                     }}
                     style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      backgroundColor: 'var(--bg-card-inner)',
+                      border: '1px solid var(--border-color)',
                       borderRadius: '8px',
                       padding: '8px 10px',
                       cursor: 'pointer',
@@ -807,13 +807,13 @@ export const Topbar: React.FC<TopbarProps> = ({
                       e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.backgroundColor = 'var(--bg-card-inner)';
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '12px', color: '#FFF' }}>{item.symbol}</span>
+                        <span style={{ fontWeight: 800, fontSize: '12px', color: 'var(--text-primary)' }}>{item.symbol}</span>
                         <span
                           style={{
                             fontSize: '9.5px',
@@ -955,17 +955,17 @@ export const Topbar: React.FC<TopbarProps> = ({
             style={{
               width: '560px',
               maxWidth: '92vw',
-              backgroundColor: '#0F172A',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: '16px',
               padding: '24px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(59, 130, 246, 0.15)',
+              boxShadow: 'var(--shadow-card)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Keyboard size={20} color="var(--neon-cyan)" />
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#FFF' }}>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)' }}>
                   คีย์ลัดสำหรับเทรดเดอร์ (Trading Terminal Shortcuts)
                 </h3>
               </div>

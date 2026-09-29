@@ -172,17 +172,17 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
         className="crypto-card report-paper-card"
         style={{
           padding: '24px',
-          backgroundColor: '#0F172A',
-          border: '1px solid rgba(59, 130, 246, 0.25)',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px',
         }}
       >
         {/* Report Top Meta */}
-        <div className="report-top-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="report-top-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: '#FFF', letterSpacing: '0.3px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.3px' }}>
               {currentMeta.title}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--neon-cyan)', fontWeight: 700, marginTop: '2px' }}>
@@ -203,22 +203,22 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
 
         {/* Section 1: Executive Market Summary */}
         <div>
-          <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#F1F5F9', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <TrendingUp size={16} color="var(--neon-green)" />
             1. สรุปภาพรวมและสภาวะตลาด (Executive Summary)
           </h3>
           {selectedReportType === 'daily' && (
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#CBD5E1' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
               ตลาดคริปโตเคอร์เรนซีในรอบ 24 ชั่วโมงที่ผ่านมาอยู่ในสภาวะ <strong>{kpis?.marketAITrend?.statusTh || 'สอดส่องและติดตาม'}</strong> โดยมีมูลค่าตลาดรวมอยู่ที่ <strong>{kpis?.totalMarketCapFormatted || '-'}</strong> (ปรับตัว {Number(kpis?.marketCapChange24h) >= 0 ? '+' : ''}{kpis?.marketCapChange24h || 0}%) พร้อมปริมาณการซื้อขายรวม <strong>{kpis?.volume24hFormatted || '-'}</strong> ดัชนีความกลัวและความโลภ (Fear &amp; Greed Index) อยู่ที่ระดับ <strong>{kpis?.fearAndGreedIndex || 0} ({kpis?.fearAndGreedSentiment || '-'})</strong> โมเมนตัมระยะสั้นยังคงกระจุกตัวในกลุ่มที่มีสัญญาณ AI บ่งชี้สะสมพลัง
             </p>
           )}
           {selectedReportType === 'weekly' && (
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#CBD5E1' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
               ภาพรวมสภาวะตลาดรายสัปดาห์ (Weekly Macro) บ่งชี้การกระจายตัวของสภาพคล่องจาก Bitcoin สู่กลุ่ม Altcoins ชัดเจนขึ้น สัดส่วนการครองตลาดของ Bitcoin (BTC Dominance) อยู่ที่ <strong>{kpis?.btcDominance || 0}%</strong> ซึ่งเป็นจุดทดสอบการหมุนเวียนของเงินทุน (Capital Rotation) สู่หมวด <strong>Layer 1/Layer 2 และ DeFi</strong> ขณะที่ค่าเฉลี่ยสัปดาห์ของโมเมนตัม AI ยังคงเป็นบวกในสินทรัพย์หลัก
             </p>
           )}
           {selectedReportType === 'risk' && (
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#CBD5E1' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
               การประเมินความเสี่ยงของตลาดโดยรวม (Risk Assessment) ตรวจพบค่าความผันผวนแฝง (Implied Volatility) อยู่ในเกณฑ์ปานกลาง ดัชนีความเสี่ยงพอร์ตโฟลิโอแนะระมัดระวังการเปิดสถานะแบบ Leverage สูงเนื่องจากมีโซน Liquidation Cluster หนาแน่นใกล้ระดับราคาแนวรับสำคัญ การกระจายสินทรัพย์ที่มีคะแนนความเสี่ยงต่ำ (Low Risk Profile) จะช่วยลดค่า Max Drawdown ได้อย่างมีนัยสำคัญ
             </p>
           )}
@@ -226,33 +226,33 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
 
         {/* Section 2: Macro Metrics Grid */}
         <div className="report-metrics-grid">
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>BTC Dominance</div>
-            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>{kpis?.btcDominance}%</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px', color: 'var(--text-primary)' }}>{kpis?.btcDominance}%</div>
             <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>สัดส่วนการครองตลาด</div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Bitcoin Price</div>
-            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px', color: 'var(--text-primary)' }}>
               {prefix}{kpis ? (kpis.btcPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-'}
             </div>
-            <div style={{ fontSize: '10.5px', color: Number(kpis?.btcChange24h) >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+            <div style={{ fontSize: '10.5px', color: Number(kpis?.btcChange24h) >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
               {Number(kpis?.btcChange24h) >= 0 ? '+' : ''}{kpis?.btcChange24h}% (24h)
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ethereum Price</div>
-            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px', color: 'var(--text-primary)' }}>
               {prefix}{kpis ? (kpis.ethPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-'}
             </div>
-            <div style={{ fontSize: '10.5px', color: Number(kpis?.ethChange24h) >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+            <div style={{ fontSize: '10.5px', color: Number(kpis?.ethChange24h) >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
               {Number(kpis?.ethChange24h) >= 0 ? '+' : ''}{kpis?.ethChange24h}% (24h)
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card-inner)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Fear & Greed</div>
             <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--neon-cyan)', marginTop: '2px' }}>
               {kpis?.fearAndGreedIndex || 50}
@@ -263,7 +263,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
 
         {/* Section 3: Dynamic Focused Opportunities */}
         <div>
-          <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#F1F5F9', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Sparkles size={16} color="var(--neon-cyan)" />
             {selectedReportType === 'risk'
               ? '2. สินทรัพย์ความเสี่ยงต่ำที่แนะนำสำหรับลดความผันผวน (Low Risk Defensive Assets)'
@@ -277,14 +277,14 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
               <div
                 key={coin.symbol}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  backgroundColor: 'var(--bg-card-inner)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '10px',
                   padding: '12px',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontWeight: 800, fontSize: '15px' }}>{idx + 1}. {coin.symbol}</span>
+                  <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>{idx + 1}. {coin.symbol}</span>
                   <span className="badge badge-strong-buy">{coin.signalLabelTh}</span>
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neon-cyan)', marginBottom: '6px' }}>
@@ -299,12 +299,12 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ kpis, coins, currency 
         </div>
 
         {/* Section 4: Risk & Invalidation Guidance */}
-        <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13.5px', fontWeight: 800, color: '#EF4444', marginBottom: '6px' }}>
+        <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13.5px', fontWeight: 800, color: 'var(--neon-red)', marginBottom: '6px' }}>
             <AlertTriangle size={16} />
             3. แนวทางการบริหารความเสี่ยงและการยกเลิกแผน ({selectedReportType === 'risk' ? 'Risk Defense Protocol' : 'Risk & Invalidation Rules'})
           </div>
-          <ul style={{ paddingLeft: '20px', fontSize: '12px', color: '#E2E8F0', lineHeight: 1.6 }}>
+          <ul style={{ paddingLeft: '20px', fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
             <li><strong>Position Sizing:</strong> ควบคุมความเสี่ยงไม่เกิน 1.5% - 2.0% ของพอร์ตรวมต่อหนึ่งไม้การลงทุน</li>
             <li><strong>Invalidation Trigger:</strong> หาก Bitcoin ปิดแท่ง 4H หลุดต่ำกว่าเส้น EMA 200 หรือเกิด Fake Breakout ให้ชะลอการเปิด Position ใหม่ในกลุ่ม Altcoins</li>
             <li><strong>Profit Taking:</strong> แบ่งไม้ขายทำกำไร (Partial TP) ที่อัตราส่วน Risk/Reward 1:2 และเลื่อนจุดตัดขาดทุนขึ้นมาที่หน้าทุน (Trailing Stop)</li>
