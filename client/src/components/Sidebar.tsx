@@ -49,10 +49,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Home', icon: Home },
-    { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE' },
+    { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', adminOnly: true },
     { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW' },
     { id: 'top5-premium', label: 'Top 5 Premium', icon: Award, badge: 'PRO' },
     { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI' },
+    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE' },
     { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
     { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity },
@@ -246,7 +247,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           gap: '4px',
         }}
       >
-        {menuItems.map((item) => {
+        {menuItems.filter((item) => !('adminOnly' in item && item.adminOnly) || userRole === 'admin').map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const isHome = item.id === 'dashboard';

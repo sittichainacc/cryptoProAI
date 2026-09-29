@@ -55,6 +55,7 @@ import { NewsPage } from './pages/NewsPage.js';
 import { Top5UltimatePage } from './pages/Top5UltimatePage.js';
 import { Top5PremiumPage } from './pages/Top5PremiumPage.js';
 import { Top5Page } from './pages/Top5Page.js';
+import { GoldSignalPage } from './pages/GoldSignalPage.js';
 import { FocusPage } from './pages/FocusPage.js';
 import { WatchlistPage } from './pages/WatchlistPage.js';
 import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
@@ -63,7 +64,18 @@ import { MobileBottomNav } from './components/MobileBottomNav.js';
 
 export const App: React.FC = () => {
   // Navigation State
-  const [activeSidebarTab, setActiveSidebarTab] = useState('dashboard');
+  const [activeSidebarTab, setActiveSidebarTab] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) return tabParam;
+      const hash = window.location.hash.replace('#', '');
+      if (hash) return hash;
+    } catch {
+      // fallback
+    }
+    return 'dashboard';
+  });
   const [activeTopTab, setActiveTopTab] = useState('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -367,6 +379,11 @@ export const App: React.FC = () => {
     localStorage.setItem('cryptopro_auth_role', 'admin');
   };
 
+  // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin (เช่น เพิ่งออกจากระบบขณะอยู่หน้า FOCUS) ให้กลับหน้า Home
+  useEffect(() => {
+    if (userRole !== 'admin' && activeSidebarTab === 'focus') setActiveSidebarTab('dashboard');
+  }, [userRole, activeSidebarTab]);
+
   const handleLogout = () => {
     setUserRole('analyst');
     localStorage.removeItem('cryptopro_auth_role');
@@ -383,6 +400,7 @@ export const App: React.FC = () => {
           case 'top5-ultimate': return { title: 'Top 5 Ultimate', desc: 'Institutional Multi-Factor Decision Engine ตรวจสอบ 15 ด่านเข้มงวด' };
           case 'top5-premium': return { title: 'Top 5 Premium', desc: 'สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก' };
           case 'top5': return { title: 'แนะนำ Top 5', desc: 'ระบบแนะนำเหรียญ AI Top 5' };
+          case 'gold-signal': return { title: 'สัญญาณทอง (Gold Intelligence & Entry Signal)', desc: 'AI Multi-Factor Gold Decision Engine วิเคราะห์ราคา เทคนิค Fed ดอลลาร์ Real Yield และ Futures เพื่อหาจังหวะเข้า–ออก' };
           case 'market': return { title: 'ตลาดคริปโต (Market Overview)', desc: 'ภาพรวมตลาดและการวิเคราะห์ Real-Time Market Breadth' };
           case 'screener': return { title: 'สแกนเหรียญ (Coin Screener)', desc: 'ระบบคัดกรองเหรียญ Multi-Filter Screener' };
           case 'analysis': return { title: 'วิเคราะห์เชิงลึก (In-Depth Analysis)', desc: 'โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง' };
@@ -448,6 +466,8 @@ export const App: React.FC = () => {
             onOpenAnalysis={handleOpenAnalysis}
           />
         );
+      case 'gold-signal':
+        return <GoldSignalPage />;
       case 'top5':
         return (
           <Top5Page
@@ -868,7 +888,7 @@ export const App: React.FC = () => {
         onRecalculate={handleRecalculateFocus}
         onOpenFocusPage={(sym) => {
           if (sym) handleSelectCoin(sym);
-          setActiveSidebarTab('focus');
+          setActiveSidebarTab(userRole === 'admin' ? 'focus' : 'dashboard');
         }}
         currency={currency}
         buyCandidates={buyNowCandidates}
@@ -914,7 +934,7 @@ export const App: React.FC = () => {
           currency={currency}
           onSelectCoin={(sym) => {
             handleSelectCoin(sym);
-            setActiveSidebarTab('focus');
+            setActiveSidebarTab(userRole === 'admin' ? 'focus' : 'dashboard');
           }}
         />
       )}

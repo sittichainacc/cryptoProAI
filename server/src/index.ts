@@ -5,6 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { apiRouter } from './routes/api.routes.js';
 import { authRouter } from './routes/auth.routes.js';
+import { goldRouter } from './routes/gold.routes.js';
 import { marketService } from './services/market.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +20,7 @@ app.use(express.json());
 // API Routes
 app.use('/api', apiRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/gold', goldRouter);
 
 // Health check
 app.get('/health', (_req, res) => {

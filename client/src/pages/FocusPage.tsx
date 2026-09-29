@@ -39,22 +39,26 @@ import {
   Crosshair,
   TrendingDown as ArrowDown,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Crown
 } from 'lucide-react';
 import { 
   FocusCoinData, 
   FocusResponse, 
   BuyNowResponse, 
-  BuyNowCandidateItem, 
   FocusTimeframeMiniAnalysis, 
-  FocusWhyScoreChanged, 
-  AlertItem 
+  FocusWhyScoreChanged,
+  AlertItem,
+  UltimateEvaluationResponse,
+  Phase20EvaluationResponse,
+  DecisionState
 } from '../types/index.js';
 import { api } from '../services/api.js';
 import { realtimeService } from '../services/realtime.js';
 import { FocusAddModal } from '../components/FocusAddModal.js';
 import { FocusCompareModal } from '../components/FocusCompareModal.js';
 import { CryptoIcon } from '../components/CryptoIcon.js';
+import { FocusTopPicksSection, TOP_PICKS_THEMES, type TopPickCard } from '../components/FocusTopPicksSection.js';
 
 interface FocusPageProps {
   currency: 'THB' | 'USDT';
@@ -72,6 +76,9 @@ export const FocusPage: React.FC<FocusPageProps> = ({
   // Main Data States
   const [focusData, setFocusData] = useState<FocusResponse | null>(null);
   const [buyNowData, setBuyNowData] = useState<BuyNowResponse | null>(null);
+  const [ultimateData, setUltimateData] = useState<UltimateEvaluationResponse | null>(null);
+  const [premiumData, setPremiumData] = useState<Phase20EvaluationResponse | null>(null);
+  const [sectionLoading, setSectionLoading] = useState<Record<string, boolean>>({});
   const [selectedSymbol, setSelectedSymbol] = useState<string>(initialSymbol || 'ADA');
   const [activeTab, setActiveTab] = useState<
     'overview' | 'technical' | 'entry' | 'orderflow' | 'derivatives' | 'onchain' | 'news_unlock' | 'risk' | 'exit' | 'history'
@@ -111,7 +118,10 @@ export const FocusPage: React.FC<FocusPageProps> = ({
 
   const expandAll = () => {
     const next: Record<string, boolean> = {
+      topUltimate: false,
+      topPremium: false,
       topBuyNow: false,
+      focusCockpitGroup: false,
       focusCoins: false,
       decisionCockpit: false,
       deepDiveTabs: false,
@@ -126,7 +136,10 @@ export const FocusPage: React.FC<FocusPageProps> = ({
 
   const collapseAll = () => {
     const next: Record<string, boolean> = {
+      topUltimate: true,
+      topPremium: true,
       topBuyNow: true,
+      focusCockpitGroup: true,
       focusCoins: true,
       decisionCockpit: true,
       deepDiveTabs: true,
@@ -149,8 +162,9 @@ export const FocusPage: React.FC<FocusPageProps> = ({
   const [lastTickTime, setLastTickTime] = useState<number>(Date.now());
   const [latencyMs, setLatencyMs] = useState<number>(38);
   const [priceFlashMap, setPriceFlashMap] = useState<Record<string, 'up' | 'down'>>({});
-  const [prevBuyNowList, setPrevBuyNowList] = useState<BuyNowCandidateItem[]>([]);
-  const [rankChangeMap, setRankChangeMap] = useState<Record<string, { rankDelta: number; isNew: boolean }>>({});
+  // Rank rotation (NEW / ↑ / ↓) แยกต่อส่วน — เก็บอันดับก่อนหน้าใน ref เพื่อให้ interval เห็นค่าล่าสุด
+  const prevRanksRef = useRef<Record<string, Map<string, number>>>({});
+  const [rankChanges, setRankChanges] = useState<Record<string, Record<string, { rankDelta: number; isNew: boolean }>>>({});
   const [prevScoresMap, setPrevScoresMap] = useState<Record<string, number>>({});
   const [scoreChangeFlashMap, setScoreChangeFlashMap] = useState<Record<string, number>>({});
   const [whyScoreModalCoin, setWhyScoreModalCoin] = useState<FocusCoinData | null>(null);
@@ -174,36 +188,46 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     return `${currencyPrefix}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // ราคาที่ backend ส่งมาเป็นสกุลที่ระบุ (Ultimate/Premium = THB) → แสดงตามสกุลที่ผู้ใช้เลือก
+  const formatDenominated = (val: number, denominated: 'THB' | 'USDT' | undefined, rate?: number) => {
+    const fx = rate && rate > 0 ? rate : usdThbRate;
+    const inThb = denominated === 'THB' ? val : val * fx;
+    const v = currency === 'THB' ? inThb : inThb / fx;
+    if (v < 0.01) return `${currencyPrefix}${v.toFixed(6)}`;
+    if (v < 1) return `${currencyPrefix}${v.toFixed(4)}`;
+    if (v < 100) return `${currencyPrefix}${v.toFixed(2)}`;
+    return `${currencyPrefix}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   // Load Focus & Top Buy Now Data
   const loadData = async (force: boolean = false) => {
     setIsLoading(true);
     const startFetch = Date.now();
     try {
-      const [fData, bData] = await Promise.all([
+      const [fRes, bRes, uRes, pRes] = await Promise.allSettled([
         force ? api.recalculateFocus() : api.getFocusList(),
         force ? api.recalculateBuyNow() : api.getBuyNow(),
+        api.getTop5Ultimate(),
+        api.getTop5Premium(),
       ]);
+      const fData = fRes.status === 'fulfilled' ? fRes.value : null;
+      const bData = bRes.status === 'fulfilled' ? bRes.value : null;
 
       setLatencyMs(Math.max(18, Date.now() - startFetch));
       setLastTickTime(Date.now());
 
-      // Change detection for Top Buy Now
+      // Change detection for Top Buy Now / Ultimate / Premium
       if (bData && bData.candidates) {
-        if (prevBuyNowList.length > 0) {
-          const prevMap = new Map(prevBuyNowList.map((c) => [c.symbol, c.rank]));
-          const newChanges: Record<string, { rankDelta: number; isNew: boolean }> = {};
-          bData.candidates.forEach((c) => {
-            const oldRank = prevMap.get(c.symbol);
-            if (oldRank === undefined) {
-              newChanges[c.symbol] = { rankDelta: 0, isNew: true };
-            } else {
-              newChanges[c.symbol] = { rankDelta: oldRank - c.rank, isNew: false };
-            }
-          });
-          setRankChangeMap(newChanges);
-        }
-        setPrevBuyNowList(bData.candidates);
+        trackRanks('buyNow', bData.candidates);
         setBuyNowData(bData);
+      }
+      if (uRes.status === 'fulfilled' && uRes.value) {
+        trackRanks('ultimate', uRes.value.candidates ?? []);
+        setUltimateData(uRes.value);
+      }
+      if (pRes.status === 'fulfilled' && pRes.value) {
+        trackRanks('premium', pRes.value.candidates ?? []);
+        setPremiumData(pRes.value);
       }
 
       // Change detection for Focus Scores
@@ -238,6 +262,47 @@ export const FocusPage: React.FC<FocusPageProps> = ({
       console.error('Failed to load focus & buynow data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  function trackRanks(section: string, list: { symbol: string; rank: number }[]) {
+    const prev = prevRanksRef.current[section];
+    if (prev && prev.size > 0) {
+      const changes: Record<string, { rankDelta: number; isNew: boolean }> = {};
+      list.forEach((c) => {
+        const old = prev.get(c.symbol);
+        changes[c.symbol] = old === undefined ? { rankDelta: 0, isNew: true } : { rankDelta: old - c.rank, isNew: false };
+      });
+      setRankChanges((r) => ({ ...r, [section]: changes }));
+    }
+    prevRanksRef.current[section] = new Map(list.map((c) => [c.symbol, c.rank]));
+  }
+
+  const recalcUltimate = async () => {
+    setSectionLoading((s) => ({ ...s, ultimate: true }));
+    try {
+      const u = await api.recalculateTop5Ultimate();
+      trackRanks('ultimate', u.candidates ?? []);
+      setUltimateData(u);
+      setLastTickTime(Date.now());
+    } catch (err) {
+      console.error('Failed to recalculate Top 5 Ultimate:', err);
+    } finally {
+      setSectionLoading((s) => ({ ...s, ultimate: false }));
+    }
+  };
+
+  const recalcPremium = async () => {
+    setSectionLoading((s) => ({ ...s, premium: true }));
+    try {
+      const p = await api.recalculateTop5Premium();
+      trackRanks('premium', p.candidates ?? []);
+      setPremiumData(p);
+      setLastTickTime(Date.now());
+    } catch (err) {
+      console.error('Failed to recalculate Top 5 Premium:', err);
+    } finally {
+      setSectionLoading((s) => ({ ...s, premium: false }));
     }
   };
 
@@ -465,17 +530,30 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     showToast(`เพิ่ม ${payload.symbol} เข้า Focus สำเร็จ`);
   };
 
-  const handleQuickAddFromBuyNow = async (symbol: string) => {
+  const handleQuickAdd = async (symbol: string, sourceTh: string) => {
     await api.addFocus({
       symbol,
       priority: 'high',
       mode: 'high_focus',
       positionStatus: 'PLANNING TO BUY',
-      userNotes: 'เพิ่มด่วนจาก Top Buy Now Candidates (Quant V3)',
+      userNotes: `เพิ่มด่วนจาก ${sourceTh}`,
     });
     await loadData(true);
     setSelectedSymbol(symbol);
     showToast(`🔥 เพิ่ม ${symbol} เข้าสู่ Focus เรียบร้อยแล้ว`);
+  };
+
+  /** ดูข้อมูล: ถ้าอยู่ใน Focus → เปิด Decision Cockpit ของเหรียญนั้น, ถ้ายังไม่อยู่ → เปิดกราฟวิเคราะห์ */
+  const handleViewPick = (symbol: string) => {
+    if (displayFocusItems.some((i) => i.symbol === symbol)) {
+      setSelectedSymbol(symbol);
+      if (isCollapsed('focusCockpitGroup')) toggleSection('focusCockpitGroup');
+      setTimeout(() => document.getElementById('focus-cockpit-group')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    } else if (onSelectCoinToChart) {
+      onSelectCoinToChart(symbol);
+    } else {
+      showToast(`${symbol} ยังไม่อยู่ใน Focus — กด ADD TO FOCUS เพื่อวิเคราะห์ใน Cockpit`);
+    }
   };
 
   const handleRemoveFocus = async (symbol: string) => {
@@ -537,6 +615,76 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     return { bg: 'rgba(245, 158, 11, 0.2)', border: '#F59E0B', text: '#FBBF24' };
   };
 
+  // ── Top Picks cards (โครงเดียวกันทั้ง 3 ส่วน) ──
+  const buyNowCards: TopPickCard[] = (buyNowData?.candidates ?? []).slice(0, 5).map((c) => ({
+    symbol: c.symbol,
+    priceText: formatPrice(c.price),
+    change24h: c.change24h,
+    status: { label: c.status, color: '#34D399' },
+    scoreLabel: 'BUY NOW SCORE',
+    score: c.buyNowScore,
+    metrics: [
+      { label: 'Entry Zone', value: `${formatPrice(c.entryZone.min)}–${formatPrice(c.entryZone.max)}` },
+      { label: 'R:R Ratio', value: c.riskReward, color: 'var(--neon-green)' },
+      { label: '4H Trend', value: c.currentTrend, color: 'var(--neon-cyan)' },
+      { label: 'Tech Score', value: `${c.technicalScore}/100` },
+      { label: 'Vol Ratio', value: `${c.volumeRatio}x` },
+      { label: 'Confidence', value: `${c.confidenceScore}%`, color: '#38BDF8' },
+    ],
+    rankChange: rankChanges.buyNow?.[c.symbol],
+    flash: priceFlashMap[c.symbol],
+  }));
+
+  const ultimateCards: TopPickCard[] = (ultimateData?.candidates ?? []).slice(0, 5).map((c) => {
+    const fmt = (v: number) => formatDenominated(v, ultimateData?.denominatedCurrency, ultimateData?.usdThbRate);
+    return {
+      symbol: c.symbol,
+      priceText: fmt(c.price),
+      change24h: c.change24h,
+      status: { label: c.stateBadge?.label ?? c.state, color: c.stateBadge?.color ?? '#38BDF8' },
+      scoreLabel: 'ULTIMATE SCORE',
+      score: c.ultimateScore,
+      metrics: [
+        { label: 'Entry Zone', value: `${fmt(c.entryPlan.entryZone.min)}–${fmt(c.entryPlan.entryZone.max)}` },
+        { label: 'R:R Ratio', value: `1:${c.entryPlan.riskRewardRatio}`, color: 'var(--neon-green)' },
+        { label: 'Hard Gates', value: `${c.passedGatesCount}/${c.totalGatesCount}`, color: 'var(--neon-cyan)' },
+        { label: 'Safety Score', value: `${c.safetyScore}/100` },
+        { label: 'จุดอ่อนสุด', value: `${c.lowestPillarScore.name} ${c.lowestPillarScore.score}` },
+        { label: 'Confidence', value: `${c.confidencePct}%`, color: '#38BDF8' },
+      ],
+      rankChange: rankChanges.ultimate?.[c.symbol],
+      flash: priceFlashMap[c.symbol],
+    };
+  });
+
+  const decisionColor = (d: DecisionState) =>
+    d === 'ENTRY_READY' || d === 'HOLD' ? '#34D399'
+      : d === 'WAIT_FOR_PULLBACK' ? '#60A5FA'
+        : d === 'WAIT_FOR_BREAKOUT' || d === 'TAKE_PARTIAL_PROFIT' || d === 'HOLD_AND_PROTECT' ? '#FBBF24'
+          : d === 'ABSTAIN' ? '#94A3B8' : '#F87171';
+
+  const premiumCards: TopPickCard[] = (premiumData?.candidates ?? []).slice(0, 5).map((c) => {
+    const fmt = (v: number) => formatDenominated(v, premiumData?.denominatedCurrency, premiumData?.usdThbRate);
+    return {
+      symbol: c.symbol,
+      priceText: fmt(c.price),
+      change24h: c.change24h,
+      status: { label: c.decisionAssistant?.decisionLabelTh ?? c.lifecycle.lifecycleState, color: decisionColor(c.decisionAssistant?.decisionState ?? 'ABSTAIN') },
+      scoreLabel: 'BUY NOW SCORE',
+      score: c.scores.buyNow,
+      metrics: [
+        { label: 'Entry Zone', value: `${fmt(c.setup.entryZone.min)}–${fmt(c.setup.entryZone.max)}` },
+        { label: 'R:R Ratio', value: `1:${c.setup.riskRewardRatio}`, color: 'var(--neon-green)' },
+        { label: 'Setup', value: c.setup.entryMode, color: 'var(--neon-cyan)' },
+        { label: 'Tech Score', value: `${c.scores.technical}/100` },
+        { label: 'Order Flow', value: `${c.scores.orderFlow}/100` },
+        { label: 'Confidence', value: `${c.scores.confidence}%`, color: '#38BDF8' },
+      ],
+      rankChange: rankChanges.premium?.[c.symbol],
+      flash: priceFlashMap[c.symbol],
+    };
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', paddingBottom: '60px' }}>
       {/* Toast Notification */}
@@ -567,365 +715,171 @@ export const FocusPage: React.FC<FocusPageProps> = ({
       )}
 
       {/* ================================================== */}
-      {/* SECTION 3 & 4: 🔥 TOP BUY NOW — LIVE OPPORTUNITIES */}
-      {/* (Positioned directly ABOVE FOCUS INTELLIGENCE CENTER) */}
+      {/* TOP PICKS: 👑 Ultimate → ♛ Premium → 🔥 Buy Now (โครงเดียวกันทั้ง 3 ส่วน) */}
+      {/* ================================================== */}
+      <FocusTopPicksSection
+        title="👑 TOP 5 ULTIMATE — INSTITUTIONAL PICKS"
+        liveBadge="ULTIMATE LIVE (15 GATES)"
+        subtitle={`Institutional Multi-Factor Decision Engine — ต้องผ่าน 15 ด่านเข้มงวด (No Weak Link)${ultimateData ? ` • ประเมิน ${ultimateData.marketStatus.totalCoinsEvaluated} เหรียญ • ตลาด ${ultimateData.marketStatus.regimeLabelTh}` : ''}`}
+        icon={<Crown size={22} color="#FFFFFF" />}
+        theme={TOP_PICKS_THEMES.ultimate}
+        collapsed={isCollapsed('topUltimate')}
+        onToggle={() => toggleSection('topUltimate')}
+        dataAgeSec={dataAgeSec}
+        isLoading={!!sectionLoading.ultimate}
+        onRecalculate={recalcUltimate}
+        cards={ultimateCards}
+        summaryChip={ultimateCards.length ? `${ultimateCards.length} เหรียญผ่าน 15 ด่าน` : 'NO ULTIMATE OPPORTUNITY'}
+        summaryText={ultimateCards.length
+          ? `${ultimateCards.length} เหรียญผ่านครบ 15 ด่าน (Ultimate Score สูงสุด: ${ultimateCards[0].score}/100 • ${ultimateCards.map((c) => c.symbol).join(', ')})`
+          : 'ไม่มีเหรียญที่ผ่านครบ 15 ด่าน (NO TRADE)'}
+        emptyTitle={ultimateData ? 'NO ULTIMATE OPPORTUNITY — ยังไม่มีเหรียญที่ผ่านครบ 15 ด่าน' : 'กำลังโหลด Top 5 Ultimate...'}
+        emptyMessage={ultimateData ? (
+          <>
+            {ultimateData.statusMessageTh}
+            <br />
+            ตลาด: {ultimateData.marketStatus.regimeLabelTh} • ความเสี่ยง {ultimateData.marketStatus.riskLevel} • Breadth {ultimateData.marketStatus.breadthPct}% • ประเมิน {ultimateData.marketStatus.totalCoinsEvaluated} เหรียญ
+            {ultimateData.marketStatus.isMarketBlocked && ultimateData.marketStatus.blockReasonTh ? <><br />⛔ {ultimateData.marketStatus.blockReasonTh}</> : null}
+          </>
+        ) : 'ระบบกำลังประเมินตลาดด้วย Ultimate Policy'}
+        onAdd={(sym) => handleQuickAdd(sym, 'Top 5 Ultimate (15 Gates)')}
+        onView={handleViewPick}
+      />
+
+      <FocusTopPicksSection
+        title="♛ TOP 5 PREMIUM — QUANT 20-STEP PICKS"
+        liveBadge="QUANT PHASE 20 LIVE"
+        subtitle={`สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก (Tradable Edge หลังหักต้นทุน)${premiumData ? ` • ผ่านเกณฑ์ ${premiumData.eligibleCount}/${premiumData.totalEvaluated} เหรียญ` : ''}`}
+        icon={<Award size={22} color="#FFFFFF" />}
+        theme={TOP_PICKS_THEMES.premium}
+        collapsed={isCollapsed('topPremium')}
+        onToggle={() => toggleSection('topPremium')}
+        dataAgeSec={dataAgeSec}
+        isLoading={!!sectionLoading.premium}
+        onRecalculate={recalcPremium}
+        cards={premiumCards}
+        summaryChip={premiumCards.length ? `${premiumCards.length} เหรียญ Premium` : 'NO PREMIUM OPPORTUNITY'}
+        summaryText={premiumCards.length
+          ? `${premiumCards.length} เหรียญผ่านเกณฑ์ (Buy Now Score สูงสุด: ${Math.max(...premiumCards.map((c) => Number(c.score)))}/100 • ${premiumCards.map((c) => c.symbol).join(', ')})`
+          : 'ไม่มีเหรียญที่ผ่านเกณฑ์ Quant 20 ขั้นตอน (NO TRADE)'}
+        emptyTitle={premiumData ? 'NO PREMIUM OPPORTUNITY — ยังไม่มีเหรียญที่ผ่านเกณฑ์ Quant 20 ขั้นตอน' : 'กำลังโหลด Top 5 Premium...'}
+        emptyMessage={premiumData ? premiumData.statusMessageTh : 'ระบบกำลังประเมินตลาดด้วย Quant Phase 20'}
+        onAdd={(sym) => handleQuickAdd(sym, 'Top 5 Premium (Quant 20 ขั้นตอน)')}
+        onView={handleViewPick}
+      />
+
+      <FocusTopPicksSection
+        title="🔥 TOP BUY NOW — LIVE OPPORTUNITIES"
+        liveBadge="QUANT V3 LIVE (0–5)"
+        subtitle="คัดกรองเฉพาะเหรียญที่ผ่าน 12 Hard Gates ตามวินัยระบบ Quant Engine V3 (R:R ≥ 1:2, Tech ≥ 75, ไม่ Overextended)"
+        icon={<Flame size={22} color="#FFFFFF" />}
+        theme={TOP_PICKS_THEMES.buyNow}
+        collapsed={isCollapsed('topBuyNow')}
+        onToggle={() => toggleSection('topBuyNow')}
+        dataAgeSec={dataAgeSec}
+        isLoading={isLoading}
+        onRecalculate={() => loadData(true)}
+        cards={buyNowCards}
+        summaryChip={buyNowCards.length ? `${buyNowCards.length} เหรียญพร้อมซื้อ` : 'NO OPPORTUNITY'}
+        summaryText={buyNowCards.length
+          ? `${buyNowCards.length} เหรียญพร้อมซื้อ (คะแนนสูงสุด: ${buyNowCards[0].score}/100 • ${buyNowCards.map((c) => c.symbol).join(', ')})`
+          : 'ไม่มีเหรียญที่ผ่านเกณฑ์ Hard Gate 12 ข้อ (NO TRADE)'}
+        emptyTitle="NO BUY NOW OPPORTUNITY — ตลาดไม่มีเหรียญที่ผ่านเกณฑ์ Hard Gate 12 ข้อ"
+        emptyMessage={'ตามวินัย Rule 26: "NO SETUP = NO TRADE" ระบบจะไม่นำเหรียญที่ไม่ผ่านเกณฑ์มาเติมให้ครบ 5 เด็ดขาด ขอให้เทรดเดอร์อดทนรอจังหวะที่แต้มต่อและ Risk/Reward ได้เปรียบสูงสุด'}
+        onAdd={(sym) => handleQuickAdd(sym, 'Top Buy Now Candidates (Quant V3)')}
+        onView={handleViewPick}
+      />
+
+      {/* ================================================== */}
+      {/* FOCUS COCKPIT GROUP — collapse เดียวครอบ 4 ส่วน: */}
+      {/* Intelligence Center · รายชื่อ Focus · Decision Cockpit · วิเคราะห์เชิงลึก 10 มิติ */}
       {/* ================================================== */}
       <div
+        id="focus-cockpit-group"
         style={{
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 50%, rgba(15, 23, 42, 0.85) 100%)',
-          border: '1px solid rgba(16, 185, 129, 0.4)',
-          boxShadow: '0 8px 28px rgba(16, 185, 129, 0.15)',
-          overflow: 'hidden',
-          padding: '18px 22px',
+          borderRadius: '18px',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(6, 182, 212, 0.04))',
+          border: '1px solid rgba(139, 92, 246, 0.35)',
+          padding: isCollapsed('focusCockpitGroup') ? '16px 20px' : '16px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '14px',
+          gap: isCollapsed('focusCockpitGroup') ? '12px' : '22px',
         }}
       >
-        {/* Banner Title & Engine Rules */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           <div
-            onClick={() => toggleSection('topBuyNow')}
+            onClick={() => toggleSection('focusCockpitGroup')}
             className="collapsible-header-clickable"
-            style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}
           >
             <div
               style={{
                 width: '38px',
                 height: '38px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+                background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(16, 185, 129, 0.4)',
+                flexShrink: 0,
+                boxShadow: '0 0 16px rgba(139, 92, 246, 0.4)',
               }}
             >
-              <Flame size={22} color="#FFFFFF" />
+              <Target size={22} color="#FFFFFF" />
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.3px' }}>
-                  🔥 TOP BUY NOW — LIVE OPPORTUNITIES
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+                  🎯 FOCUS COCKPIT
                 </h2>
-                <span
-                  style={{
-                    fontSize: '10.5px',
-                    fontWeight: 800,
-                    backgroundColor: 'rgba(16, 185, 129, 0.25)',
-                    color: '#34D399',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    padding: '2px 8px',
-                    borderRadius: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span className="live-green-pulse" style={{ width: '5.5px', height: '5.5px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-                  QUANT V3 LIVE (0–5)
-                </span>
-                {isCollapsed('topBuyNow') && (
+                {isCollapsed('focusCockpitGroup') && (
                   <span className="collapsible-summary-chip">
-                    {buyNowData?.candidates?.length ? `${buyNowData.candidates.length} เหรียญพร้อมซื้อ` : 'NO OPPORTUNITY'}
+                    {displayFocusItems.length} เหรียญ{activeCoin ? ` • Cockpit: ${activeCoin.symbol}` : ''}
                   </span>
                 )}
               </div>
               <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
-                คัดกรองเฉพาะเหรียญที่ผ่าน 12 Hard Gates ตามวินัยระบบ Quant Engine V3 (R:R ≥ 1:2, Tech ≥ 75, ไม่ Overextended)
+                Focus Intelligence Center • รายชื่อเหรียญที่กำลัง Focus • Decision Cockpit • การวิเคราะห์เชิงลึก 10 มิติ
               </p>
             </div>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <Clock size={12} /> Live Scan: <strong style={{ color: '#34D399' }}>{dataAgeSec}s ago</strong>
-            </span>
-            <button
-              onClick={() => loadData(true)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                color: '#34D399',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-            >
-              <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
-              คำนวณสด
-            </button>
-            <button
-              onClick={() => toggleSection('topBuyNow')}
-              className="collapse-toggle-btn"
-              title={isCollapsed('topBuyNow') ? 'ขยาย Top Buy Now' : 'ย่อ Top Buy Now'}
-            >
-              {isCollapsed('topBuyNow') ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-              <span>{isCollapsed('topBuyNow') ? 'ขยาย' : 'ย่อ'}</span>
-            </button>
-          </div>
+          <button
+            onClick={() => toggleSection('focusCockpitGroup')}
+            className="collapse-toggle-btn"
+            title={isCollapsed('focusCockpitGroup') ? 'ขยาย Focus Cockpit' : 'ย่อ Focus Cockpit'}
+          >
+            {isCollapsed('focusCockpitGroup') ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+            <span>{isCollapsed('focusCockpitGroup') ? 'ขยาย' : 'ย่อ'}</span>
+          </button>
         </div>
 
-        {/* Collapsed summary pill */}
-        {isCollapsed('topBuyNow') ? (
+        {isCollapsed('focusCockpitGroup') ? (
           <div
-            onClick={() => toggleSection('topBuyNow')}
+            onClick={() => toggleSection('focusCockpitGroup')}
             style={{
               cursor: 'pointer',
               padding: '10px 14px',
               borderRadius: '8px',
               backgroundColor: 'rgba(0, 0, 0, 0.25)',
-              border: '1px dashed rgba(16, 185, 129, 0.35)',
+              border: '1px dashed rgba(139, 92, 246, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '8px',
               fontSize: '12px',
             }}
           >
-            <span style={{ color: '#34D399', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="live-green-pulse" style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-              สถานะ: {buyNowData?.candidates?.length ? `${buyNowData.candidates.length} เหรียญพร้อมซื้อ (คะแนนสูงสุด: ${buyNowData.candidates[0]?.buyNowScore}/100 • ${buyNowData.candidates.map(c => c.symbol).join(', ')})` : 'ไม่มีเหรียญที่ผ่านเกณฑ์ Hard Gate 12 ข้อ (NO TRADE)'}
+            <span style={{ color: '#CBD5E1' }}>
+              กำลัง Focus <strong style={{ color: '#FFFFFF' }}>{displayFocusItems.length} เหรียญ</strong>
+              {' • '}คะแนนเฉลี่ย <strong style={{ color: 'var(--neon-green)' }}>{focusData?.averageScore || 0}/100</strong>
+              {' • '}ตลาด <strong style={{ color: 'var(--neon-cyan)' }}>{focusData?.marketRegime || 'Normal'}</strong>
+              {activeCoin && <>{' • '}Decision Cockpit: <strong style={{ color: '#A78BFA' }}>{activeCoin.symbol} / THB</strong></>}
             </span>
-            <span style={{ color: '#A78BFA', fontSize: '11px', fontWeight: 700 }}>คลิกเพื่อขยายดูการ์ดเหรียญ</span>
+            <span style={{ color: '#A78BFA', fontSize: '11px', fontWeight: 700 }}>คลิกเพื่อขยายดู Cockpit และการวิเคราะห์ 10 มิติ</span>
           </div>
         ) : (
-          /* Top Buy Now Cards Rotation Carousel (Max 5, NO SETUP fallback - Section 3, 4, 26) */
-          (!buyNowData || !buyNowData.candidates || buyNowData.candidates.length === 0) ? (
-            <div
-              style={{
-                padding: '24px',
-                borderRadius: '12px',
-                backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                border: '1px dashed rgba(245, 158, 11, 0.35)',
-                textAlign: 'center',
-
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <ShieldAlert size={26} color="#F59E0B" />
-            <div style={{ fontSize: '14px', fontWeight: 800, color: '#FBBF24' }}>
-              NO BUY NOW OPPORTUNITY — ตลาดไม่มีเหรียญที่ผ่านเกณฑ์ Hard Gate 12 ข้อ
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '650px' }}>
-              ตามวินัย Rule 26: "NO SETUP = NO TRADE" ระบบจะไม่นำเหรียญที่ไม่ผ่านเกณฑ์มาเติมให้ครบ 5 เด็ดขาด
-              ขอให้เทรดเดอร์อดทนรอจังหวะที่แต้มต่อและ Risk/Reward ได้เปรียบสูงสุด
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-              gap: '12px',
-            }}
-          >
-            {buyNowData.candidates.slice(0, 5).map((candidate, idx) => {
-              const rankInfo = rankChangeMap[candidate.symbol];
-              const isUp = rankInfo && rankInfo.rankDelta > 0;
-              const isDown = rankInfo && rankInfo.rankDelta < 0;
-              const isNew = rankInfo && rankInfo.isNew;
-              const priceFlash = priceFlashMap[candidate.symbol];
-
-              return (
-                <div
-                  key={candidate.symbol}
-                  className={`rank-slide ${isUp ? 'card-glow-green' : isDown ? 'card-glow-orange' : ''}`}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                    border: isNew
-                      ? '1.5px solid #06B6D4'
-                      : isUp
-                      ? '1.5px solid #10B981'
-                      : '1px solid rgba(16, 185, 129, 0.3)',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    transition: 'all 0.35s ease',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Top Line: Rank, Symbol, Badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 900,
-                          backgroundColor: idx === 0 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                          color: idx === 0 ? '#FBBF24' : idx === 1 ? '#CBD5E1' : '#94A3B8',
-                          padding: '2px 7px',
-                          borderRadius: '6px',
-                          border: `1px solid ${idx === 0 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                        }}
-                      >
-                        #{idx + 1}
-                      </span>
-                      <CryptoIcon symbol={candidate.symbol} size={22} />
-                      <strong style={{ fontSize: '16px', color: '#FFFFFF', letterSpacing: '-0.2px' }}>
-                        {candidate.symbol}
-                      </strong>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/THB</span>
-
-                      {/* Rank Rotation Badge */}
-                      {isNew && (
-                        <span style={{ fontSize: '9px', fontWeight: 900, padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(6, 182, 212, 0.25)', color: '#22D3EE', border: '1px solid #06B6D4' }}>
-                          NEW
-                        </span>
-                      )}
-                      {isUp && (
-                        <span style={{ fontSize: '9.5px', fontWeight: 900, padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.25)', color: '#34D399', border: '1px solid #10B981' }}>
-                          ↑ +{rankInfo.rankDelta}
-                        </span>
-                      )}
-                      {isDown && (
-                        <span style={{ fontSize: '9.5px', fontWeight: 900, padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(249, 115, 22, 0.25)', color: '#FB923C', border: '1px solid #F97316' }}>
-                          ↓ {rankInfo.rankDelta}
-                        </span>
-                      )}
-                    </div>
-
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                        color: '#34D399',
-                        border: '1px solid #10B981',
-                      }}
-                    >
-                      {candidate.status}
-                    </span>
-                  </div>
-
-                  {/* Price & Buy Now Score */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                    <div>
-                      <div
-                        className={priceFlash === 'up' ? 'price-flash-up' : priceFlash === 'down' ? 'price-flash-down' : ''}
-                        style={{ fontSize: '18px', fontWeight: 900, color: '#FFFFFF', transition: 'background-color 0.4s ease' }}
-                      >
-                        {formatPrice(candidate.price)}
-                      </div>
-                      <div style={{ fontSize: '11.5px', fontWeight: 700, color: candidate.change24h >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
-                        {candidate.change24h >= 0 ? '+' : ''}{candidate.change24h.toFixed(2)}% (24h)
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
-                        BUY NOW SCORE
-                      </div>
-                      <div style={{ fontSize: '19px', fontWeight: 900, color: 'var(--neon-green)' }}>
-                        {candidate.buyNowScore}
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>/100</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Key Metrics Grid */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: '6px',
-                      padding: '8px',
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                      fontSize: '10.5px',
-                    }}
-                  >
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Entry Zone:</span>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>
-                        {formatPrice(candidate.entryZone.min)}–{formatPrice(candidate.entryZone.max)}
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>R:R Ratio:</span>
-                      <div style={{ color: 'var(--neon-green)', fontWeight: 800 }}>{candidate.riskReward}</div>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>4H Trend:</span>
-                      <div style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{candidate.currentTrend}</div>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Tech Score:</span>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{candidate.technicalScore}/100</div>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Vol Ratio:</span>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{candidate.volumeRatio}x</div>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Confidence:</span>
-                      <div style={{ color: '#38BDF8', fontWeight: 800 }}>
-                        {candidate.confidenceScore || 92}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Action Button: ADD TO FOCUS (Section 20) */}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
-                    <button
-                      onClick={() => handleQuickAddFromBuyNow(candidate.symbol)}
-                      style={{
-                        flex: 1,
-                        padding: '7px 10px',
-                        borderRadius: '8px',
-                        background: 'linear-gradient(135deg, #10B981, #06B6D4)',
-                        border: 'none',
-                        color: '#FFFFFF',
-                        fontSize: '11.5px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)',
-                      }}
-                    >
-                      <Plus size={13} /> ADD TO FOCUS
-                    </button>
-                    <button
-                      onClick={() => setSelectedSymbol(candidate.symbol)}
-                      style={{
-                        padding: '7px 10px',
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        color: '#CBD5E1',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                      title="เลือกเพื่อดูการวิเคราะห์เชิงลึก"
-                    >
-                      ดูข้อมูล
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )
-      )}
-    </div>
-
+        <>
       {/* ================================================== */}
       {/* SECTION 1: FOCUS INTELLIGENCE CENTER (REAL-TIME HEADER) */}
       {/* ================================================== */}
@@ -2660,6 +2614,9 @@ export const FocusPage: React.FC<FocusPageProps> = ({
           </div>
         </>
       )}
+        </>
+        )}
+      </div>
 
       {/* ================================================== */}
       {/* SECTION 18: WHY SCORE CHANGED EXPLAINABLE MODAL */}
