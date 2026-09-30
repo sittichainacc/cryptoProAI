@@ -36,13 +36,12 @@ export class GoldExplanationEngine {
     }
     switch (state) {
       case 'LONG_READY':
-      case 'SHORT_READY':
-        return inZone ? `${buy}ได้ในโซน ${usd(e!.entryLow)} – ${usd(e!.entryHigh)}` : `รอ${buy}บริเวณ Entry Zone ${usd(e!.entryLow)} – ${usd(e!.entryHigh)} — ไม่ไล่ราคา${side === 'LONG' ? 'เหนือ' : 'ต่ำกว่า'} ${usd(e!.chaseLevel)}`;
-      case 'WAIT_FOR_PULLBACK': return e ? `ยังไม่เข้า — รอราคา${side === 'LONG' ? 'ย่อ' : 'เด้ง'}มาที่ ${usd(e.entryLow)} – ${usd(e.entryHigh)}` : 'ยังไม่เข้า — รอราคาย่อเข้าแนวรับ';
-      case 'WAIT_FOR_BREAKOUT': return trigger ? `ยังไม่เข้า — รอราคาปิด 4H ${side === 'SHORT' ? 'ต่ำกว่า' : 'เหนือ'} ${usd(trigger)} ก่อน` : 'ยังไม่เข้า — รอ Breakout ยืนยัน';
+        return inZone ? `ซื้อสะสมได้ในโซน ${usd(e!.entryLow)} – ${usd(e!.entryHigh)}` : `รอซื้อบริเวณ Entry Zone ${usd(e!.entryLow)} – ${usd(e!.entryHigh)} — ไม่ไล่ราคาเหนือ ${usd(e!.chaseLevel)}`;
+      case 'WAIT_FOR_PULLBACK': return e ? `ยังไม่เข้า — รอราคาย่อมาที่ ${usd(e.entryLow)} – ${usd(e.entryHigh)}` : 'ยังไม่เข้า — รอราคาย่อเข้าแนวรับ';
+      case 'WAIT_FOR_BREAKOUT': return trigger ? `ยังไม่เข้า — รอราคาปิด 4H เหนือ ${usd(trigger)} ก่อน` : 'ยังไม่เข้า — รอ Breakout ยืนยัน';
       case 'WAIT_FOR_NEWS': return 'ยังไม่เปิด Position ใหม่ — รอข่าวสำคัญผ่านไปและราคายืนยันทิศทาง';
       case 'REVERSAL_WATCH': return 'ไม่ไล่ราคา — เฝ้าดูสัญญาณกลับตัว';
-      case 'NO_TRADE': return 'ไม่เทรด — ความได้เปรียบยังไม่ชัดเจน';
+      case 'NO_TRADE': return 'ไม่เทรด — ความได้เปรียบยังไม่ชัดเจนหรือตลาดเป็นขาลง (ระบบเน้นเฉพาะขาขึ้น LONG ONLY)';
       default: return '';
     }
   }
@@ -57,7 +56,7 @@ export class GoldExplanationEngine {
   }): string {
     const { state, side, entry: e, setup, regime, technical: t, macro, flow, inter, event, mode, thai, waitLevels } = p;
     const out: string[] = [];
-    const long = side === 'LONG';
+    const long = true; // เน้นเฉพาะขาขึ้น
     const dxy = inter.items.find(i => i.key === 'dxy');
 
     const context: string[] = [];
@@ -70,19 +69,19 @@ export class GoldExplanationEngine {
     if (flow.state.includes('ACCUMULATION')) context.push('COMEX Order Flow มีแรงสะสมซื้อ');
     if (flow.state.includes('DISTRIBUTION')) context.push('COMEX Order Flow มีแรงขาย');
 
-    if ((state === 'LONG_READY' || state === 'SHORT_READY') && e) {
+    if (state === 'LONG_READY' && e) {
       if (mode === 'THAI_GOLD_BAR' && thai) {
         out.push(`ตอนนี้สามารถรอซื้อทองคำแท่งในโซน ${thb(thai.buyZoneLow)} – ${thb(thai.buyZoneHigh)} (ราคาขายออก) ได้`);
       } else {
-        out.push(`ตอนนี้สามารถรอ${long ? 'ซื้อ' : 'ขาย Short'}ในโซน ${usd(e.entryLow)} – ${usd(e.entryHigh)} ได้ (Setup: ${GoldExplanationEngine.setupName(setup?.type ?? 'NONE')})`);
+        out.push(`ตอนนี้สามารถรอซื้อในโซน ${usd(e.entryLow)} – ${usd(e.entryHigh)} ได้ (Setup: ${GoldExplanationEngine.setupName(setup?.type ?? 'NONE')})`);
       }
       if (context.length) out.push(context.join(' ') + '');
       if (mode === 'THAI_GOLD_BAR' && thai) {
         out.push(`ไม่แนะนำไล่ซื้อหากราคาขายออกเกิน ${thb(thai.chaseAbove)} เพราะ Risk/Reward จะเริ่มไม่คุ้ม`);
         out.push(`หากซื้อแล้ว ให้ถือตามแผนตราบใดที่ราคารับซื้อไม่ต่ำกว่า ${thb(thai.invalidation)} · เป้าหมายแรก ${thb(thai.tp1)} (ราคารับซื้อ) ถึงแล้วทยอยขายบางส่วน`);
       } else {
-        out.push(`ไม่แนะนำไล่${long ? 'ซื้อหากราคาขึ้นเกิน' : 'ขายหากราคาลงต่ำกว่า'} ${usd(e.chaseLevel)} เพราะ Risk/Reward จะเริ่มไม่คุ้ม`);
-        out.push(`หากเข้าแล้ว ให้ถือแผนเดิมตราบใดที่ราคาไม่${long ? 'หลุด' : 'ผ่าน'} ${usd(e.stopLoss)} · ถึง TP1 ${usd(e.tp1)} ให้ทยอยทำกำไรบางส่วนและยก Stop มาที่ทุน`);
+        out.push(`ไม่แนะนำไล่ซื้อหากราคาขึ้นเกิน ${usd(e.chaseLevel)} เพราะ Risk/Reward จะเริ่มไม่คุ้ม`);
+        out.push(`หากเข้าแล้ว ให้ถือแผนเดิมตราบใดที่ราคาไม่หลุด ${usd(e.stopLoss)} · ถึง TP1 ${usd(e.tp1)} ให้ทยอยทำกำไรบางส่วนและยก Stop มาที่ทุน`);
       }
       if (event.nextHighImpact && event.nextHighImpact.countdownMinutes < 24 * 60) out.push(`ระวัง: ${event.nextHighImpact.eventName} อีก ${event.nextHighImpact.countdown} — พิจารณาลดขนาด Position`);
     } else if (state === 'WAIT_FOR_PULLBACK') {

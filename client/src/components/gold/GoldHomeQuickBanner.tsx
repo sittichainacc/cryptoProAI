@@ -152,6 +152,28 @@ export const GoldHomeQuickBanner: React.FC<GoldHomeQuickBannerProps> = ({ onOpen
               />
               LIVE COCKPIT
             </span>
+            {price && (
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: 'rgba(245, 158, 11, 0.18)',
+                  color: '#FFD700',
+                  border: '1px solid rgba(245, 158, 11, 0.45)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <span style={{ color: 'var(--text-muted, #94A3B8)', fontSize: '10px' }}>ราคาปัจจุบัน:</span>
+                <strong style={{ color: '#FFFFFF' }}>{usd(price.xauUsd)}</strong>
+                <span style={{ color: isXauUp ? '#34D399' : '#F87171' }}>
+                  {signed(xauChange)}
+                </span>
+              </span>
+            )}
           </div>
 
           <div

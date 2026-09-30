@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Target, ShieldAlert, Award, ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, 
-  CheckCircle2, AlertTriangle, Calculator, Sparkles, Copy, Check, Info, ShieldCheck, Zap 
+  Target, ShieldAlert, Award, ArrowUpRight, TrendingUp, 
+  CheckCircle2, AlertTriangle, Calculator, Sparkles, Copy, Check, Info, ShieldCheck, Zap, Crown, Clock 
 } from 'lucide-react';
 import type { GoldSignalResponse } from '../../types/gold.js';
 
@@ -21,11 +21,10 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
   const entry = data.tradePlan.entry;
   const thaiEntry = data.tradePlan.thaiGoldEntry;
   const signal = data.tradePlan.signal;
-  const nowActionTh = data.tradePlan.nowActionTh;
-  
-  // Side detection: Thai Gold is always LONG (physical buy), Spot/Futures can be LONG or SHORT
-  const rawSide = isThai ? 'LONG' : (data.conviction.side || data.tradePlan.direction || 'LONG');
-  const isShort = !isThai && rawSide === 'SHORT';
+  const conviction = data.conviction;
+
+  // ⚠️ กลยุทธ์สัญญาณทองคำเป็น LONG ONLY (ขาขึ้นเท่านั้น ไม่เทรดขาลง)
+  const isShort = false;
 
   const [copied, setCopied] = useState(false);
 
@@ -55,12 +54,6 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
     entryHigh = thaiEntry?.buyZoneHigh ?? (base + 50);
     bestEntry = thaiEntry?.bestBuy ?? base;
     chaseLimit = thaiEntry?.chaseAbove ?? (base + 250);
-  } else if (isShort) {
-    const base = currentPrice;
-    entryLow = entry?.entryLow ?? Number((base * 0.998).toFixed(2));
-    entryHigh = entry?.entryHigh ?? Number((base * 1.004).toFixed(2));
-    bestEntry = entry?.bestEntry ?? Number((base * 1.002).toFixed(2));
-    chaseLimit = entry?.chaseLevel ?? Number((base * 0.993).toFixed(2)); // ห้ามไล่ขายต่ำกว่านี้
   } else {
     const base = currentPrice;
     entryLow = entry?.entryLow ?? Number((base * 0.996).toFixed(2));
@@ -69,20 +62,18 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
     chaseLimit = entry?.chaseLevel ?? Number((base * 1.006).toFixed(2)); // ห้ามไล่ซื้อสูงกว่านี้
   }
 
-  // 2. Dynamic Stop Loss Calculations
+  // 2. Dynamic Stop Loss Calculations (Always below entry for LONG)
   let stopLoss: number;
   if (isThai) {
     stopLoss = thaiEntry?.invalidation ?? (price.thaiGoldBarSell ? price.thaiGoldBarSell - 600 : 65400);
-  } else if (isShort) {
-    stopLoss = entry?.stopLoss ?? Number((bestEntry * 1.012).toFixed(2)); // Stop loss อยู่เหนือจุดเข้า
   } else {
-    stopLoss = entry?.stopLoss ?? Number((bestEntry * 0.988).toFixed(2)); // Stop loss อยู่ใต้จุดเข้า
+    stopLoss = entry?.stopLoss ?? Number((bestEntry * 0.988).toFixed(2));
   }
 
   const stopDist = Math.abs(bestEntry - stopLoss);
   const stopPct = ((stopDist / (bestEntry || 1)) * 100);
 
-  // 3. Dynamic Take Profit Calculations
+  // 3. Dynamic Take Profit Calculations (Always above entry for LONG)
   let tp1: number;
   let tp2: number;
   let tp3: number;
@@ -91,105 +82,91 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
     tp1 = thaiEntry?.tp1 ?? (base + 600);
     tp2 = thaiEntry?.tp2 ?? (base + 1200);
     tp3 = thaiEntry?.tp3 ?? (base + 2000);
-  } else if (isShort) {
-    tp1 = entry?.tp1 ?? Number((bestEntry * 0.985).toFixed(2));
-    tp2 = entry?.tp2 ?? Number((bestEntry * 0.970).toFixed(2));
-    tp3 = entry?.tp3 ?? Number((bestEntry * 0.950).toFixed(2));
   } else {
     tp1 = entry?.tp1 ?? Number((bestEntry * 1.015).toFixed(2));
     tp2 = entry?.tp2 ?? Number((bestEntry * 1.030).toFixed(2));
     tp3 = entry?.tp3 ?? Number((bestEntry * 1.050).toFixed(2));
   }
 
-  const rrRatio = entry?.riskReward ?? (isShort ? 2.3 : 2.5);
+  const rrRatio = entry?.riskReward ?? 2.5;
 
   // Real-Time Price Proximity Evaluation
   const minZone = Math.min(entryLow, entryHigh);
   const maxZone = Math.max(entryLow, entryHigh);
+  const isPriceInZone = currentPrice >= minZone && currentPrice <= maxZone;
+  const isStoppedOut = currentPrice < stopLoss;
+  const isExtended = currentPrice > chaseLimit;
+
+  // Best Gold vs Ready Green Detection
+  const isBestGold = Boolean(
+    (signal.isBestGold || (signal.state === 'LONG_READY' && conviction.totalScore >= 70 && conviction.isAllGatesPass && isPriceInZone)) &&
+    !isStoppedOut &&
+    !isExtended
+  );
+
+  const isReadyGreen = Boolean(
+    !isBestGold &&
+    (signal.state === 'LONG_READY' || isPriceInZone || (conviction.totalScore >= 60 && conviction.isAllGatesPass)) &&
+    !isStoppedOut &&
+    !isExtended
+  );
 
   const getPriceZoneStatus = () => {
-    if (isShort) {
-      if (currentPrice > stopLoss) {
-        return {
-          status: 'STOPPED_OUT',
-          label: 'ราคาทะลุ Stop Loss — แผนเสีย ยกเลิกเข้าออเดอร์',
-          color: '#EF4444',
-          bg: 'rgba(239, 68, 68, 0.15)',
-          border: 'rgba(239, 68, 68, 0.35)',
-          icon: ShieldAlert,
-        };
-      }
-      if (currentPrice < chaseLimit) {
-        return {
-          status: 'EXTENDED',
-          label: 'ราคาลงมาไกลเกินโซน — ห้ามไล่ขาย (Chase Risk)',
-          color: '#F59E0B',
-          bg: 'rgba(245, 158, 11, 0.15)',
-          border: 'rgba(245, 158, 11, 0.35)',
-          icon: AlertTriangle,
-        };
-      }
-      if (currentPrice >= minZone && currentPrice <= maxZone) {
-        return {
-          status: 'IN_ZONE',
-          label: '🎯 ราคาอยู่ในโซนเปิด SHORT แล้ว! เหมาะแก่การสะสมไม้แรก',
-          color: '#EF4444',
-          bg: 'rgba(239, 68, 68, 0.22)',
-          border: 'rgba(239, 68, 68, 0.55)',
-          icon: CheckCircle2,
-          pulse: true,
-        };
-      }
+    if (currentPrice < stopLoss) {
       return {
-        status: 'WAITING',
-        label: `⏳ ราคายังไม่อยู่ในโซน — รอราคาเด้งทดสอบโซน $${usd(entryLow, 0)} – $${usd(entryHigh, 0)}`,
-        color: '#06B6D4',
-        bg: 'rgba(6, 182, 212, 0.15)',
-        border: 'rgba(6, 182, 212, 0.35)',
-        icon: Sparkles,
-      };
-    } else {
-      // LONG or THAI GOLD
-      if (currentPrice < stopLoss) {
-        return {
-          status: 'STOPPED_OUT',
-          label: 'ราคาหลุด Stop Loss — แผนเสีย ยกเลิกการเข้าออเดอร์',
-          color: '#EF4444',
-          bg: 'rgba(239, 68, 68, 0.15)',
-          border: 'rgba(239, 68, 68, 0.35)',
-          icon: ShieldAlert,
-        };
-      }
-      if (currentPrice > chaseLimit) {
-        return {
-          status: 'EXTENDED',
-          label: 'ราคาปรับขึ้นเกินโซนปลอดภัย — ห้ามไล่ราคาเด็ดขาด (Chase Risk)',
-          color: '#F59E0B',
-          bg: 'rgba(245, 158, 11, 0.15)',
-          border: 'rgba(245, 158, 11, 0.35)',
-          icon: AlertTriangle,
-        };
-      }
-      if (currentPrice >= minZone && currentPrice <= maxZone) {
-        return {
-          status: 'IN_ZONE',
-          label: '🎯 ราคาอยู่ในโซนเข้าซื้อแล้ว! เหมาะแก่การเริ่มสะสมไม้แรก',
-          color: '#10B981',
-          bg: 'rgba(16, 185, 129, 0.22)',
-          border: 'rgba(16, 185, 129, 0.55)',
-          icon: CheckCircle2,
-          pulse: true,
-        };
-      }
-      return {
-        status: 'WAITING',
-        label: `⏳ ราคายังไม่ถึงโซน — รอจังหวะย่อตัวเข้าสู่โซน ${isThai ? thb(entryLow) : usd(entryLow, 0)} – ${isThai ? thb(entryHigh) : usd(entryHigh, 0)}`,
-        color: '#06B6D4',
-        bg: 'rgba(6, 182, 212, 0.15)',
-        border: 'rgba(6, 182, 212, 0.35)',
-        icon: Sparkles,
+        status: 'STOPPED_OUT',
+        label: '⛔ ราคาหลุด Stop Loss — แผนเสีย ยกเลิกการเข้าออเดอร์',
+        color: '#EF4444',
+        bg: 'rgba(239, 68, 68, 0.18)',
+        border: 'rgba(239, 68, 68, 0.45)',
+        icon: ShieldAlert,
+        tier: 'RED',
       };
     }
+    if (currentPrice > chaseLimit) {
+      return {
+        status: 'EXTENDED',
+        label: '⚠️ ราคาปรับขึ้นเกินโซนปลอดภัย — ห้ามไล่ราคาเด็ดขาด (Chase Risk)',
+        color: '#F59E0B',
+        bg: 'rgba(245, 158, 11, 0.18)',
+        border: 'rgba(245, 158, 11, 0.45)',
+        icon: AlertTriangle,
+        tier: 'AMBER',
+      };
+    }
+    if (currentPrice >= minZone && currentPrice <= maxZone) {
+      if (isBestGold) {
+        return {
+          status: 'IN_ZONE_BEST',
+          label: '👑 ราคาอยู่ในโซนจุดเข้าที่ดีที่สุด! สัญญาณความได้เปรียบสูงสุด (Supreme Entry)',
+          color: '#FDE047',
+          bg: 'rgba(245, 158, 11, 0.28)',
+          border: 'rgba(245, 158, 11, 0.75)',
+          icon: Sparkles,
+          pulse: true,
+          tier: 'GOLD',
+        };
+      }
+      return {
+        status: 'IN_ZONE',
+        label: '🟢 ราคาอยู่ในโซนเข้าซื้อแล้ว! สัญญาณเข้าพร้อม เหมาะแก่การสะสมไม้แรก',
+        color: '#34D399',
+        bg: 'rgba(16, 185, 129, 0.22)',
+        border: 'rgba(16, 185, 129, 0.65)',
+        icon: CheckCircle2,
+        pulse: true,
+        tier: 'GREEN',
+      };
+    }
+    return {
+      status: 'WAITING',
+      label: `⏳ ราคายังไม่ถึงโซน — รอจังหวะย่อตัวเข้าสู่โซน ${isThai ? thb(entryLow) : usd(entryLow, 0)} – ${isThai ? thb(entryHigh) : usd(entryHigh, 0)}`,
+      color: '#F59E0B',
+      bg: 'rgba(245, 158, 11, 0.14)',
+      border: 'rgba(245, 158, 11, 0.35)',
+      icon: Clock,
+      tier: 'AMBER',
+    };
   };
 
   const zoneStatus = getPriceZoneStatus();
@@ -198,15 +175,15 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
   // Copy Trade Plan to Clipboard
   const handleCopyPlan = () => {
     const symbolStr = isThai ? '🇹🇭 ทองคำแท่งไทย 96.5%' : (mode === 'COMEX_FUTURES' ? '⚡ COMEX Gold Futures (GC)' : '🌐 XAU/USD Spot');
-    const sideStr = isThai ? 'ซื้อสะสม (BUY)' : (isShort ? 'เปิดสถานะ SHORT (ขาย)' : 'เปิดสถานะ LONG (ซื้อ)');
+    const sideStr = isThai ? 'ซื้อสะสม (BUY)' : 'เปิดสถานะซื้อ / ขาขึ้น (LONG ONLY)';
     const entryStr = isThai ? `${thb(entryLow)} – ${thb(entryHigh)} (จุดดีที่สุด: ${thb(bestEntry)})` : `${usd(entryLow)} – ${usd(entryHigh)} (Best: ${usd(bestEntry)})`;
     const slStr = isThai ? `${thb(stopLoss)} (-${thb(stopDist)} / ${stopPct.toFixed(2)}%)` : `${usd(stopLoss)} (-${usd(stopDist)} / ${stopPct.toFixed(2)}%)`;
     const tpStr = isThai ? `TP1: ${thb(tp1)} | TP2: ${thb(tp2)} | TP3: ${thb(tp3)}` : `TP1: ${usd(tp1)} | TP2: ${usd(tp2)} | TP3: ${usd(tp3)}`;
 
-    const textToCopy = `🥇 แผนเทรดทองคำ CryptoPro AI
+    const textToCopy = `🥇 แผนเทรดทองคำ CryptoPro AI (Long Only)
 ─────────────────────
 สินทรัพย์: ${symbolStr}
-สถานะ: ${sideStr}
+ทิศทาง: ${sideStr}
 โซนเข้า: ${entryStr}
 ห้ามไล่ราคาเกิน: ${isThai ? thb(chaseLimit) : usd(chaseLimit)}
 จุดตัดขาดทุน (SL): ${slStr}
@@ -221,6 +198,95 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
     });
   };
 
+  // Card 1 Dynamic Style based on Status (Gold Flashing -> Green Ready -> Amber Waiting -> Red Stop)
+  const getCard1Style = () => {
+    if (isBestGold) {
+      return {
+        border: '2px solid #F59E0B',
+        animation: 'goldFlashBlink 1.6s infinite ease-in-out',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, var(--bg-card, #111827) 45%, rgba(253, 224, 71, 0.16) 100%)',
+        boxShadow: '0 0 35px rgba(245, 158, 11, 0.45)',
+        topRail: 'linear-gradient(90deg, #F59E0B, #FDE047, #FFFFFF, #FDE047, #F59E0B)',
+        badgeText: '👑 1. จุดเข้าที่ดีที่สุด (SUPREME GOLD ENTRY)',
+        badgeStyle: {
+          background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+          color: '#FFFFFF',
+          border: '1px solid rgba(253, 224, 71, 0.8)',
+          boxShadow: '0 0 16px rgba(245, 158, 11, 0.7)',
+        },
+        tagText: '⭐ BEST GOLDEN SETUP',
+        tagStyle: {
+          backgroundColor: 'rgba(245, 158, 11, 0.25)',
+          color: '#FDE047',
+          border: '1px solid rgba(245, 158, 11, 0.55)',
+        },
+      };
+    }
+    if (isReadyGreen) {
+      return {
+        border: '2px solid rgba(16, 185, 129, 0.8)',
+        animation: 'greenReadyPulse 2s infinite ease-in-out',
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, var(--bg-card, #111827) 45%, rgba(6, 182, 212, 0.1) 100%)',
+        boxShadow: '0 0 28px rgba(16, 185, 129, 0.35)',
+        topRail: 'linear-gradient(90deg, #10B981, #34D399, #06B6D4)',
+        badgeText: '🟢 1. จุดเข้าซื้อพร้อม (READY TO BUY)',
+        badgeStyle: {
+          backgroundColor: 'rgba(16, 185, 129, 0.22)',
+          color: '#34D399',
+          border: '1px solid rgba(16, 185, 129, 0.6)',
+        },
+        tagText: 'OPTIMAL BUY ZONE',
+        tagStyle: {
+          backgroundColor: 'rgba(16, 185, 129, 0.18)',
+          color: '#10B981',
+          border: '1px solid rgba(16, 185, 129, 0.4)',
+        },
+      };
+    }
+    if (isStoppedOut) {
+      return {
+        border: '2px solid rgba(239, 68, 68, 0.55)',
+        animation: 'none',
+        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, var(--bg-card, #111827) 45%, rgba(0, 0, 0, 0.3) 100%)',
+        boxShadow: '0 4px 20px rgba(239, 68, 68, 0.15)',
+        topRail: 'linear-gradient(90deg, #EF4444, #F87171, #EF4444)',
+        badgeText: '⛔ 1. หลุด Stop Loss ยกเลิกแผน (INVALIDATED)',
+        badgeStyle: {
+          backgroundColor: 'rgba(239, 68, 68, 0.22)',
+          color: '#F87171',
+          border: '1px solid rgba(239, 68, 68, 0.5)',
+        },
+        tagText: 'PLAN INVALIDATED',
+        tagStyle: {
+          backgroundColor: 'rgba(239, 68, 68, 0.18)',
+          color: '#F87171',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+        },
+      };
+    }
+    return {
+      border: '2px solid rgba(245, 158, 11, 0.45)',
+      animation: 'none',
+      background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--bg-card, #111827) 45%, rgba(255, 255, 255, 0.02) 100%)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+      topRail: 'linear-gradient(90deg, #F59E0B, #EAB308, #F59E0B)',
+      badgeText: '⏳ 1. จุดเข้าซื้อสะสม (WAIT FOR DIP)',
+      badgeStyle: {
+        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+        color: '#FDE047',
+        border: '1px solid rgba(245, 158, 11, 0.5)',
+      },
+      tagText: 'WAIT FOR PULLBACK',
+      tagStyle: {
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+        color: '#FDE047',
+        border: '1px solid rgba(245, 158, 11, 0.35)',
+      },
+    };
+  };
+
+  const card1Theme = getCard1Style();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {/* Title Bar with Calculator & Copy Actions */}
@@ -228,35 +294,39 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '34px',
-              height: '34px',
+              width: '36px',
+              height: '36px',
               borderRadius: '10px',
-              background: isShort 
-                ? 'linear-gradient(135deg, #EF4444, #F97316)' 
+              background: isBestGold 
+                ? 'linear-gradient(135deg, #F59E0B, #D97706)' 
                 : 'linear-gradient(135deg, #10B981, #06B6D4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: isShort ? '0 0 14px rgba(239, 68, 68, 0.4)' : '0 0 14px rgba(16, 185, 129, 0.4)',
+              boxShadow: isBestGold ? '0 0 16px rgba(245, 158, 11, 0.6)' : '0 0 14px rgba(16, 185, 129, 0.4)',
             }}
           >
-            <Target size={18} color="#FFFFFF" />
+            {isBestGold ? <Crown size={19} color="#FFFFFF" /> : <Target size={18} color="#FFFFFF" />}
           </div>
           <div>
-            <div style={{ fontSize: '16.5px', fontWeight: 900, color: 'var(--text-primary, #FFFFFF)', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontSize: '16.5px', fontWeight: 900, color: 'var(--text-primary, #FFFFFF)', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>3 จุดตัดสินใจสำคัญ: จุดเข้า • จุดตัดขาดทุน • จุดทำกำไร</span>
               <span
                 style={{
                   fontSize: '10.5px',
-                  fontWeight: 800,
+                  fontWeight: 900,
                   padding: '2px 8px',
                   borderRadius: '6px',
-                  backgroundColor: isShort ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                  color: isShort ? '#F87171' : '#34D399',
-                  border: isShort ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)',
+                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                  color: '#34D399',
+                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
-                {isThai ? 'ฝั่งซื้อทองคำแท่ง' : (isShort ? 'ฝั่ง SHORT (ขายทำกำไรขาลง)' : 'ฝั่ง LONG (ซื้อตามเทรนด์)')}
+                <TrendingUp size={12} />
+                {isThai ? 'ฝั่งซื้อทองคำแท่ง' : 'ฝั่งซื้อ / ขาขึ้นเท่านั้น (LONG ONLY)'}
               </span>
             </div>
             <div style={{ fontSize: '11.5px', color: 'var(--text-muted, #94A3B8)' }}>
@@ -322,7 +392,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
         </div>
       </div>
 
-      {/* 3 High-Impact Precision Decision Cards */}
+      {/* 3 High-Impact Precision Decision Cards (Long Only) */}
       <div
         style={{
           display: 'grid',
@@ -330,21 +400,21 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
           gap: '16px',
         }}
       >
-        {/* ═══ CARD 1: 🟢/🔴 จุดเข้าที่ได้เปรียบ (Optimal Entry Zone) ═══ */}
+        {/* ═══ CARD 1: 👑/🟢 จุดเข้าที่ได้เปรียบ (Optimal Buy Zone - Gold/Green Tiered) ═══ */}
         <div
           style={{
-            background: isShort
-              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, var(--bg-card, #111827) 45%, rgba(249, 115, 22, 0.08) 100%)'
-              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, var(--bg-card, #111827) 45%, rgba(6, 182, 212, 0.08) 100%)',
-            border: isShort ? '2px solid rgba(239, 68, 68, 0.5)' : '2px solid rgba(16, 185, 129, 0.5)',
+            border: card1Theme.border,
+            animation: card1Theme.animation,
+            background: card1Theme.background,
+            boxShadow: card1Theme.boxShadow,
             borderRadius: '18px',
             padding: '20px',
-            boxShadow: isShort ? '0 8px 32px rgba(239, 68, 68, 0.18)' : '0 8px 32px rgba(16, 185, 129, 0.18)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             position: 'relative',
             overflow: 'hidden',
+            transition: 'all 0.3s ease',
           }}
         >
           {/* Top Neon Accent Line */}
@@ -354,16 +424,14 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
               top: 0,
               left: 0,
               right: 0,
-              height: '3px',
-              background: isShort 
-                ? 'linear-gradient(90deg, #EF4444, #F87171, #F97316)' 
-                : 'linear-gradient(90deg, #10B981, #34D399, #06B6D4)',
+              height: '3.5px',
+              background: card1Theme.topRail,
             }}
           />
 
           <div>
             {/* Header Badge */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '6px' }}>
               <span
                 style={{
                   display: 'inline-flex',
@@ -373,14 +441,12 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                   borderRadius: '20px',
                   fontSize: '11px',
                   fontWeight: 900,
-                  backgroundColor: isShort ? 'rgba(239, 68, 68, 0.22)' : 'rgba(16, 185, 129, 0.22)',
-                  color: isShort ? '#F87171' : '#34D399',
-                  border: isShort ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(16, 185, 129, 0.5)',
                   letterSpacing: '0.4px',
+                  ...card1Theme.badgeStyle,
                 }}
               >
-                <Target size={13} />
-                <span>1. {isShort ? 'จุดเปิดสถานะ SHORT (ENTRY)' : 'จุดเข้าซื้อที่ได้เปรียบ (ENTRY)'}</span>
+                {isBestGold ? <Crown size={13} /> : <Target size={13} />}
+                <span>{card1Theme.badgeText}</span>
               </span>
 
               <span
@@ -389,27 +455,25 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                   fontWeight: 800,
                   padding: '2px 8px',
                   borderRadius: '6px',
-                  backgroundColor: isShort ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isShort ? '#F87171' : '#10B981',
-                  border: isShort ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                  ...card1Theme.tagStyle,
                 }}
               >
-                {isShort ? 'OPTIMAL SHORT ZONE' : 'OPTIMAL BUY ZONE'}
+                {card1Theme.tagText}
               </span>
             </div>
 
             {/* Primary Entry Zone Price */}
             <div style={{ fontSize: '11.5px', color: 'var(--text-muted, #94A3B8)', fontWeight: 600 }}>
-              {isShort ? 'กรอบราคาเปิด SHORT ที่แนะนำ:' : 'กรอบราคาเข้าซื้อที่แนะนำ:'}
+              กรอบราคาเข้าซื้อที่แนะนำ:
             </div>
             <div
               style={{
                 fontSize: 'clamp(22px, 3vw, 28px)',
                 fontWeight: 900,
-                color: isShort ? '#F87171' : '#34D399',
+                color: isBestGold ? '#FDE047' : '#34D399',
                 letterSpacing: '-0.5px',
                 marginTop: '4px',
-                textShadow: isShort ? '0 0 16px rgba(239, 68, 68, 0.4)' : '0 0 16px rgba(16, 185, 129, 0.4)',
+                textShadow: isBestGold ? '0 0 20px rgba(245, 158, 11, 0.6)' : '0 0 16px rgba(16, 185, 129, 0.4)',
               }}
             >
               {isThai ? `${thb(entryLow)} – ${thb(entryHigh)}` : `${usd(entryLow)} – ${usd(entryHigh)}`}
@@ -427,7 +491,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 800,
                 color: zoneStatus.color,
               }}
             >
@@ -441,7 +505,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                 marginTop: '12px',
                 padding: '10px 12px',
                 borderRadius: '10px',
-                backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                backgroundColor: 'rgba(0, 0, 0, 0.28)',
                 border: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))',
                 display: 'flex',
                 flexDirection: 'column',
@@ -450,7 +514,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '11.5px', color: 'var(--text-primary, #FFFFFF)', fontWeight: 700 }}>
-                  ⭐ จุดเข้าที่ดีที่สุด ({isShort ? 'Best Short' : 'Best Buy'}):
+                  ⭐ จุดเข้าที่ดีที่สุด (Best Buy):
                 </span>
                 <span style={{ fontSize: '14px', fontWeight: 900, color: '#FDE047' }}>
                   {isThai ? thb(bestEntry) : usd(bestEntry)}
@@ -459,7 +523,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)' }}>
-                  ⛔ {isShort ? 'ห้ามไล่ขายต่ำกว่า:' : 'ห้ามไล่ราคาเกิน:'}
+                  ⛔ ห้ามไล่ราคาเกิน:
                 </span>
                 <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#F87171' }}>
                   {isThai ? thb(chaseLimit) : usd(chaseLimit)}
@@ -481,11 +545,11 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
               color: 'var(--text-muted, #94A3B8)',
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isShort ? '#F87171' : '#34D399', fontWeight: 700 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isBestGold ? '#FDE047' : '#34D399', fontWeight: 700 }}>
               <CheckCircle2 size={13} />
-              {isThai ? 'อิงราคาสมาคมค้าทองคำ 96.5%' : (isShort ? 'Resistance Confluence Zone' : 'Fibonacci Golden 0.618 Zone')}
+              {isThai ? 'อิงราคาสมาคมค้าทองคำ 96.5%' : 'Fibonacci Golden 0.618 Zone'}
             </span>
-            <span>{isShort ? 'รอจังหวะเด้งในเทรนด์ขาลง' : 'รอจังหวะย่อในเทรนด์ขาขึ้น'}</span>
+            <span>รอจังหวะย่อในเทรนด์ขาขึ้น</span>
           </div>
         </div>
 
@@ -576,7 +640,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                 marginTop: '12px',
                 padding: '10px 12px',
                 borderRadius: '10px',
-                backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                backgroundColor: 'rgba(0, 0, 0, 0.28)',
                 border: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))',
                 display: 'flex',
                 flexDirection: 'column',
@@ -593,9 +657,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
               </div>
 
               <div style={{ fontSize: '11px', color: 'var(--text-secondary, #CBD5E1)', lineHeight: 1.4 }}>
-                ⚠️ {isShort
-                  ? 'หากราคาปิดแท่ง 4H ทะลุเหนือระดับนี้ = โครงสร้างขาลงเสียทันที ต้องคัตลอสเด็ดขาด ไม่ทนถือ'
-                  : 'หากราคาปิดแท่ง 4H หลุดระดับนี้ = แผนเสียทันที ต้องคัตลอสเด็ดขาด ไม่ทนถือ'}
+                ⚠️ หากราคาปิดแท่ง 4H หลุดระดับนี้ = โครงสร้างขาขึ้นเสียทันที ต้องคัตลอสเด็ดขาด ไม่ทนถือ
               </div>
             </div>
           </div>
@@ -666,7 +728,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                 }}
               >
                 <Award size={13} />
-                <span>3. {isShort ? 'จุดทำกำไรเป้าหมายขาลง (TAKE PROFIT)' : 'จุดออกทำกำไร (TAKE PROFIT)'}</span>
+                <span>3. จุดออกทำกำไร (TAKE PROFIT)</span>
               </span>
 
               <span
@@ -694,7 +756,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.28)',
                   border: '1px solid rgba(6, 182, 212, 0.25)',
                 }}
               >
@@ -724,7 +786,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.28)',
                   border: '1px solid rgba(245, 158, 11, 0.35)',
                 }}
               >
@@ -754,7 +816,7 @@ export const PrecisionTradePlanCards: React.FC<PrecisionTradePlanCardsProps> = (
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.28)',
                   border: '1px solid rgba(16, 185, 129, 0.25)',
                 }}
               >

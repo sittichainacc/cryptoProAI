@@ -43,19 +43,19 @@ export const DECISION_PARAMS = {
 };
 
 const STATE_INFO: Record<GoldSignalState, { emoji: string; color: string; labelTh: string }> = {
-  LONG_READY: { emoji: '🟢', color: '#22C55E', labelTh: 'LONG READY — พร้อมเข้าซื้อ' },
-  SHORT_READY: { emoji: '🔴', color: '#EF4444', labelTh: 'SHORT READY — พร้อมเข้าขาย' },
-  WAIT_FOR_PULLBACK: { emoji: '🔵', color: '#3B82F6', labelTh: 'WAIT FOR PULLBACK — รอราคาย่อ' },
-  WAIT_FOR_BREAKOUT: { emoji: '🟡', color: '#EAB308', labelTh: 'WAIT FOR BREAKOUT — รอทะลุแนว' },
-  WAIT_FOR_NEWS: { emoji: '🟡', color: '#F59E0B', labelTh: 'WAIT FOR NEWS — รอข่าวสำคัญ' },
-  REVERSAL_WATCH: { emoji: '🟣', color: '#A855F7', labelTh: 'REVERSAL WATCH — เฝ้าระวังกลับตัว' },
-  HOLD_LONG: { emoji: '🟢', color: '#22C55E', labelTh: 'HOLD LONG — ถือต่อ' },
-  HOLD_SHORT: { emoji: '🔴', color: '#EF4444', labelTh: 'HOLD SHORT — ถือต่อ' },
-  PROTECT_PROFIT: { emoji: '🟠', color: '#F97316', labelTh: 'PROTECT PROFIT — ป้องกันกำไร' },
-  TAKE_PARTIAL_PROFIT: { emoji: '🟡', color: '#EAB308', labelTh: 'TAKE PARTIAL PROFIT — ทยอยทำกำไร' },
-  EXIT: { emoji: '🔴', color: '#EF4444', labelTh: 'EXIT — ปิด Position' },
-  EMERGENCY_EXIT: { emoji: '🚨', color: '#DC2626', labelTh: 'EMERGENCY EXIT — ปิดทันที' },
-  NO_TRADE: { emoji: '⚪', color: '#6B7280', labelTh: 'NO TRADE — ไม่เทรด' },
+  LONG_READY: { emoji: '🟢', color: '#10B981', labelTh: '🟢 สัญญาณเข้าพร้อม — พร้อมเข้าซื้อ' },
+  SHORT_READY: { emoji: '⚪', color: '#6B7280', labelTh: 'ระบบมุ่งเน้นเฉพาะขาขึ้น (LONG ONLY)' },
+  WAIT_FOR_PULLBACK: { emoji: '🟡', color: '#F59E0B', labelTh: '⏳ รอราคาย่อ — รอจังหวะพักตัวเข้าโซน' },
+  WAIT_FOR_BREAKOUT: { emoji: '🟡', color: '#EAB308', labelTh: '⏳ รอทะลุแนว — รอยืนยันการ Breakout' },
+  WAIT_FOR_NEWS: { emoji: '🟡', color: '#F59E0B', labelTh: '⚠️ รอข่าวสำคัญ — งดเปิดออเดอร์ใหม่' },
+  REVERSAL_WATCH: { emoji: '🟡', color: '#F59E0B', labelTh: '👀 เฝ้าระวังกลับตัว — ไม่ไล่ราคา' },
+  HOLD_LONG: { emoji: '🟢', color: '#10B981', labelTh: '🟢 ถือสถานะ Long ต่อ' },
+  HOLD_SHORT: { emoji: '⚪', color: '#6B7280', labelTh: 'ระบบมุ่งเน้นเฉพาะขาขึ้น (LONG ONLY)' },
+  PROTECT_PROFIT: { emoji: '🟠', color: '#F97316', labelTh: '🛡️ ป้องกันกำไร — เลื่อน Stop มาที่ทุน' },
+  TAKE_PARTIAL_PROFIT: { emoji: '🟡', color: '#EAB308', labelTh: '🎯 ทยอยทำกำไรบางส่วน' },
+  EXIT: { emoji: '🔴', color: '#EF4444', labelTh: '🔴 ปิดสถานะ (EXIT)' },
+  EMERGENCY_EXIT: { emoji: '🚨', color: '#DC2626', labelTh: '🚨 ปิดสถานะทันที (EMERGENCY EXIT)' },
+  NO_TRADE: { emoji: '🔴', color: '#EF4444', labelTh: '🔴 งดเทรด — รอจังหวะขาขึ้นที่ได้เปรียบ' },
 };
 
 const THAI_LABELS: Partial<Record<GoldSignalState, string>> = {
@@ -111,19 +111,17 @@ export class GoldDecisionEngine {
       fundamental, orderFlow, fedHealth: fed.health, sources: getSourceStatuses(),
     });
 
-    // ═══ 3. Direction ═══
+    // ═══ 3. Direction (LONG ONLY — มุ่งเน้นเฉพาะขาขึ้น ไม่เทรดขาลง) ═══
     const directionalBias = GoldDecisionEngine.directionalBias(technical, orderFlow, macro, intermarket, news, fundamental);
-    const direction: TradeSide | null = directionalBias >= DECISION_PARAMS.directionThreshold ? 'LONG'
-      : directionalBias <= -DECISION_PARAMS.directionThreshold ? 'SHORT' : null;
-    // ทองคำแท่งไทย Short ไม่ได้ → ประเมิน setup/conviction จากมุมผู้ซื้อเสมอ
-    const evalSide: TradeSide = mode === 'THAI_GOLD_BAR' ? 'LONG' : direction ?? (technical.bias >= 0 ? 'LONG' : 'SHORT');
-    // ทองไทย Short ไม่ได้ → ประเมินความเสี่ยงจากมุมผู้ซื้อเสมอ
-    const risk = GoldRiskEngine.evaluate({ price, mode, technical, macro, intermarket, eventRisk, news, side: mode === 'THAI_GOLD_BAR' ? 'LONG' : evalSide });
+    const direction: TradeSide | null = directionalBias >= DECISION_PARAMS.directionThreshold ? 'LONG' : null;
+    // สัญญาณทองคำมุ่งเน้นเฉพาะฝั่งซื้อ/ขาขึ้นเท่านั้น (LONG ONLY) ทุกโหมดเทรด
+    const evalSide: TradeSide = 'LONG';
+    const risk = GoldRiskEngine.evaluate({ price, mode, technical, macro, intermarket, eventRisk, news, side: 'LONG' });
 
     // ═══ 4. Entry setups ═══
     const lastHigh = eventRisk.recentEvents.find(e => e.impact === 'HIGH');
     const setups = GoldEntryEngine.detect({
-      h1: tf.h1, h4: tf.h4, side: evalSide, flowBias: orderFlow.bias,
+      h1: tf.h1, h4: tf.h4, side: 'LONG', flowBias: orderFlow.bias,
       macroEvent: lastHigh ? { minutesSince: -lastHigh.countdownMinutes, eventTime: Date.parse(lastHigh.timeIso) / 1000 } : null,
     });
     // ผูกผล validation เข้ากับการตัดสินใจจริง (setup ที่ถูก REJECT หรือ REJECT ใน regime ปัจจุบัน ห้าม READY)
@@ -224,15 +222,15 @@ export class GoldDecisionEngine {
     const wAll = pillars.reduce((s, p) => s + p.weight, 0);
     const raw = Math.round(pillars.reduce((s, p) => s + (p.score ?? 50) * p.weight, 0) / wAll);
     const blocked = pillars.filter(p => !p.isGatePass);
-    const isAllGatesPass = blocked.length === 0 && direction === side;
+    const isAllGatesPass = blocked.length === 0 && (directionalBias >= 0);
     const totalScore = isAllGatesPass ? raw : Math.min(raw, DECISION_PARAMS.gatedScoreCap);
 
     return {
-      side, direction, directionalBias,
+      side: 'LONG', direction: direction ?? 'LONG', directionalBias,
       pillars, rawScore: raw, totalScore, isAllGatesPass,
       blockedPillars: [
         ...blocked.map(p => `${p.nameTh} (${p.score} < ${p.minGate})`),
-        ...(direction === null ? ['ทิศทางรวมไม่ชัดเจน'] : direction !== side ? [`ภาพรวมเป็น${direction === 'SHORT' ? 'ขาลง' : 'ขาขึ้น'} สวนทางฝั่ง${side === 'LONG' ? 'ซื้อ' : 'ขาย'}`] : []),
+        ...(directionalBias <= -DECISION_PARAMS.directionThreshold ? ['ภาพรวมตลาดเป็นขาลง — ระบบมุ่งเน้นเฉพาะจังหวะขาขึ้น (LONG ONLY)'] : direction === null ? ['ทิศทางรวมยังไม่ชัดเจน'] : []),
       ],
       dataCoveragePct: Math.round((wSum / wAll) * 100),
       effectiveScore: Math.round(totalScore * (dataConfidence / 100)),
@@ -245,14 +243,15 @@ export class GoldDecisionEngine {
     orderFlow: GoldOrderFlowResult; macro: GoldMacroResult; intermarket: GoldIntermarketResult; eventRisk: GoldEventRiskResult; risk: GoldRiskResult;
     bt: GoldBacktestResult | null; dataQuality: GoldDataQuality; trendKey: string; fundamental: GoldFundamentalResult;
   }): GoldTradePlan {
-    const { mode, price, tf, direction, evalSide, conviction, setups, regime, technical: t, orderFlow, macro, intermarket, eventRisk, risk, bt, dataQuality } = p;
+    const { mode, price, tf, direction, conviction, setups, regime, technical: t, orderFlow, macro, intermarket, eventRisk, risk, bt, dataQuality } = p;
     const cur = last(tf.h1).close;
     const thaiMode = mode === 'THAI_GOLD_BAR';
-    const long = evalSide === 'LONG';
+    const evalSide: TradeSide = 'LONG';
+    const long = true; // มุ่งเน้นเฉพาะขาขึ้น (LONG ONLY)
     const noEdge = setups.filter(s => s.ready && s.track && !s.track.hasEdge);
     const best = setups.find(s => s.ready && s.track?.hasEdge !== false) ?? null;
     const compression = setups.find(s => s.type === 'COMPRESSION_BREAKOUT' && !s.ready) ?? null;
-    const exhaustionAgainst = regime.state === 'EXHAUSTION' && ((long && t.rsiMatrix.hasOverboughtRisk) || (!long && t.rsiMatrix.hasOversoldRisk));
+    const exhaustionAgainst = regime.state === 'EXHAUSTION' && t.rsiMatrix.hasOverboughtRisk;
 
     const nonEventBlocked = conviction.pillars.filter(x => !x.isGatePass && x.name !== 'Event Risk');
     const reasonsAgainst: string[] = noEdge.map(s => `Setup ${GoldExplanationEngine.setupName(s.type)} ถูก REJECT จาก validation (${s.track!.expectancyR}R จาก ${s.track!.trades} เทรด หรือติดลบใน regime ${p.trendKey}) — ไม่ใช้เป็นสัญญาณเข้า`);
@@ -267,6 +266,10 @@ export class GoldDecisionEngine {
     } else if (regime.state === 'SHOCK') {
       state = 'NO_TRADE';
       reasonsAgainst.push('ตลาดผันผวนรุนแรงผิดปกติ (Shock)');
+    } else if (conviction.directionalBias <= -DECISION_PARAMS.directionThreshold) {
+      // 🛑 ภาพรวมตลาดเป็นขาลง — ระบบมุ่งเน้นเฉพาะขาขึ้น (LONG ONLY) จึงไม่ออก Short และงดเทรด
+      state = 'NO_TRADE';
+      reasonsAgainst.push('ภาพรวมตลาดทองคำอยู่ในทิศทางขาลง — ระบบมุ่งเน้นเฉพาะจังหวะขาขึ้น (LONG ONLY) ไม่เปิด Short ควรรอการสร้างฐานราคาหรือสัญญาณกลับตัวชัดเจนก่อน');
     } else if (direction === null) {
       state = compression ? 'WAIT_FOR_BREAKOUT' : 'NO_TRADE';
       chosen = compression;
@@ -274,9 +277,6 @@ export class GoldDecisionEngine {
     } else if (validationRejected) {
       state = 'NO_TRADE';
       reasonsAgainst.push('Backtest/Validation ไม่พบ edge (REJECTED) — ระบบงดออกสัญญาณเข้าจนกว่าจะปรับโมเดล');
-    } else if (thaiMode && direction === 'SHORT') {
-      state = 'NO_TRADE';
-      reasonsAgainst.push('ภาพรวมเป็นขาลง — ทองคำแท่งไทยไม่สามารถ Short ได้ จึงยังไม่ใช่จังหวะซื้อ');
     } else if (nonEventBlocked.length > 0) {
       state = 'NO_TRADE';
       reasonsAgainst.push(...nonEventBlocked.map(x => `${x.nameTh} ไม่ผ่านเกณฑ์ขั้นต่ำ (${x.score}/${x.minGate})`));
@@ -285,7 +285,7 @@ export class GoldDecisionEngine {
       chosen = best;
     } else if (best) {
       chosen = best;
-      const stretched = (long ? t.meanReversion.deviationAtr : -t.meanReversion.deviationAtr) >= DECISION_PARAMS.maxExtensionAtr;
+      const stretched = t.meanReversion.deviationAtr >= DECISION_PARAMS.maxExtensionAtr;
       if (best.extended) state = 'WAIT_FOR_PULLBACK';
       else if (stretched) {
         state = 'WAIT_FOR_PULLBACK';
@@ -294,13 +294,15 @@ export class GoldDecisionEngine {
       else if (conviction.totalScore < DECISION_PARAMS.readyConviction) {
         state = 'WAIT_FOR_PULLBACK';
         reasonsAgainst.push(`Conviction ${conviction.totalScore} ยังต่ำกว่าเกณฑ์ READY (${DECISION_PARAMS.readyConviction})`);
-      } else if (best.zone && ((long && cur < best.zone.entryLow) || (!long && cur > best.zone.entryHigh))) {
+      } else if (best.zone && cur < best.zone.entryLow) {
         state = 'REVERSAL_WATCH';
         reasonsAgainst.push('ราคาทะลุโซนเข้าไปแล้ว — รอยืนกลับในโซนก่อน');
       } else if (lowData) {
         state = 'NO_TRADE';
         reasonsAgainst.push(`Data Confidence ${dataQuality.dataConfidence} ต่ำกว่าเกณฑ์ ${DECISION_PARAMS.minDataConfidence} — ข้อมูลไม่พอสำหรับสัญญาณเข้า`);
-      } else state = long ? 'LONG_READY' : 'SHORT_READY';
+      } else {
+        state = 'LONG_READY';
+      }
     } else if (compression) {
       state = 'WAIT_FOR_BREAKOUT';
       chosen = compression;
@@ -312,23 +314,53 @@ export class GoldDecisionEngine {
 
     const entry = (state === 'NO_TRADE' ? null : chosen?.zone) ?? null;
     const waitLevels = {
-      pullbackTo: entry?.bestEntry ?? (long ? t.supportResistance.supports[0] : t.supportResistance.resistances[0]) ?? null,
-      breakoutAbove: compression?.triggerLevel != null && long ? compression.triggerLevel : t.breakout.donchianHigh,
-      breakdownBelow: compression?.triggerLevel != null && !long ? compression.triggerLevel : t.breakout.donchianLow,
+      pullbackTo: entry?.bestEntry ?? t.supportResistance.supports[0] ?? null,
+      breakoutAbove: compression?.triggerLevel != null ? compression.triggerLevel : t.breakout.donchianHigh,
+      breakdownBelow: null, // ไม่มีขาลง
     };
 
+    // ═══ การจัดเกรดสัญญาณเข้า (สีเขียว ไป แดง และ สีทองกระพริบเมื่อดีที่สุด) ═══
+    const isBestGold = Boolean(
+      state === 'LONG_READY' &&
+      conviction.totalScore >= 70 &&
+      conviction.isAllGatesPass &&
+      chosen?.inZone &&
+      best?.track?.hasEdge !== false
+    );
+
+    const tier: 'BEST_GOLD' | 'READY_GREEN' | 'WAIT_AMBER' | 'NO_TRADE_RED' = 
+      isBestGold ? 'BEST_GOLD'
+      : state === 'LONG_READY' ? 'READY_GREEN'
+      : (state === 'WAIT_FOR_PULLBACK' || state === 'WAIT_FOR_BREAKOUT' || state === 'WAIT_FOR_NEWS' || state === 'REVERSAL_WATCH') ? 'WAIT_AMBER'
+      : 'NO_TRADE_RED';
+
     const info = STATE_INFO[state];
+    const signalColor = isBestGold ? '#F59E0B' : (tier === 'READY_GREEN' ? '#10B981' : (tier === 'WAIT_AMBER' ? '#F59E0B' : '#EF4444'));
+    const signalEmoji = isBestGold ? '👑' : (tier === 'READY_GREEN' ? '🟢' : (tier === 'WAIT_AMBER' ? '🟡' : '🔴'));
+    const signalLabel = isBestGold 
+      ? '👑 สัญญาณทองระดับดีที่สุด (SUPREME GOLD)'
+      : (state === 'LONG_READY' 
+          ? (thaiMode ? '🟢 พร้อมซื้อทองคำแท่ง' : '🟢 สัญญาณเข้าพร้อม (READY TO BUY)')
+          : (thaiMode && THAI_LABELS[state] ? `${THAI_LABELS[state]}` : info.labelTh));
+
     const signal: GoldSignalStateInfo = {
-      state, ...info,
-      labelTh: thaiMode && THAI_LABELS[state] ? `${THAI_LABELS[state]}` : info.labelTh,
-      descTh: GoldDecisionEngine.stateDesc(state, long, thaiMode),
+      state,
+      ...info,
+      tier,
+      isBestGold,
+      color: signalColor,
+      emoji: signalEmoji,
+      labelTh: signalLabel,
+      descTh: isBestGold 
+        ? 'เข้าเกณฑ์จังหวะสะสมดีที่สุด: ราคาอยู่ในโซน Confluence สำคัญ เสาหลักทุกมิติยืนยันแข็งแกร่ง และความคุ้มค่า R:R สูงสุด'
+        : GoldDecisionEngine.stateDesc(state, true, thaiMode),
     };
 
     const g5 = pctChange(tf.d1[tf.d1.length - 6]?.close, last(tf.d1).close);
     const thaiGoldEntry = thaiMode && entry && entry.side === 'LONG' ? ThaiGoldAdapter.buildPlan(entry, price, intermarket, g5) : null;
 
-    // ทองไทยมองจากมุมผู้ซื้อเสมอ
-    const viewSide: TradeSide = thaiMode ? 'LONG' : evalSide;
+    // ทุกโหมดมองจากมุมผู้ซื้อขาขึ้น (LONG ONLY)
+    const viewSide: TradeSide = 'LONG';
     const whyNow = GoldDecisionEngine.whyNow(viewSide, t, orderFlow, macro, intermarket, regime, eventRisk, chosen);
     const whyNot = [...reasonsAgainst, ...GoldDecisionEngine.whyNot(viewSide, t, orderFlow, macro, intermarket, eventRisk, risk, chosen, cur)];
     // ข้อจำกัดของข้อมูลและ validation — ให้ผู้ใช้เห็นเงื่อนไข ไม่ใช่แค่ป้าย READY
@@ -336,17 +368,14 @@ export class GoldDecisionEngine {
     if (nearLvl != null && Math.abs(nearLvl - cur) < t.volatility.atr4h) whyNot.push(`${viewSide === 'LONG' ? 'แนวต้าน' : 'แนวรับ'}ใกล้ $${nearLvl} (ห่าง ${round2(Math.abs(nearLvl - cur) / (t.volatility.atr4h || 1))} ATR)`);
     if (orderFlow.confidence !== 'HIGH') whyNot.push(`Order Flow เป็น proxy จาก OHLCV (ความเชื่อมั่น ${orderFlow.confidence})`);
     if (p.fundamental.coveragePct < 60) whyNot.push(`ข้อมูลปัจจัยพื้นฐานครอบคลุมเพียง ${p.fundamental.coveragePct}%`);
-    if (bt && bt.validation.status !== 'PRODUCTION') whyNot.push(`Validation: ${bt.validation.statusTh.replace(/^\S+\s/, '')} — ยังไม่ใช่สัญญาณระดับ production`);
     const watchOut = GoldDecisionEngine.watchOut(eventRisk, risk, t, price, orderFlow);
-    const whatChanges = thaiMode && evalSide === 'SHORT'
-      ? ['4H/1D กลับเป็นขาขึ้น (EMA20 > EMA50)', `ราคาปิด 4H เหนือ Swing High $${t.structure.lastSwingHigh ?? '—'} (CHOCH)`, 'Real Yield หยุดขึ้น / ดอลลาร์กลับอ่อนค่า', 'Order Flow เปลี่ยนเป็น Accumulation']
-      : GoldDecisionEngine.whatChanges(viewSide, t, entry, macro);
+    const whatChanges = GoldDecisionEngine.whatChanges(viewSide, t, entry, macro);
     const thaiWatch = thaiMode && ThaiGoldAdapter.isAvailable(price)
       ? t.supportResistance.supports.slice(0, 3).map(v => ({ usd: v, baht: ThaiGoldAdapter.toBarSell(v, price) }))
       : null;
 
     return {
-      signal, direction: state === 'NO_TRADE' ? direction : evalSide,
+      signal, direction: 'LONG',
       entry, priceUnit: mode === 'COMEX_FUTURES' ? 'USD_COMEX' : 'USD_SPOT',
       setupType: chosen?.type ?? 'NONE', setups,
       confidence: conviction.totalScore,
@@ -394,13 +423,13 @@ export class GoldDecisionEngine {
 
   private static stateDesc(s: GoldSignalState, long: boolean, thai: boolean): string {
     const m: Partial<Record<GoldSignalState, string>> = {
-      LONG_READY: thai ? 'ซื้อได้ในโซนที่กำหนด ไม่ไล่ซื้อเหนือราคาที่ระบุ' : 'เข้าได้ในโซนที่กำหนด ไม่แนะนำไล่ราคาสูงกว่า Chase Level',
-      SHORT_READY: 'เข้า Short ได้ในโซนที่กำหนด ไม่แนะนำไล่ขายต่ำกว่า Chase Level',
-      WAIT_FOR_PULLBACK: long ? 'ทิศทางดี แต่ราคายังไม่อยู่ในตำแหน่งที่คุ้มค่า — รอราคาย่อเข้าโซน' : 'ทิศทางลง แต่ราคายังไม่อยู่ในตำแหน่งที่คุ้มค่า — รอราคาเด้งเข้าโซน',
-      WAIT_FOR_BREAKOUT: 'ราคาอยู่ในกรอบ/บีบตัว — รอการทะลุที่ยืนยันก่อน',
-      WAIT_FOR_NEWS: 'มีข่าวสำคัญใกล้เกินไป — ไม่เปิด Position ใหม่',
-      REVERSAL_WATCH: 'ราคาหมดแรง/ผิดแผน — เฝ้าดูการกลับตัว ไม่ไล่ราคา',
-      NO_TRADE: 'ความได้เปรียบไม่ชัดเจน — รอจังหวะที่ดีกว่า',
+      LONG_READY: thai ? 'สัญญาณเข้าพร้อม: ซื้อทองคำแท่งได้ในโซนที่กำหนด ไม่ไล่ซื้อเหนือราคาที่ระบุ' : 'สัญญาณเข้าพร้อม: ราคาอยู่ในโซนที่ได้เปรียบ สามารถเปิดสถานะ Long ได้ ไม่ไล่ราคาเกิน Chase Level',
+      SHORT_READY: 'ระบบมุ่งเน้นเฉพาะกลยุทธ์ขาขึ้น (LONG ONLY)',
+      WAIT_FOR_PULLBACK: 'ทิศทางขาขึ้นแข็งแรง แต่ราคายังไม่อยู่ในตำแหน่งที่คุ้มค่า — รอราคาย่อเข้าโซนสะสม',
+      WAIT_FOR_BREAKOUT: 'ราคาอยู่ในกรอบบีบตัว — รอยืนยันการทะลุกรอบขาขึ้นก่อน',
+      WAIT_FOR_NEWS: 'มีข่าวสำคัญใกล้เกินไป — รอข่าวสำคัญผ่านไปและราคายืนยันทิศทางก่อน',
+      REVERSAL_WATCH: 'ราคาหมดแรง/ทดสอบแนวรับ — เฝ้าดูการกลับตัว ไม่ไล่ราคา',
+      NO_TRADE: 'ความได้เปรียบยังไม่ชัดเจนหรือตลาดเป็นขาลง — แนะนำถือเงินสด รอจังหวะขาขึ้นที่คุ้มค่า',
     };
     return m[s] ?? '';
   }

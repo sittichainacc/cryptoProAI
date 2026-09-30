@@ -381,6 +381,8 @@ export interface GoldSignalStateInfo {
   color: string;
   labelTh: string;
   descTh: string;
+  tier?: 'BEST_GOLD' | 'READY_GREEN' | 'WAIT_AMBER' | 'NO_TRADE_RED';
+  isBestGold?: boolean;
 }
 
 export interface ThaiGoldPlan {
