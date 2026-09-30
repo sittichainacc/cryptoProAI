@@ -56,11 +56,13 @@ import { Top5UltimatePage } from './pages/Top5UltimatePage.js';
 import { Top5PremiumPage } from './pages/Top5PremiumPage.js';
 import { Top5Page } from './pages/Top5Page.js';
 import { GoldSignalPage } from './pages/GoldSignalPage.js';
+import { GoldHomeQuickBanner } from './components/gold/GoldHomeQuickBanner.js';
 import { FocusPage } from './pages/FocusPage.js';
 import { WatchlistPage } from './pages/WatchlistPage.js';
 import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
 import { LoginModal } from './components/LoginModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
+import { HomeAdminLockCard } from './components/HomeAdminLockCard.js';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -392,15 +394,14 @@ export const App: React.FC = () => {
 
   // Render Page Content based on active navigation
   const renderMainContent = () => {
-    // RESTRICTION: Non-admin users are strictly restricted to the 'Home' menu only
-    if (activeSidebarTab !== 'dashboard' && userRole !== 'admin') {
+    // RESTRICTION: Non-admin users can access 'Home' and 'Gold Signal'
+    if (activeSidebarTab !== 'dashboard' && activeSidebarTab !== 'gold-signal' && userRole !== 'admin') {
       const getFeatureInfo = (tab: string) => {
         switch (tab) {
           case 'focus': return { title: 'FOCUS (เรดาร์ตรวจจับเหรียญเด่น)', desc: 'ระบบเรดาร์ตรวจจับเหรียญเด่นและสัญญาณเจาะลึก' };
           case 'top5-ultimate': return { title: 'Top 5 Ultimate', desc: 'Institutional Multi-Factor Decision Engine ตรวจสอบ 15 ด่านเข้มงวด' };
           case 'top5-premium': return { title: 'Top 5 Premium', desc: 'สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก' };
           case 'top5': return { title: 'แนะนำ Top 5', desc: 'ระบบแนะนำเหรียญ AI Top 5' };
-          case 'gold-signal': return { title: 'สัญญาณทอง (Gold Intelligence & Entry Signal)', desc: 'AI Multi-Factor Gold Decision Engine วิเคราะห์ราคา เทคนิค Fed ดอลลาร์ Real Yield และ Futures เพื่อหาจังหวะเข้า–ออก' };
           case 'market': return { title: 'ตลาดคริปโต (Market Overview)', desc: 'ภาพรวมตลาดและการวิเคราะห์ Real-Time Market Breadth' };
           case 'screener': return { title: 'สแกนเหรียญ (Coin Screener)', desc: 'ระบบคัดกรองเหรียญ Multi-Filter Screener' };
           case 'analysis': return { title: 'วิเคราะห์เชิงลึก (In-Depth Analysis)', desc: 'โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง' };
@@ -413,14 +414,14 @@ export const App: React.FC = () => {
           case 'strategy': return { title: 'เครื่องมือ & กลยุทธ์ (Trading Tools & Strategies)', desc: 'เครื่องคำนวณขนาดไม้ Position Sizing และแบบจำลองกลยุทธ์' };
           case 'settings': return { title: 'ตั้งค่าระบบ (System Settings)', desc: 'การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys' };
           case 'news': return { title: 'ข่าวสาร & Sentiment (Crypto News)', desc: 'ฟีดข่าวสารกรองพิเศษและการวิเคราะห์ Sentiment' };
-          default: return { title: 'ฟีเจอร์ระดับ Admin', desc: 'ส่วนนี้สงวนสิทธิ์เฉพาะผู้ดูแลระบบ' };
+          default: return { title: 'ฟีเจอร์ระดับ Premium', desc: 'ส่วนนี้สงวนสิทธิ์สำหรับสมาชิก Premium (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)' };
         }
       };
       const info = getFeatureInfo(activeSidebarTab);
       return (
         <PermissionDeniedGuard
           featureTitle={info.title}
-          description={`${info.desc} สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น — ผู้ใช้งานทั่วไปสามารถใช้งานหน้า Home ได้ตามปกติ`}
+          description={`${info.desc} สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท) — สมาชิกทั่วไปสามารถใช้งานหน้า Home และสัญญาณทองคำได้ตามปกติ`}
           onOpenLogin={() => setIsLoginModalOpen(true)}
           onGoBack={() => setActiveSidebarTab('dashboard')}
         />
@@ -453,7 +454,7 @@ export const App: React.FC = () => {
           return (
             <PermissionDeniedGuard
               featureTitle="Top 5 Premium"
-              description="สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              description="สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
             />
@@ -499,7 +500,7 @@ export const App: React.FC = () => {
           return (
             <PermissionDeniedGuard
               featureTitle="วิเคราะห์เชิงลึก (In-Depth Analysis)"
-              description="โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              description="โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
             />
@@ -539,7 +540,7 @@ export const App: React.FC = () => {
           return (
             <PermissionDeniedGuard
               featureTitle="รายการเฝ้าดู (Watchlist Tracking)"
-              description="ระบบติดตามความเคลื่อนไหวเหรียญส่วนตัว สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              description="ระบบติดตามความเคลื่อนไหวเหรียญส่วนตัว สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
             />
@@ -565,7 +566,7 @@ export const App: React.FC = () => {
           return (
             <PermissionDeniedGuard
               featureTitle="วิเคราะห์พอร์ต & เสี่ยง (Portfolio & Risk)"
-              description="ระบบวิเคราะห์การจัดสรรพอร์ตและการประเมินความเสี่ยง VaR สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              description="ระบบวิเคราะห์การจัดสรรพอร์ตและการประเมินความเสี่ยง VaR สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
             />
@@ -583,7 +584,7 @@ export const App: React.FC = () => {
           return (
             <PermissionDeniedGuard
               featureTitle="ตั้งค่าระบบ (System Settings)"
-              description="การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น"
+              description="การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
               onOpenLogin={() => setIsLoginModalOpen(true)}
               onGoBack={() => setActiveSidebarTab('dashboard')}
             />
@@ -604,141 +605,162 @@ export const App: React.FC = () => {
       default:
         return (
           <>
+            {/* Quick Access: Gold Intelligence Banner (Accessible to everyone) */}
+            <GoldHomeQuickBanner onOpenGold={() => setActiveSidebarTab('gold-signal')} />
+
             {/* Row 1: KPI Cards */}
             <KpiCards kpis={kpis} currency={currency} />
 
-            {/* Row 2: Main Trading Section — แบบชิดกัน ปรับสัดส่วนด้วยเมาส์ (Resizable Docked Workspace) */}
-            <ResizableTradingWorkspace
-              movers={movers}
-              watchlist={watchlist}
-              buyNowCandidates={buyNowCandidates}
-              selectedSymbol={selectedSymbol}
-              selectedCoinData={selectedCoinData}
-              chartCandles={chartCandles}
-              signals={signals}
-              currency={currency}
-              isCurrentInWatchlist={isCurrentInWatchlist}
-              onSelectCoin={handleSelectCoin}
-              onToggleWatchlist={handleToggleWatchlist}
-              onOpenAnalysis={handleOpenAnalysis}
-              onViewAllWatchlist={() => setActiveSidebarTab('watchlist')}
-            />
-
-            {/* Complete Crypto Ranking Table - Section 7 */}
-            <CollapsibleSection
-              id="coin_ranking"
-              title="ตารางจัดอันดับเหรียญคริปโตทั้งหมด (Crypto Screener & Ranking)"
-              subtitle="ข้อมูลสตรีมมิ่งสด 100% พร้อมตัวชี้วัดทางเทคนิค RSI, EMA, AI Score และสัญญาณการลงทุน"
-              badge={`${allCoins.length} เหรียญ`}
-              badgeColor="var(--neon-green)"
-              icon={<BarChart3 size={18} color="var(--neon-green)" />}
-              defaultOpen={true}
-            >
-              <CoinRankingTable
-                coins={allCoins}
+            {/* Row 2: Main Trading Section — แบบชิดกัน ปรับสัดส่วนด้วยเมาส์ (เฉพาะ Admin เท่านั้น) */}
+            {userRole === 'admin' ? (
+              <ResizableTradingWorkspace
+                movers={movers}
+                watchlist={watchlist}
+                buyNowCandidates={buyNowCandidates}
+                selectedSymbol={selectedSymbol}
+                selectedCoinData={selectedCoinData}
+                chartCandles={chartCandles}
+                signals={signals}
+                currency={currency}
+                isCurrentInWatchlist={isCurrentInWatchlist}
                 onSelectCoin={handleSelectCoin}
                 onToggleWatchlist={handleToggleWatchlist}
-                currency={currency}
-                hideCardWrapper={true}
-                watchlist={watchlist}
+                onOpenAnalysis={handleOpenAnalysis}
+                onViewAllWatchlist={() => setActiveSidebarTab('watchlist')}
               />
-            </CollapsibleSection>
-
-            {/* Special Module: Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ (ซ่อนอัตโนมัติหากไม่มีเหรียญผ่านเกณฑ์) */}
-            <Top5BuyNowWidget
-              candidates={buyNowCandidates}
-              currency={currency}
-              onSelectCoin={handleSelectCoin}
-              onOpenAnalysis={handleOpenAnalysis}
-              onRecalculate={handleRecalculateBuyNow}
-            />
-
-            {/* Quick Section Guide Banner */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 14px',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                border: '1px dashed var(--border-color)',
-                borderRadius: '10px',
-                marginBottom: '16px',
-                fontSize: '11.5px',
-                color: 'var(--text-muted)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
-                  ส่วนประกอบวิเคราะห์เพิ่มเติม (ด้านล่างกราฟ)
-                </span>
-                <span>• คลิกที่หัวข้อแต่ละส่วนเพื่อ ย่อ/ขยาย (Collapse / Expand) เปิด-ปิด ได้อย่างอิสระ</span>
-              </div>
-            </div>
-
-            {/* Row 3: Bottom Intelligence Grid (Portfolio, Alerts, AI Scanner, News, Quote) */}
-            <CollapsibleSection
-              id="intelligence_widgets"
-              title="ศูนย์วิเคราะห์พอร์ต ข่าว และเรดาร์อัจฉริยะ"
-              subtitle="การจัดสรรพอร์ต, การแจ้งเตือนสัญญาณ, AI Scanner สแกนเหรียญสด, ข่าวกรองตลาด"
-              badge="5 วิดเจ็ต"
-              badgeColor="var(--neon-cyan)"
-              icon={<Activity size={18} color="var(--neon-cyan)" />}
-              defaultOpen={true}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '14px',
-                }}
-              >
-                <PortfolioWidgets portfolio={portfolio} currency={currency} />
-                <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
-                <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
-                <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
-                <QuoteBannerCard />
-              </div>
-            </CollapsibleSection>
-
-            {/* Row 4: 24 เหรียญแนะนำ (8 สาย สายละ 3 ตัว) - Section 25 & Image 2 */}
-            <CollapsibleSection
-              id="sector_24"
-              title="24 เหรียญแนะนำตามกลุ่มอุตสาหกรรม (8 สาย สายละ 3 ตัว)"
-              subtitle="คัดกรองตามคะแนน AI และโครงสร้างทางเทคนิค จัดกลุ่ม Core, L1/L2, DeFi, AI, RWA, Meme, GameFi, Emerging"
-              badge="24 เหรียญ"
-              badgeColor="var(--neon-blue)"
-              icon={<Layers size={18} color="var(--neon-blue)" />}
-              action={{ label: 'ดูภาพรวมตลาด', onClick: () => setActiveSidebarTab('market') }}
-              defaultOpen={true}
-            >
-              <Sector24Grid
-                items={sector24}
-                onSelectCoin={handleSelectCoin}
-                onViewAll={() => setActiveSidebarTab('market')}
-                hideHeader={true}
+            ) : (
+              <HomeAdminLockCard
+                type="workspace"
+                onOpenLogin={() => setIsLoginModalOpen(true)}
               />
-            </CollapsibleSection>
+            )}
 
-            {/* Row 5: ตัวเด่นที่สุดตอนนี้ (Top 3 Overall) - Section 26 & Image 2 */}
-            <CollapsibleSection
-              id="top3_overall"
-              title="ตัวเด่นที่สุดตอนนี้ (Top 3 Overall - Gold, Silver, Bronze)"
-              subtitle="เหรียญที่มี Momentum เชิงบวกสูง ทะลุแนวต้านสำคัญ และได้คะแนน AI สูงสุดในตลาด"
-              badge="Top 3"
-              badgeColor="var(--neon-amber)"
-              icon={<Award size={18} color="var(--neon-amber)" />}
-              action={{ label: 'ดูบทวิเคราะห์เหรียญเด่น', onClick: () => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL') }}
-              defaultOpen={true}
-            >
-              <Top3OverallCard
-                items={top3Overall}
-                onSelectCoin={handleSelectCoin}
-                onViewAll={() => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL')}
-                currency={currency}
-                hideHeader={true}
+            {/* ส่วนถัดจากกราฟ ดังภาพ (ตารางจัดอันดับ, Top 5 Buy Now, ศูนย์วิเคราะห์พอร์ต, 24 เหรียญ, Top 3) — เฉพาะ Admin เท่านั้น */}
+            {userRole === 'admin' ? (
+              <>
+                {/* Complete Crypto Ranking Table - Section 7 */}
+                <CollapsibleSection
+                  id="coin_ranking"
+                  title="ตารางจัดอันดับเหรียญคริปโตทั้งหมด (Crypto Screener & Ranking)"
+                  subtitle="ข้อมูลสตรีมมิ่งสด 100% พร้อมตัวชี้วัดทางเทคนิค RSI, EMA, AI Score และสัญญาณการลงทุน"
+                  badge={`${allCoins.length} เหรียญ`}
+                  badgeColor="var(--neon-green)"
+                  icon={<BarChart3 size={18} color="var(--neon-green)" />}
+                  defaultOpen={true}
+                >
+                  <CoinRankingTable
+                    coins={allCoins}
+                    onSelectCoin={handleSelectCoin}
+                    onToggleWatchlist={handleToggleWatchlist}
+                    currency={currency}
+                    hideCardWrapper={true}
+                    watchlist={watchlist}
+                  />
+                </CollapsibleSection>
+
+                {/* Special Module: Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ (ซ่อนอัตโนมัติหากไม่มีเหรียญผ่านเกณฑ์) */}
+                <Top5BuyNowWidget
+                  candidates={buyNowCandidates}
+                  currency={currency}
+                  onSelectCoin={handleSelectCoin}
+                  onOpenAnalysis={handleOpenAnalysis}
+                  onRecalculate={handleRecalculateBuyNow}
+                />
+
+                {/* Quick Section Guide Banner */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 14px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px dashed var(--border-color)',
+                    borderRadius: '10px',
+                    marginBottom: '16px',
+                    fontSize: '11.5px',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      ส่วนประกอบวิเคราะห์เพิ่มเติม (ด้านล่างกราฟ)
+                    </span>
+                    <span>• คลิกที่หัวข้อแต่ละส่วนเพื่อ ย่อ/ขยาย (Collapse / Expand) เปิด-ปิด ได้อย่างอิสระ</span>
+                  </div>
+                </div>
+
+                {/* Row 3: Bottom Intelligence Grid (Portfolio, Alerts, AI Scanner, News, Quote) */}
+                <CollapsibleSection
+                  id="intelligence_widgets"
+                  title="ศูนย์วิเคราะห์พอร์ต ข่าว และเรดาร์อัจฉริยะ"
+                  subtitle="การจัดสรรพอร์ต, การแจ้งเตือนสัญญาณ, AI Scanner สแกนเหรียญสด, ข่าวกรองตลาด"
+                  badge="5 วิดเจ็ต"
+                  badgeColor="var(--neon-cyan)"
+                  icon={<Activity size={18} color="var(--neon-cyan)" />}
+                  defaultOpen={true}
+                >
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: '14px',
+                    }}
+                  >
+                    <PortfolioWidgets portfolio={portfolio} currency={currency} />
+                    <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
+                    <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
+                    <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
+                    <QuoteBannerCard />
+                  </div>
+                </CollapsibleSection>
+
+                {/* Row 4: 24 เหรียญแนะนำ (8 สาย สายละ 3 ตัว) - Section 25 & Image 2 */}
+                <CollapsibleSection
+                  id="sector_24"
+                  title="24 เหรียญแนะนำตามกลุ่มอุตสาหกรรม (8 สาย สายละ 3 ตัว)"
+                  subtitle="คัดกรองตามคะแนน AI และโครงสร้างทางเทคนิค จัดกลุ่ม Core, L1/L2, DeFi, AI, RWA, Meme, GameFi, Emerging"
+                  badge="24 เหรียญ"
+                  badgeColor="var(--neon-blue)"
+                  icon={<Layers size={18} color="var(--neon-blue)" />}
+                  action={{ label: 'ดูภาพรวมตลาด', onClick: () => setActiveSidebarTab('market') }}
+                  defaultOpen={true}
+                >
+                  <Sector24Grid
+                    items={sector24}
+                    onSelectCoin={handleSelectCoin}
+                    onViewAll={() => setActiveSidebarTab('market')}
+                    hideHeader={true}
+                  />
+                </CollapsibleSection>
+
+                {/* Row 5: ตัวเด่นที่สุดตอนนี้ (Top 3 Overall) - Section 26 & Image 2 */}
+                <CollapsibleSection
+                  id="top3_overall"
+                  title="ตัวเด่นที่สุดตอนนี้ (Top 3 Overall - Gold, Silver, Bronze)"
+                  subtitle="เหรียญที่มี Momentum เชิงบวกสูง ทะลุแนวต้านสำคัญ และได้คะแนน AI สูงสุดในตลาด"
+                  badge="Top 3"
+                  badgeColor="var(--neon-amber)"
+                  icon={<Award size={18} color="var(--neon-amber)" />}
+                  action={{ label: 'ดูบทวิเคราะห์เหรียญเด่น', onClick: () => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL') }}
+                  defaultOpen={true}
+                >
+                  <Top3OverallCard
+                    items={top3Overall}
+                    onSelectCoin={handleSelectCoin}
+                    onViewAll={() => handleOpenAnalysis(top3Overall[0]?.symbol || 'SOL')}
+                    currency={currency}
+                    hideHeader={true}
+                  />
+                </CollapsibleSection>
+              </>
+            ) : (
+              <HomeAdminLockCard
+                type="subsections"
+                onOpenLogin={() => setIsLoginModalOpen(true)}
+                onOpenGold={() => setActiveSidebarTab('gold-signal')}
               />
-            </CollapsibleSection>
+            )}
           </>
         );
     }
@@ -872,45 +894,47 @@ export const App: React.FC = () => {
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
-      {/* Focus Right Sidebar Drawer */}
-      <FocusRightSidebar
-        isOpen={isFocusSidebarOpen}
-        onToggleOpen={() => setIsFocusSidebarOpen(!isFocusSidebarOpen)}
-        isPinned={isFocusSidebarPinned}
-        onTogglePin={() => setIsFocusSidebarPinned(!isFocusSidebarPinned)}
-        isCollapsed={isFocusSidebarCollapsed}
-        onToggleCollapse={() => setIsFocusSidebarCollapsed(!isFocusSidebarCollapsed)}
-        focusCoins={focusData?.items || []}
-        selectedSymbol={selectedSymbol}
-        onSelectCoin={handleSelectCoin}
-        onOpenAddModal={() => setIsFocusAddModalOpen(true)}
-        onOpenCompareModal={() => setIsFocusCompareModalOpen(true)}
-        onRecalculate={handleRecalculateFocus}
-        onOpenFocusPage={(sym) => {
-          if (sym) handleSelectCoin(sym);
-          setActiveSidebarTab(userRole === 'admin' ? 'focus' : 'dashboard');
-        }}
-        currency={currency}
-        buyCandidates={buyNowCandidates}
-        onNavigateToAnalysis={(sym) => {
-          handleSelectCoin(sym);
-          setActiveSidebarTab('analysis');
-        }}
-        onNavigateToTop5Ultimate={(sym) => {
-          if (sym) handleSelectCoin(sym);
-          setActiveSidebarTab('top5-ultimate');
-        }}
-        onNavigateToTop5Premium={(sym) => {
-          if (sym) handleSelectCoin(sym);
-          setActiveSidebarTab('top5-premium');
-        }}
-        onNavigateToTop5={(sym) => {
-          if (sym) handleSelectCoin(sym);
-          setActiveSidebarTab('top5');
-        }}
-        userRole={userRole}
-        onOpenLogin={() => setIsLoginModalOpen(true)}
-      />
+      {/* Focus Right Sidebar Drawer - ส่วนแนะนำการลงทุน (ซ่อนไว้หากไม่ได้เข้าสู่ระบบ) */}
+      {userRole === 'admin' && (
+        <FocusRightSidebar
+          isOpen={isFocusSidebarOpen}
+          onToggleOpen={() => setIsFocusSidebarOpen(!isFocusSidebarOpen)}
+          isPinned={isFocusSidebarPinned}
+          onTogglePin={() => setIsFocusSidebarPinned(!isFocusSidebarPinned)}
+          isCollapsed={isFocusSidebarCollapsed}
+          onToggleCollapse={() => setIsFocusSidebarCollapsed(!isFocusSidebarCollapsed)}
+          focusCoins={focusData?.items || []}
+          selectedSymbol={selectedSymbol}
+          onSelectCoin={handleSelectCoin}
+          onOpenAddModal={() => setIsFocusAddModalOpen(true)}
+          onOpenCompareModal={() => setIsFocusCompareModalOpen(true)}
+          onRecalculate={handleRecalculateFocus}
+          onOpenFocusPage={(sym) => {
+            if (sym) handleSelectCoin(sym);
+            setActiveSidebarTab(userRole === 'admin' ? 'focus' : 'dashboard');
+          }}
+          currency={currency}
+          buyCandidates={buyNowCandidates}
+          onNavigateToAnalysis={(sym) => {
+            handleSelectCoin(sym);
+            setActiveSidebarTab('analysis');
+          }}
+          onNavigateToTop5Ultimate={(sym) => {
+            if (sym) handleSelectCoin(sym);
+            setActiveSidebarTab('top5-ultimate');
+          }}
+          onNavigateToTop5Premium={(sym) => {
+            if (sym) handleSelectCoin(sym);
+            setActiveSidebarTab('top5-premium');
+          }}
+          onNavigateToTop5={(sym) => {
+            if (sym) handleSelectCoin(sym);
+            setActiveSidebarTab('top5');
+          }}
+          userRole={userRole}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+        />
+      )}
 
       {/* Focus Add Modal */}
       <FocusAddModal
@@ -954,6 +978,7 @@ export const App: React.FC = () => {
         onToggleFocusSidebar={() => setIsFocusSidebarOpen((prev) => !prev)}
         isFocusSidebarOpen={isFocusSidebarOpen}
         recommendationCount={buyNowCandidates.length || 5}
+        userRole={userRole}
       />
     </div>
   );

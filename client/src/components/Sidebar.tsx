@@ -49,11 +49,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE' },
     { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', adminOnly: true },
     { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW' },
     { id: 'top5-premium', label: 'Top 5 Premium', icon: Award, badge: 'PRO' },
-    { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI' },
-    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE' },
+    { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI', adminOnly: true },
     { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
     { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity },
@@ -209,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {userRole === 'admin' ? 'Admin Mode' : 'Guest / Analyst'}
               </div>
               <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
-                {userRole === 'admin' ? 'เข้าถึงได้ทุกฟังก์ชัน' : 'เข้าถึงเฉพาะหน้า Home'}
+                {userRole === 'admin' ? 'เข้าถึงได้ทุกฟังก์ชัน' : 'เข้าถึงหน้า Home และสัญญาณทอง'}
               </div>
             </div>
           </div>
@@ -251,7 +251,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const isHome = item.id === 'dashboard';
-          const isLocked = userRole !== 'admin' && !isHome;
+          const isGold = item.id === 'gold-signal';
+          const isUnlocked = isHome || isGold || userRole === 'admin';
+          const isLocked = !isUnlocked;
           return (
             <button
               key={item.id}
@@ -269,6 +271,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 borderRadius: '10px',
                 border: isHome
                   ? (isActive ? '1px solid rgba(245, 158, 11, 0.7)' : '1px solid rgba(245, 158, 11, 0.35)')
+                  : isGold
+                  ? (isActive ? '1px solid rgba(245, 158, 11, 0.7)' : '1px solid rgba(245, 158, 11, 0.3)')
                   : (isActive ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'),
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
@@ -276,23 +280,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? (isActive
                       ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.18))'
                       : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(180, 83, 9, 0.04))')
+                  : isGold
+                  ? (isActive
+                      ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.28), rgba(217, 119, 6, 0.16))'
+                      : 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(180, 83, 9, 0.03))')
                   : (isActive
                       ? 'rgba(59, 130, 246, 0.18)'
                       : 'transparent'),
-                color: isHome
+                color: isHome || isGold
                   ? (isActive ? '#FDE047' : '#FBBF24')
                   : (isActive ? '#60A5FA' : 'var(--text-secondary)'),
-                fontWeight: isHome ? 800 : (isActive ? 700 : 500),
+                fontWeight: isHome || isGold ? 800 : (isActive ? 700 : 500),
                 fontSize: '13.5px',
                 position: 'relative',
                 opacity: isLocked && !isActive ? 0.72 : 1,
-                boxShadow: isHome
+                boxShadow: isHome || isGold
                   ? (isActive
                       ? '0 0 16px rgba(245, 158, 11, 0.35), inset 0 0 12px rgba(245, 158, 11, 0.2)'
                       : '0 2px 10px rgba(245, 158, 11, 0.12), inset 0 0 6px rgba(245, 158, 11, 0.05)')
                   : (isActive ? 'inset 0 0 12px rgba(59, 130, 246, 0.25)' : 'none'),
               }}
-              title={isCollapsed ? `${item.label}${isLocked ? ' (เฉพาะ Admin)' : ''}` : (isLocked ? `${item.label} (เฉพาะ Admin)` : undefined)}
+              title={isCollapsed ? `${item.label}${isLocked ? ' (เฉพาะ Premium)' : ''}` : (isLocked ? `${item.label} (เฉพาะ Premium)` : undefined)}
             >
               {isActive && (
                 <div
@@ -302,16 +310,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     top: '18%',
                     bottom: '18%',
                     width: '3.5px',
-                    backgroundColor: isHome ? '#F59E0B' : 'var(--neon-cyan)',
+                    backgroundColor: isHome || isGold ? '#F59E0B' : 'var(--neon-cyan)',
                     borderRadius: '0 4px 4px 0',
-                    boxShadow: isHome ? '0 0 10px #F59E0B, 0 0 4px #FDE047' : '0 0 8px var(--neon-cyan)',
+                    boxShadow: isHome || isGold ? '0 0 10px #F59E0B, 0 0 4px #FDE047' : '0 0 8px var(--neon-cyan)',
                   }}
                 />
               )}
               <Icon 
                 size={18} 
-                color={isHome ? (isActive ? '#FDE047' : '#F59E0B') : (isActive ? 'var(--neon-cyan)' : 'currentColor')} 
-                style={isHome ? { filter: isActive ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.4))' } : undefined}
+                color={isHome || isGold ? (isActive ? '#FDE047' : '#F59E0B') : (isActive ? 'var(--neon-cyan)' : 'currentColor')} 
+                style={isHome || isGold ? { filter: isActive ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.4))' } : undefined}
               />
               {!isCollapsed && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
@@ -319,12 +327,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px',
-                    color: isHome ? (isActive ? '#FDE047' : '#FBBF24') : undefined,
-                    letterSpacing: isHome ? '0.4px' : undefined 
+                    color: isHome || isGold ? (isActive ? '#FDE047' : '#FBBF24') : undefined,
+                    letterSpacing: isHome || isGold ? '0.4px' : undefined 
                   }}>
                     {item.label}
                     {isHome && (
                       <Sparkles 
+                        size={12} 
+                        color={isActive ? '#FDE047' : '#F59E0B'} 
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))' }} 
+                      />
+                    )}
+                    {isGold && (
+                      <Gem 
                         size={12} 
                         color={isActive ? '#FDE047' : '#F59E0B'} 
                         style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))' }} 
@@ -342,6 +357,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.35), rgba(168, 85, 247, 0.35))'
                           : item.id === 'focus' 
                           ? 'rgba(16, 185, 129, 0.2)' 
+                          : item.id === 'gold-signal'
+                          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.35))'
                           : item.id === 'top5-premium'
                           ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(168, 85, 247, 0.3))'
                           : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
@@ -349,14 +366,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? '#38BDF8'
                           : item.id === 'focus' 
                           ? '#34D399' 
-                          : item.id === 'top5-premium'
+                          : item.id === 'gold-signal' || item.id === 'top5-premium'
                           ? '#FDE047'
                           : '#FBBF24',
                         border: item.id === 'top5-ultimate'
                           ? '1px solid rgba(34, 211, 238, 0.6)'
                           : item.id === 'focus' 
                           ? '1px solid rgba(16, 185, 129, 0.4)' 
-                          : item.id === 'top5-premium'
+                          : item.id === 'gold-signal' || item.id === 'top5-premium'
                           ? '1px solid rgba(245, 158, 11, 0.6)'
                           : '1px solid rgba(245, 158, 11, 0.4)',
                         letterSpacing: '0.4px',
@@ -365,13 +382,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         gap: '4px',
                         boxShadow: item.id === 'top5-ultimate' 
                           ? '0 0 10px rgba(6, 182, 212, 0.45)' 
-                          : item.id === 'top5-premium' 
+                          : item.id === 'gold-signal' || item.id === 'top5-premium'
                           ? '0 0 10px rgba(245, 158, 11, 0.35)' 
                           : 'none'
                       }}
                     >
                       {item.id === 'top5-ultimate' && <Gem size={9} color="#38BDF8" />}
                       {item.id === 'top5-premium' && <Sparkles size={9} color="#FDE047" />}
+                      {item.id === 'gold-signal' && (
+                        <span
+                          className="live-green-pulse"
+                          style={{
+                            width: '5.5px',
+                            height: '5.5px',
+                            borderRadius: '50%',
+                            backgroundColor: '#F59E0B',
+                            boxShadow: '0 0 6px #F59E0B',
+                            display: 'inline-block',
+                          }}
+                        />
+                      )}
                       {item.id === 'focus' && (
                         <span
                           className="live-green-pulse"
@@ -397,7 +427,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         opacity: 0.75,
                         marginLeft: 'auto',
                       }}
-                      title="เฉพาะ Admin"
+                      title="สำหรับสมาชิก Premium (เดือนละ 10 บาท/ปีละ 110 บาท)"
                     >
                       <Lock size={12} />
                     </span>
@@ -412,7 +442,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     right: '5px',
                     opacity: 0.65,
                   }}
-                  title="เฉพาะ Admin"
+                  title="สำหรับสมาชิก Premium (เดือนละ 10 บาท/ปีละ 110 บาท)"
                 >
                   <Lock size={9} color="#94A3B8" />
                 </div>
@@ -428,6 +458,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     height: '6px',
                     borderRadius: '50%',
                     backgroundColor: '#10B981',
+                  }}
+                />
+              )}
+              {isCollapsed && item.id === 'gold-signal' && (
+                <span
+                  className="live-green-pulse"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#F59E0B',
+                    boxShadow: '0 0 6px #F59E0B',
                   }}
                 />
               )}

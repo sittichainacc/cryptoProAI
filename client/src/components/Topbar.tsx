@@ -908,10 +908,10 @@ export const Topbar: React.FC<TopbarProps> = ({
               fontSize: '11px',
               fontWeight: 800,
             }}
-            title="เข้าสู่ระบบในฐานะ Admin เรียบร้อยแล้ว"
+            title="เข้าสู่ระบบในฐานะ Premium เรียบร้อยแล้ว (สมาชิก Premium)"
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-            <span className="topbar-admin-status-text">ADMINISTRATOR</span>
+            <span className="topbar-admin-status-text">PREMIUM MEMBER</span>
           </div>
         )}
 

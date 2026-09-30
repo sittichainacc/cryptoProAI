@@ -102,7 +102,7 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
           </button>
         </div>
 
-        {/* If non-admin: Display "ท่านไม่มีสิทธิ์ดูส่วนนี้" */}
+        {/* If non-premium: Display "สำหรับสมาชิก Premium" */}
         {!isAdmin ? (
           <div
             style={{
@@ -132,12 +132,16 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
             </div>
 
             <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
-              ท่านไม่มีสิทธิ์ดูส่วนนี้
+              สำหรับสมาชิก Premium
             </h3>
 
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '440px', margin: '0 auto 20px auto' }}>
-              การวิเคราะห์เชิงลึกเหรียญ <strong style={{ color: 'var(--neon-cyan)' }}>{coin.symbol}</strong> (โมเดล AI Score, Technical Score, Trade Levels, AI Thai Rationale) สงวนสิทธิ์เฉพาะ <strong style={{ color: '#F59E0B' }}>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '440px', margin: '0 auto 12px auto' }}>
+              การวิเคราะห์เชิงลึกเหรียญ <strong style={{ color: 'var(--neon-cyan)' }}>{coin.symbol}</strong> (โมเดล AI Score, Technical Score, Trade Levels, AI Thai Rationale) สำหรับ <strong style={{ color: '#F59E0B' }}>สมาชิก Premium</strong> เท่านั้น
             </p>
+
+            <div style={{ display: 'inline-block', padding: '5px 14px', borderRadius: '20px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#FDE047', fontSize: '11.5px', fontWeight: 700, marginBottom: '18px' }}>
+              ต้องสมัครสมาชิกเดือนละ 10 บาท / ปีละ 110 บาท
+            </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
               {onOpenLogin && (
@@ -162,7 +166,7 @@ export const CoinAnalysisModal: React.FC<CoinAnalysisModalProps> = ({
                   }}
                 >
                   <LogIn size={15} />
-                  <span>เข้าสู่ระบบในฐานะ Admin</span>
+                  <span>เข้าสู่ระบบในฐานะ Premium</span>
                 </button>
               )}
               <button

@@ -220,12 +220,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           <h2 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
-            {isLocked ? 'ระบบระงับการเข้าสู่ระบบ (IP Locked)' : 'เข้าสู่ระบบผู้ดูแลระบบ (Admin Login)'}
+            {isLocked ? 'ระบบระงับการเข้าสู่ระบบ (IP Locked)' : 'เข้าสู่ระบบในฐานะ Premium'}
           </h2>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
             {isLocked
               ? 'ไอพีเครื่องนี้พยายามล็อกอินผิดพลาดเกิน 3 ครั้ง'
-              : 'เข้าถึงเมนู Top 5 Premium, วิเคราะห์เชิงลึก, และรายการเฝ้าดู'}
+              : 'ปลดล็อก TRADING WORKSPACE, Top 5 Premium และโมดูลวิเคราะห์ครบวงจร (เพียงเดือนละ 10 บาท / ปีละ 110 บาท)'}
           </p>
         </div>
 
@@ -328,7 +328,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             }}
           >
             <CheckCircle2 size={16} />
-            <span>เข้าสู่ระบบสำเร็จ กำลังเข้าสู่ระบบ Admin...</span>
+            <span>เข้าสู่ระบบสำเร็จ กำลังเข้าสู่ระบบ Premium...</span>
           </div>
         )}
 
@@ -355,7 +355,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLocked || isLoading}
-                placeholder="กรอกชื่อผู้ใช้ admin..."
+                placeholder="กรอกชื่อผู้ใช้..."
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -390,7 +390,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLocked || isLoading}
-                placeholder="กรอกรหัสผ่าน admin..."
+                placeholder="กรอกรหัสผ่าน..."
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -420,7 +420,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           >
             <ShieldCheck size={13} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
             <span>
-              ระบบรักษาความปลอดภัย: กรุณากรอกข้อมูลบัญชีผู้ดูแลระบบที่ได้รับอนุญาต
+              ระบบรักษาความปลอดภัย: บัญชีสมาชิก Premium (สมัครสมาชิกเดือนละ 10 บาท / ปีละ 110 บาท)
             </span>
           </div>
 
@@ -462,7 +462,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               ) : (
                 <>
                   <LogIn size={15} />
-                  <span>เข้าสู่ระบบ Admin</span>
+                  <span>เข้าสู่ระบบในฐานะ Premium</span>
                 </>
               )}
             </button>

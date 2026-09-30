@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Crown, BarChart2, Target, Menu } from 'lucide-react';
+import { Home, Crown, BarChart2, Target, Menu, Gem } from 'lucide-react';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -8,6 +8,7 @@ interface MobileBottomNavProps {
   onToggleFocusSidebar: () => void;
   isFocusSidebarOpen: boolean;
   recommendationCount?: number;
+  userRole?: string;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -17,8 +18,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onToggleFocusSidebar,
   isFocusSidebarOpen,
   recommendationCount = 5,
+  userRole = 'analyst',
 }) => {
   const isHome = activeTab === 'dashboard';
+  const isGoldSignal = activeTab === 'gold-signal';
   const isTop5 = activeTab === 'top5-ultimate' || activeTab === 'top5-premium' || activeTab === 'top5';
   const isChart = activeTab === 'technical' || activeTab === 'analysis';
 
@@ -92,10 +95,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         </span>
       </button>
 
-      {/* 2. Top 5 Button */}
+      {/* 2. Gold Signal Button */}
       <button
-        onClick={() => onSelectTab('top5-premium')}
-        className={`mobile-nav-btn ${isTop5 ? 'is-active' : ''}`}
+        onClick={() => onSelectTab('gold-signal')}
+        className={`mobile-nav-btn ${isGoldSignal ? 'is-active' : ''}`}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -104,7 +107,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           gap: '3px',
           background: 'none',
           border: 'none',
-          color: isTop5 ? '#FBBF24' : '#94A3B8',
+          color: isGoldSignal ? '#FBBF24' : '#94A3B8',
           cursor: 'pointer',
           padding: '6px 12px',
           borderRadius: '8px',
@@ -113,11 +116,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <div style={{ position: 'relative' }}>
-          <Crown
+          <Gem
             size={20}
-            color={isTop5 ? '#FBBF24' : 'currentColor'}
+            color={isGoldSignal ? '#FBBF24' : 'currentColor'}
             style={{
-              filter: isTop5 ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'none',
+              filter: isGoldSignal ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'none',
             }}
           />
           <span
@@ -133,11 +136,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               borderRadius: '6px',
             }}
           >
-            PRO
+            LIVE
           </span>
         </div>
-        <span style={{ fontSize: '10.5px', fontWeight: isTop5 ? 800 : 500, letterSpacing: '0.2px' }}>
-          Top 5
+        <span style={{ fontSize: '10.5px', fontWeight: isGoldSignal ? 800 : 500, letterSpacing: '0.2px' }}>
+          สัญญาณทอง
         </span>
       </button>
 
@@ -175,54 +178,56 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         </span>
       </button>
 
-      {/* 4. Recommendation Drawer Toggle Button */}
-      <button
-        onClick={onToggleFocusSidebar}
-        className={`mobile-nav-btn ${isFocusSidebarOpen ? 'is-active' : ''}`}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          background: 'none',
-          border: 'none',
-          color: isFocusSidebarOpen ? '#34D399' : '#94A3B8',
-          cursor: 'pointer',
-          padding: '6px 12px',
-          borderRadius: '8px',
-          flex: 1,
-          transition: 'all 0.18s ease',
-        }}
-      >
-        <div style={{ position: 'relative' }}>
-          <Target
-            size={20}
-            color={isFocusSidebarOpen ? '#34D399' : 'currentColor'}
-            style={{
-              filter: isFocusSidebarOpen ? 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.7))' : 'none',
-            }}
-          />
-          <span
-            style={{
-              position: 'absolute',
-              top: '-3px',
-              right: '-8px',
-              backgroundColor: '#10B981',
-              color: '#000',
-              fontSize: '8px',
-              fontWeight: 900,
-              padding: '0 4px',
-              borderRadius: '6px',
-            }}
-          >
-            {recommendationCount}
+      {/* 4. Recommendation Drawer Toggle Button (ซ่อนไว้หากไม่ได้เข้าสู่ระบบ) */}
+      {userRole === 'admin' && (
+        <button
+          onClick={onToggleFocusSidebar}
+          className={`mobile-nav-btn ${isFocusSidebarOpen ? 'is-active' : ''}`}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            color: isFocusSidebarOpen ? '#34D399' : '#94A3B8',
+            cursor: 'pointer',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            flex: 1,
+            transition: 'all 0.18s ease',
+          }}
+        >
+          <div style={{ position: 'relative' }}>
+            <Target
+              size={20}
+              color={isFocusSidebarOpen ? '#34D399' : 'currentColor'}
+              style={{
+                filter: isFocusSidebarOpen ? 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.7))' : 'none',
+              }}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-8px',
+                backgroundColor: '#10B981',
+                color: '#000',
+                fontSize: '8px',
+                fontWeight: 900,
+                padding: '0 4px',
+                borderRadius: '6px',
+              }}
+            >
+              {recommendationCount}
+            </span>
+          </div>
+          <span style={{ fontSize: '10.5px', fontWeight: isFocusSidebarOpen ? 800 : 500, letterSpacing: '0.2px' }}>
+            แนะนำ
           </span>
-        </div>
-        <span style={{ fontSize: '10.5px', fontWeight: isFocusSidebarOpen ? 800 : 500, letterSpacing: '0.2px' }}>
-          แนะนำ
-        </span>
-      </button>
+        </button>
+      )}
 
       {/* 5. Menu Drawer Toggle Button */}
       <button

@@ -93,7 +93,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
           }}
         >
           <Lock size={12} />
-          <span>RESTRICTED ACCESS • ADMIN ONLY</span>
+          <span>PREMIUM ACCESS • สำหรับสมาชิก PREMIUM</span>
         </div>
 
         <h1
@@ -105,7 +105,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
             letterSpacing: '-0.3px',
           }}
         >
-          ท่านไม่มีสิทธิ์ดูส่วนนี้
+          สำหรับสมาชิก Premium
         </h1>
 
         <div
@@ -113,17 +113,38 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
             fontSize: '13.5px',
             color: 'var(--text-secondary)',
             lineHeight: 1.6,
-            marginBottom: '20px',
-            maxWidth: '440px',
-            margin: '0 auto 20px auto',
+            marginBottom: '16px',
+            maxWidth: '460px',
+            margin: '0 auto 16px auto',
           }}
         >
-          ส่วน <strong style={{ color: 'var(--neon-cyan)' }}>"{featureTitle}"</strong> ถูกจำกัดสิทธิ์เฉพาะ{' '}
-          <strong style={{ color: '#F59E0B' }}>ผู้ดูแลระบบ (Admin)</strong> เท่านั้น{' '}
-          {description || 'เพื่อความปลอดภัยและการจัดการข้อมูลเชิงลึกขั้นสูง กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ'}
+          ส่วน <strong style={{ color: 'var(--neon-cyan)' }}>"{featureTitle}"</strong> สงวนสิทธิ์เฉพาะ{' '}
+          <strong style={{ color: '#F59E0B' }}>สมาชิก Premium</strong> เท่านั้น{' '}
+          {description || 'เพื่อเข้าถึงการวิเคราะห์และโมเดลขั้นสูง กรุณาเข้าสู่ระบบด้วยบัญชีสมาชิก Premium'}
         </div>
 
-        {/* Admin privileges included in this access */}
+        {/* Pricing Highlight Pill */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '7px 16px',
+            borderRadius: '20px',
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            border: '1px solid rgba(245, 158, 11, 0.45)',
+            color: '#FDE047',
+            fontSize: '12.5px',
+            fontWeight: 800,
+            marginBottom: '20px',
+            boxShadow: '0 0 15px rgba(245, 158, 11, 0.2)',
+          }}
+        >
+          <Sparkles size={14} />
+          <span>ต้องสมัครสมาชิกเดือนละ 10 บาท / ปีละ 110 บาท</span>
+        </div>
+
+        {/* Premium privileges included in this access */}
         <div
           style={{
             backgroundColor: 'var(--bg-card-inner)',
@@ -144,7 +165,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
               textTransform: 'uppercase',
             }}
           >
-            ฟีเจอร์ระดับ Admin ที่ได้รับการปกป้อง:
+            สิทธิประโยชน์พิเศษสำหรับสมาชิก Premium (เดือนละ 10 บาท / ปีละ 110 บาท):
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -153,7 +174,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
               { text: 'วิเคราะห์เชิงลึก (โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix)', active: featureTitle.includes('วิเคราะห์เชิงลึก') },
               { text: 'รายการเฝ้าดู (Watchlist & Real-time Institutional Tracking)', active: featureTitle.includes('เฝ้าดู') || featureTitle.includes('Watchlist') },
               { text: 'วิเคราะห์พอร์ต & เสี่ยง (Portfolio Risk & VaR Stress Test)', active: featureTitle.includes('พอร์ต') },
-              { text: 'การตั้งค่าระบบ (System Settings & API Key Exchange Controls)', active: featureTitle.includes('ตั้งค่า') },
+              { text: 'การตั้งค่าระบบ & เครื่องมือบริหารกลยุทธ์ขั้นสูง', active: featureTitle.includes('ตั้งค่า') || featureTitle.includes('กลยุทธ์') },
             ].map((item, idx) => (
               <div
                 key={idx}
@@ -202,7 +223,7 @@ export const PermissionDeniedGuard: React.FC<PermissionDeniedGuardProps> = ({
             }}
           >
             <LogIn size={16} />
-            <span>เข้าสู่ระบบในฐานะ Admin</span>
+            <span>เข้าสู่ระบบในฐานะ Premium</span>
           </button>
 
           <button

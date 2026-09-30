@@ -3,7 +3,7 @@
  * AI Multi-Factor Gold Decision Engine
  * ตอบ 6 มิติชัดเจน: ตอนนี้ทำอะไร → เข้าแถวไหน → ผิดออกตรงไหน → กำไรตรงไหน → ถือต่อไหม → อะไรจะเปลี่ยนแผน
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   GoldSignalResponse, GoldPillarScore, GoldSetupCandidate, GoldRiskItem, GoldValidationStatus, GoldDataQuality,
   GoldEventRisk, IntermarketItem, MacroDataPoint, GoldNewsItem, GoldPosition, GoldPriceData,
@@ -11,6 +11,9 @@ import type {
 import { GoldPlanChart } from '../components/gold/GoldPlanChart.js';
 import { GoldRiskCalculator } from '../components/gold/GoldRiskCalculator.js';
 import { GoldBacktestPanel, TagChip } from '../components/gold/GoldBacktestPanel.js';
+import { GoldenTimingAlertBanner } from '../components/gold/GoldenTimingAlertBanner.js';
+import { PrecisionTradePlanCards } from '../components/gold/PrecisionTradePlanCards.js';
+import { ThreePillarsConfidenceSection } from '../components/gold/ThreePillarsConfidenceSection.js';
 import { 
   TrendingUp, TrendingDown, Target, Shield, AlertTriangle, ArrowRight, 
   CheckCircle2, XCircle, RefreshCw, Zap, Clock, DollarSign, BarChart3, 
@@ -85,6 +88,13 @@ export const GoldSignalPage: React.FC = () => {
     try { return { ...emptyPos, ...JSON.parse(readLS(`${POS_KEY}:${readLS(MODE_KEY) ?? 'XAU_USD_SPOT'}`) ?? '{}') }; } catch { return emptyPos; }
   });
   const [activePos, setActivePos] = useState<PosForm | null>(() => posForm.entry ? posForm : null);
+  const tradePlanRef = useRef<HTMLDivElement | null>(null);
+
+  const handleScrollToPlan = () => {
+    if (tradePlanRef.current) {
+      tradePlanRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const fetchSignal = useCallback(async () => {
     try {
@@ -321,6 +331,25 @@ export const GoldSignalPage: React.FC = () => {
 
       {error && <Banner color={C.red} icon="⚠️" title="รีเฟรชล่าสุดไม่สำเร็จ — แสดงข้อมูลชุดก่อนหน้า" text={error} />}
       {data.alerts.map(a => <Banner key={a.messageTh} color={a.level === 'ERROR' ? C.red : C.amber} icon={a.level === 'ERROR' ? '🛑' : '⚠️'} title={a.level === 'ERROR' ? 'ADMIN ALERT' : 'แจ้งเตือนระบบ'} text={a.messageTh} />)}
+
+      {/* ═══ Golden Timing Alert Banner (แจ้งเตือนเวลาทองที่เข้าซื้อได้ พร้อมเสียง Chime & Simulator) ═══ */}
+      <GoldenTimingAlertBanner 
+        data={data} 
+        mode={mode} 
+        onScrollToPlan={handleScrollToPlan} 
+      />
+
+      {/* ═══ Crystal Clear Entry / Stop Loss / Take Profit Cards (จุดเข้า จุดออก ตัดขาดทุน ชัดเจน สวยงาม) ═══ */}
+      <div ref={tradePlanRef}>
+        <PrecisionTradePlanCards 
+          data={data} 
+          mode={mode} 
+          onOpenCalculator={() => setShowCalculator(true)} 
+        />
+      </div>
+
+      {/* ═══ 3-Pillar Confidence Score Section (คะแนนความมั่นใจ 3 ด้านหลัก เต็ม 100) ═══ */}
+      <ThreePillarsConfidenceSection data={data} />
 
       {/* ═══ Executive Decision Cockpit: 3-Col Hero Grid ═══ */}
       <div style={{

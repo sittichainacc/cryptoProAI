@@ -156,6 +156,11 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
   // Total count for badge
   const totalRecommendedCount = (isAdmin ? premiumCandidates.length : 0) + buyCandidates.length;
 
+  // หากไม่ได้เข้าสู่ระบบ ให้ซ่อนส่วนแนะนำการลงทุนทั้งหมดทันที (ไม่แสดงทั้งแถบและตัวลิ้นชัก)
+  if (!isAdmin) {
+    return null;
+  }
+
   // 1. Floating Trigger Button on the right screen edge
   if (!isOpen) {
     return (
@@ -427,7 +432,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                 justifyContent: 'center',
                 gap: '2px',
               }}
-              title="Top 5 Premium: ท่านไม่มีสิทธิ์ดูส่วนนี้ (เฉพาะ Admin คลิกเพื่อล็อกอิน)"
+              title="Top 5 Premium: สำหรับสมาชิก Premium เท่านั้น (เดือนละ 10 บาท/ปีละ 110 บาท)"
             >
               <Crown size={14} color="#F59E0B" />
               <span style={{ fontSize: '8px', color: '#FDE047', fontWeight: 900 }}>VIP</span>
@@ -688,7 +693,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '9.5px', fontWeight: 800, color: isAdmin ? '#F59E0B' : '#EF4444' }}>
-                      {isAdmin ? `${filteredPremium.length} เหรียญ` : '🔒 เฉพาะ Admin'}
+                      {isAdmin ? `${filteredPremium.length} เหรียญ` : '🔒 เฉพาะ Premium'}
                     </span>
                     {isPremiumExpanded ? <ChevronUp size={14} color="#F59E0B" /> : <ChevronDown size={14} color="#F59E0B" />}
                   </div>
@@ -746,17 +751,17 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                             }}
                           >
                             <Lock size={10} />
-                            <span>เฉพาะ ADMIN</span>
+                            <span>เฉพาะ PREMIUM</span>
                           </div>
                         </div>
 
                         {/* Title & Subtitle */}
                         <div>
                           <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.2px' }}>
-                            ท่านไม่มีสิทธิ์ดูส่วนนี้
+                            สำหรับสมาชิก Premium
                           </div>
                           <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '3px', lineHeight: 1.4 }}>
-                            แนะนำซื้อ <strong style={{ color: '#FDE047' }}>Top 5 Premium</strong> สงวนสิทธิ์สำหรับบัญชีผู้ดูแลระบบ (Admin) เท่านั้น
+                            แนะนำซื้อ <strong style={{ color: '#FDE047' }}>Top 5 Premium</strong> สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)
                           </div>
                         </div>
 
@@ -918,7 +923,7 @@ export const FocusRightSidebar: React.FC<FocusRightSidebarProps> = ({
                             }}
                           >
                             <LogIn size={15} />
-                            <span>เข้าสู่ระบบในฐานะ Admin เพื่อปลดล็อก</span>
+                            <span>เข้าสู่ระบบในฐานะ Premium</span>
                           </button>
                         )}
                       </div>
