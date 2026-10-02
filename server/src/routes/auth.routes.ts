@@ -73,8 +73,18 @@ authRouter.post('/login', (req: Request, res: Response) => {
 
   const { username, password } = req.body || {};
 
+  // Admin credentials list
+  const ADMIN_CREDENTIALS = [
+    { username: 'fuyu',     password: 'haru',       name: 'Admin Fuyu'     },
+    { username: 'totokung', password: 'Ss@crypto',  name: 'Admin Totokung' },
+  ];
+
+  const matchedAdmin = ADMIN_CREDENTIALS.find(
+    (c) => c.username === username && c.password === password
+  );
+
   // Check admin fixed credentials
-  if (username === 'fuyu' && password === 'haru') {
+  if (matchedAdmin) {
     // Reset attempt count upon successful authentication
     record.attempts = 0;
     record.isLocked = false;
@@ -86,12 +96,12 @@ authRouter.post('/login', (req: Request, res: Response) => {
       attempts: 0,
       maxAttempts: 3,
       user: {
-        username: 'fuyu',
-        name: 'Admin Fuyu',
+        username: matchedAdmin.username,
+        name: matchedAdmin.name,
         role: 'admin',
         loggedInAt: new Date().toISOString(),
       },
-      message: 'เข้าสู่ระบบผู้ดูแลระบบ (Admin) สำเร็จ',
+      message: `เข้าสู่ระบบผู้ดูแลระบบ (Admin) สำเร็จ — ยินดีต้อนรับ ${matchedAdmin.name}`,
     });
   }
 
