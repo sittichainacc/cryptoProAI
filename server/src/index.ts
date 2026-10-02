@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { apiRouter } from './routes/api.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { goldRouter } from './routes/gold.routes.js';
+import { usersRouter } from './routes/users.routes.js';
 import { marketService } from './services/market.service.js';
 import { testDbConnection, pool } from './database/db.js';
 
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/api', apiRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/gold', goldRouter);
+app.use('/api/users', usersRouter);
 
 // Database Health & Status check
 app.get('/api/db/status', async (_req, res) => {

@@ -63,6 +63,7 @@ import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
 import { LoginModal } from './components/LoginModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
 import { HomeAdminLockCard } from './components/HomeAdminLockCard.js';
+import { UserManagementPage } from './pages/UserManagementPage.js';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -82,10 +83,13 @@ export const App: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<'THB' | 'USDT'>('THB');
-  const [userRole, setUserRole] = useState<'admin' | 'analyst' | 'investor'>(() => {
+  const [userRole, setUserRole] = useState<'admin' | 'platinum' | 'premium' | 'gold' | 'free'>(() => {
     const saved = localStorage.getItem('cryptopro_auth_role');
     if (saved === 'admin') return 'admin';
-    return 'analyst';
+    if (saved === 'platinum') return 'platinum';
+    if (saved === 'premium') return 'premium';
+    if (saved === 'gold') return 'gold';
+    return 'free';
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -376,26 +380,56 @@ export const App: React.FC = () => {
 
   const isCurrentInWatchlist = watchlist.some((c) => c.symbol === selectedSymbol);
 
-  const handleLoginSuccess = (user: { username: string; name: string; role: 'admin' }) => {
-    setUserRole('admin');
-    localStorage.setItem('cryptopro_auth_role', 'admin');
+  const handleLoginSuccess = (user: { username: string; name: string; role: string }) => {
+    const validRoles = ['admin', 'platinum', 'premium', 'gold', 'free'] as const;
+    type ValidRole = typeof validRoles[number];
+    const role: ValidRole = validRoles.includes(user.role as ValidRole) ? (user.role as ValidRole) : 'free';
+    setUserRole(role);
+    localStorage.setItem('cryptopro_auth_role', role);
   };
 
-  // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin (เช่น เพิ่งออกจากระบบขณะอยู่หน้า FOCUS) ให้กลับหน้า Home
+  // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin ให้กลับหน้า Home
   useEffect(() => {
-    if (userRole !== 'admin' && activeSidebarTab === 'focus') setActiveSidebarTab('dashboard');
+    if (userRole !== 'admin' && (activeSidebarTab === 'focus' || activeSidebarTab === 'user-management')) setActiveSidebarTab('dashboard');
   }, [userRole, activeSidebarTab]);
 
   const handleLogout = () => {
-    setUserRole('analyst');
+    setUserRole('free');
     localStorage.removeItem('cryptopro_auth_role');
     localStorage.removeItem('cryptopro_auth_user');
   };
 
+  // ─── Tier-based access helper ──────────────────────────────────────────────
+  // free: Home + Gold Signal only
+  // gold: + Market, Screener, Technical Chart, News
+  // premium: + AI Signals, Watchlist, Alerts, Reports, Strategy, Settings
+  // platinum: + Top5 Ultimate, Top5 Premium, Top5, Portfolio, Analysis
+  // admin: ALL including Focus, User Management
+  const canAccess = (tab: string): boolean => {
+    if (userRole === 'admin') return true;
+    const freeAccess = ['dashboard', 'gold-signal'];
+    const goldAccess = [...freeAccess, 'market', 'screener', 'technical', 'news'];
+    const premiumAccess = [...goldAccess, 'signals', 'watchlist', 'alerts', 'reports', 'strategy', 'settings'];
+    const platinumAccess = [...premiumAccess, 'top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis'];
+    if (userRole === 'platinum') return platinumAccess.includes(tab);
+    if (userRole === 'premium') return premiumAccess.includes(tab);
+    if (userRole === 'gold') return goldAccess.includes(tab);
+    return freeAccess.includes(tab);
+  };
+
+  const getRequiredTier = (tab: string): string => {
+    const platinumOnly = ['top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'focus'];
+    const premiumOnly = ['signals', 'watchlist', 'alerts', 'reports', 'strategy', 'settings'];
+    const goldOnly = ['market', 'screener', 'technical', 'news'];
+    if (platinumOnly.includes(tab)) return 'Platinum';
+    if (premiumOnly.includes(tab)) return 'Premium';
+    if (goldOnly.includes(tab)) return 'Gold';
+    return 'Admin';
+  };
+
   // Render Page Content based on active navigation
   const renderMainContent = () => {
-    // RESTRICTION: Non-admin users can access 'Home' and 'Gold Signal'
-    if (activeSidebarTab !== 'dashboard' && activeSidebarTab !== 'gold-signal' && userRole !== 'admin') {
+    if (!canAccess(activeSidebarTab)) {
       const getFeatureInfo = (tab: string) => {
         switch (tab) {
           case 'focus': return { title: 'FOCUS (เรดาร์ตรวจจับเหรียญเด่น)', desc: 'ระบบเรดาร์ตรวจจับเหรียญเด่นและสัญญาณเจาะลึก' };
@@ -414,14 +448,15 @@ export const App: React.FC = () => {
           case 'strategy': return { title: 'เครื่องมือ & กลยุทธ์ (Trading Tools & Strategies)', desc: 'เครื่องคำนวณขนาดไม้ Position Sizing และแบบจำลองกลยุทธ์' };
           case 'settings': return { title: 'ตั้งค่าระบบ (System Settings)', desc: 'การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys' };
           case 'news': return { title: 'ข่าวสาร & Sentiment (Crypto News)', desc: 'ฟีดข่าวสารกรองพิเศษและการวิเคราะห์ Sentiment' };
-          default: return { title: 'ฟีเจอร์ระดับ Premium', desc: 'ส่วนนี้สงวนสิทธิ์สำหรับสมาชิก Premium (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)' };
+          default: return { title: 'ฟีเจอร์พิเศษ', desc: 'ส่วนนี้สงวนสิทธิ์สำหรับสมาชิกระดับสูงขึ้น' };
         }
       };
       const info = getFeatureInfo(activeSidebarTab);
+      const required = getRequiredTier(activeSidebarTab);
       return (
         <PermissionDeniedGuard
           featureTitle={info.title}
-          description={`${info.desc} สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท) — สมาชิกทั่วไปสามารถใช้งานหน้า Home และสัญญาณทองคำได้ตามปกติ`}
+          description={`${info.desc} — ต้องการสมาชิกระดับ ${required} ขึ้นไป`}
           onOpenLogin={() => setIsLoginModalOpen(true)}
           onGoBack={() => setActiveSidebarTab('dashboard')}
         />
@@ -449,17 +484,9 @@ export const App: React.FC = () => {
             onOpenAnalysis={handleOpenAnalysis}
           />
         );
+      case 'user-management':
+        return <UserManagementPage />;
       case 'top5-premium':
-        if (userRole !== 'admin') {
-          return (
-            <PermissionDeniedGuard
-              featureTitle="Top 5 Premium"
-              description="สูตรอัลกอริทึม Quant 20 ขั้นตอน คัด 5 เหรียญพร้อมจุดเข้า-ออก สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
-              onOpenLogin={() => setIsLoginModalOpen(true)}
-              onGoBack={() => setActiveSidebarTab('dashboard')}
-            />
-          );
-        }
         return (
           <Top5PremiumPage
             currency={currency}
@@ -496,16 +523,6 @@ export const App: React.FC = () => {
           />
         );
       case 'analysis':
-        if (userRole !== 'admin') {
-          return (
-            <PermissionDeniedGuard
-              featureTitle="วิเคราะห์เชิงลึก (In-Depth Analysis)"
-              description="โมเดลคำนวณ CVD, Volatility, Regime & AI Edge Matrix ขั้นสูง สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
-              onOpenLogin={() => setIsLoginModalOpen(true)}
-              onGoBack={() => setActiveSidebarTab('dashboard')}
-            />
-          );
-        }
         return (
           <CoinAnalysisPage
             selectedSymbol={selectedSymbol}
@@ -536,16 +553,6 @@ export const App: React.FC = () => {
           />
         );
       case 'watchlist':
-        if (userRole !== 'admin') {
-          return (
-            <PermissionDeniedGuard
-              featureTitle="รายการเฝ้าดู (Watchlist Tracking)"
-              description="ระบบติดตามความเคลื่อนไหวเหรียญส่วนตัว สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
-              onOpenLogin={() => setIsLoginModalOpen(true)}
-              onGoBack={() => setActiveSidebarTab('dashboard')}
-            />
-          );
-        }
         return (
           <WatchlistPage
             watchlist={watchlist}
@@ -562,16 +569,6 @@ export const App: React.FC = () => {
           />
         );
       case 'portfolio':
-        if (userRole !== 'admin') {
-          return (
-            <PermissionDeniedGuard
-              featureTitle="วิเคราะห์พอร์ต & เสี่ยง (Portfolio & Risk)"
-              description="ระบบวิเคราะห์การจัดสรรพอร์ตและการประเมินความเสี่ยง VaR สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
-              onOpenLogin={() => setIsLoginModalOpen(true)}
-              onGoBack={() => setActiveSidebarTab('dashboard')}
-            />
-          );
-        }
         return <PortfolioPage onSelectCoin={handleSelectCoin} currency={currency} />;
       case 'alerts':
         return <AlertsPage currency={currency} />;
@@ -580,16 +577,6 @@ export const App: React.FC = () => {
       case 'strategy':
         return <StrategyPage onSelectCoin={handleSelectCoin} currency={currency} />;
       case 'settings':
-        if (userRole !== 'admin') {
-          return (
-            <PermissionDeniedGuard
-              featureTitle="ตั้งค่าระบบ (System Settings)"
-              description="การจัดการพารามิเตอร์ระบบและการตั้งค่า API Keys สำหรับสมาชิก Premium เท่านั้น (ต้องสมัครสมาชิกเดือนละ 10 บาท/ปีละ 110 บาท)"
-              onOpenLogin={() => setIsLoginModalOpen(true)}
-              onGoBack={() => setActiveSidebarTab('dashboard')}
-            />
-          );
-        }
         return <SettingsPage currency={currency} setCurrency={setCurrency} />;
       case 'news':
         return (
@@ -611,8 +598,8 @@ export const App: React.FC = () => {
             {/* Row 1: KPI Cards */}
             <KpiCards kpis={kpis} currency={currency} />
 
-            {/* Row 2: Main Trading Section — แบบชิดกัน ปรับสัดส่วนด้วยเมาส์ (เฉพาะ Admin เท่านั้น) */}
-            {userRole === 'admin' ? (
+            {/* Row 2: Main Trading Section — Admin/Platinum/Premium see live workspace */}
+            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium') ? (
               <ResizableTradingWorkspace
                 movers={movers}
                 watchlist={watchlist}
@@ -635,8 +622,8 @@ export const App: React.FC = () => {
               />
             )}
 
-            {/* ส่วนถัดจากกราฟ ดังภาพ (ตารางจัดอันดับ, Top 5 Buy Now, ศูนย์วิเคราะห์พอร์ต, 24 เหรียญ, Top 3) — เฉพาะ Admin เท่านั้น */}
-            {userRole === 'admin' ? (
+            {/* ส่วนถัดจากกราฟ — Admin/Platinum/Premium เห็นส่วนนี้ */}
+            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium') ? (
               <>
                 {/* Complete Crypto Ranking Table - Section 7 */}
                 <CollapsibleSection
@@ -805,43 +792,34 @@ export const App: React.FC = () => {
         />
 
         <div className="content-body">
-          {/* Investor Mode Notice Banner */}
-          {userRole === 'investor' && (
+          {/* Tier Banner for non-admin users */}
+          {userRole !== 'admin' && userRole !== 'free' && (
             <div
               style={{
                 marginBottom: '16px',
-                padding: '10px 16px',
+                padding: '8px 16px',
                 borderRadius: '10px',
-                background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.14), rgba(6, 182, 212, 0.08))',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: userRole === 'platinum'
+                  ? 'linear-gradient(90deg, rgba(167,139,250,0.14), rgba(139,92,246,0.07))'
+                  : userRole === 'premium'
+                  ? 'linear-gradient(90deg, rgba(56,189,248,0.14), rgba(6,182,212,0.07))'
+                  : 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(217,119,6,0.07))',
+                border: `1px solid ${userRole === 'platinum' ? 'rgba(167,139,250,0.3)' : userRole === 'premium' ? 'rgba(56,189,248,0.3)' : 'rgba(245,158,11,0.3)'}`,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '12.5px',
+                gap: '10px',
+                fontSize: '12px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '15px' }}>🟢</span>
-                <span style={{ fontWeight: 700, color: '#34D399' }}>โหมดนักลงทุน (Investor Mode):</span>
-                <span style={{ color: '#CBD5E1' }}>
-                  ระบบคัดกรองเฉพาะสัญญาณซื้อขายที่ชัดเจน พร้อมคำนวณเป้าหมายกำไรและจุดตัดขาดทุนให้เข้าใจง่าย
-                </span>
-              </div>
-              <button
-                onClick={() => setUserRole('analyst')}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#FFF',
-                  borderRadius: '6px',
-                  padding: '3px 10px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                สลับเป็นโหมดนักวิเคราะห์
-              </button>
+              <span style={{ fontSize: '15px' }}>
+                {userRole === 'platinum' ? '💎' : userRole === 'premium' ? '⭐' : '🥇'}
+              </span>
+              <span style={{ fontWeight: 700, color: userRole === 'platinum' ? '#A78BFA' : userRole === 'premium' ? '#38BDF8' : '#F59E0B' }}>
+                สมาชิก {userRole === 'platinum' ? 'Platinum' : userRole === 'premium' ? 'Premium' : 'Gold'}:
+              </span>
+              <span style={{ color: '#CBD5E1' }}>
+                {userRole === 'platinum' ? 'เข้าถึงฟีเจอร์พิเศษระดับสูงสุด ยกเว้น Focus & บริหารผู้ใช้' : userRole === 'premium' ? 'เข้าถึงสัญญาณ, Watchlist, Alerts, Reports, Settings' : 'เข้าถึงตลาด, Screener, กราฟเทคนิค, ข่าว'}
+              </span>
             </div>
           )}
 

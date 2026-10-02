@@ -33,7 +33,7 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
-  userRole?: 'admin' | 'analyst' | 'investor';
+  userRole?: 'admin' | 'platinum' | 'premium' | 'gold' | 'free';
   onOpenLogin?: () => void;
 }
 
@@ -44,28 +44,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsCollapsed,
   isMobileOpen = false,
   onCloseMobile,
-  userRole = 'analyst',
+  userRole = 'free',
   onOpenLogin,
 }) => {
   const menuItems = [
-    { id: 'dashboard', label: 'Home', icon: Home },
-    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE' },
-    { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', adminOnly: true },
-    { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW' },
-    { id: 'top5-premium', label: 'Top 5 Premium', icon: Award, badge: 'PRO' },
-    { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI', adminOnly: true },
-    { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp },
-    { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine },
-    { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity },
-    { id: 'technical', label: 'วิเคราะห์กราฟ', icon: BarChart2 },
-    { id: 'signals', label: 'สัญญาณ AI', icon: Sparkles },
-    { id: 'watchlist', label: 'รายการเฝ้าดู', icon: Eye },
-    { id: 'portfolio', label: 'วิเคราะห์พอร์ต & เสี่ยง', icon: PieChart },
-    { id: 'alerts', label: 'การแจ้งเตือน', icon: Bell },
-    { id: 'reports', label: 'รายงาน & สถิติ', icon: FileSpreadsheet },
-    { id: 'strategy', label: 'เครื่องมือ & กลยุทธ์', icon: Wrench },
-    { id: 'settings', label: 'ตั้งค่าระบบ', icon: Settings },
+    { id: 'dashboard', label: 'Home', icon: Home, minRole: 'free' },
+    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE', minRole: 'free' },
+    { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', minRole: 'admin' },
+    { id: 'user-management', label: 'จัดการผู้ใช้งาน', icon: ShieldCheck, badge: 'ADMIN', minRole: 'admin' },
+    { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW', minRole: 'platinum' },
+    { id: 'top5-premium', label: 'Top 5 Premium', icon: Award, badge: 'PRO', minRole: 'platinum' },
+    { id: 'top5', label: 'แนะนำ Top 5', icon: Award, badge: 'AI', minRole: 'platinum' },
+    { id: 'market', label: 'ตลาดคริปโต', icon: TrendingUp, minRole: 'gold' },
+    { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine, minRole: 'gold' },
+    { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity, minRole: 'platinum' },
+    { id: 'technical', label: 'วิเคราะห์กราฟ', icon: BarChart2, minRole: 'gold' },
+    { id: 'signals', label: 'สัญญาณ AI', icon: Sparkles, minRole: 'premium' },
+    { id: 'watchlist', label: 'รายการเฝ้าดู', icon: Eye, minRole: 'premium' },
+    { id: 'portfolio', label: 'วิเคราะห์พอร์ต & เสี่ยง', icon: PieChart, minRole: 'platinum' },
+    { id: 'alerts', label: 'การแจ้งเตือน', icon: Bell, minRole: 'premium' },
+    { id: 'reports', label: 'รายงาน & สถิติ', icon: FileSpreadsheet, minRole: 'premium' },
+    { id: 'strategy', label: 'เครื่องมือ & กลยุทธ์', icon: Wrench, minRole: 'premium' },
+    { id: 'settings', label: 'ตั้งค่าระบบ', icon: Settings, minRole: 'premium' },
   ];
+
+  const ROLE_RANK: Record<string, number> = { free: 0, gold: 1, premium: 2, platinum: 3, admin: 4 };
+  const userRank = ROLE_RANK[userRole] ?? 0;
+
+  const isRoleUnlocked = (minRole: string) => userRank >= (ROLE_RANK[minRole] ?? 0);
+
+  const getTierLabel = (minRole: string) => {
+    if (minRole === 'admin') return 'Admin เท่านั้น';
+    if (minRole === 'platinum') return 'สมาชิก Platinum+';
+    if (minRole === 'premium') return 'สมาชิก Premium+';
+    if (minRole === 'gold') return 'สมาชิก Gold+';
+    return '';
+  };
+
+  const roleBadgeColor: Record<string, string> = {
+    free: '#94A3B8', gold: '#F59E0B', premium: '#38BDF8', platinum: '#A78BFA', admin: '#F43F5E',
+  };
+  const roleLabel: Record<string, string> = {
+    free: 'Free', gold: '🥇 Gold', premium: '⭐ Premium', platinum: '💎 Platinum', admin: '👑 Admin',
+  };
+  const roleDesc: Record<string, string> = {
+    free: 'เข้าถึง Home และสัญญาณทอง',
+    gold: 'เข้าถึงตลาด, Screener, กราฟ, ข่าว',
+    premium: 'เข้าถึง Signals, Watchlist, Alerts, Reports',
+    platinum: 'เข้าถึง Top5, Portfolio, Analysis และอื่นๆ',
+    admin: 'เข้าถึงได้ทุกฟังก์ชัน',
+  };
 
   const dataStreams = [
     { name: 'Binance Stream', status: 'Tick-by-Tick', connected: true, color: '#F0B90B' },
@@ -180,8 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             padding: '10px 14px',
             margin: '10px 12px 2px',
             borderRadius: '10px',
-            backgroundColor: userRole === 'admin' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-            border: userRole === 'admin' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: userRole === 'admin' ? 'rgba(244,63,94,0.1)' : userRole === 'platinum' ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.04)',
+            border: userRole === 'admin' ? '1px solid rgba(244,63,94,0.3)' : userRole === 'platinum' ? '1px solid rgba(167,139,250,0.3)' : '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -193,8 +221,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 width: '24px',
                 height: '24px',
                 borderRadius: '50%',
-                backgroundColor: userRole === 'admin' ? '#F59E0B' : 'rgba(255, 255, 255, 0.1)',
-                color: userRole === 'admin' ? '#000' : '#FFF',
+                backgroundColor: roleBadgeColor[userRole] || '#94A3B8',
+                color: '#000',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -202,18 +230,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 fontWeight: 800,
               }}
             >
-              {userRole === 'admin' ? '👑' : '👤'}
+              {userRole === 'admin' ? '👑' : userRole === 'platinum' ? '💎' : userRole === 'premium' ? '⭐' : userRole === 'gold' ? '🥇' : '👤'}
             </div>
             <div>
-              <div style={{ fontSize: '11.5px', fontWeight: 800, color: userRole === 'admin' ? '#FDE047' : '#FFF' }}>
-                {userRole === 'admin' ? 'Admin Mode' : 'Guest / Analyst'}
+              <div style={{ fontSize: '11.5px', fontWeight: 800, color: roleBadgeColor[userRole] || '#FFF' }}>
+                {roleLabel[userRole] || 'Free'}
               </div>
               <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
-                {userRole === 'admin' ? 'เข้าถึงได้ทุกฟังก์ชัน' : 'เข้าถึงหน้า Home และสัญญาณทอง'}
+                {roleDesc[userRole] || ''}
               </div>
             </div>
           </div>
-          {userRole !== 'admin' && onOpenLogin && (
+          {userRole === 'free' && onOpenLogin && (
             <button
               onClick={() => {
                 if (onCloseMobile) onCloseMobile();
@@ -230,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 cursor: 'pointer',
               }}
             >
-              ล็อกอิน
+              อัปเกรด
             </button>
           )}
         </div>
@@ -247,13 +275,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           gap: '4px',
         }}
       >
-        {menuItems.filter((item) => !('adminOnly' in item && item.adminOnly) || userRole === 'admin').map((item) => {
+        {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const isHome = item.id === 'dashboard';
           const isGold = item.id === 'gold-signal';
-          const isUnlocked = isHome || isGold || userRole === 'admin';
-          const isLocked = !isUnlocked;
+          const isAdminOnly = item.id === 'focus' || item.id === 'user-management';
+          const unlocked = isRoleUnlocked(item.minRole || 'free');
+          const isLocked = !unlocked;
+          // Hide admin-only items from non-admins entirely
+          if (isAdminOnly && userRole !== 'admin') return null;
           return (
             <button
               key={item.id}
@@ -300,7 +331,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       : '0 2px 10px rgba(245, 158, 11, 0.12), inset 0 0 6px rgba(245, 158, 11, 0.05)')
                   : (isActive ? 'inset 0 0 12px rgba(59, 130, 246, 0.25)' : 'none'),
               }}
-              title={isCollapsed ? `${item.label}${isLocked ? ' (เฉพาะ Premium)' : ''}` : (isLocked ? `${item.label} (เฉพาะ Premium)` : undefined)}
+              title={isCollapsed ? `${item.label}${isLocked ? ` (${getTierLabel(item.minRole || 'free')})` : ''}` : (isLocked ? `${item.label} (${getTierLabel(item.minRole || 'free')})` : undefined)}
             >
               {isActive && (
                 <div
