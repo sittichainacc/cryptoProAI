@@ -99,6 +99,7 @@ export const GoldenTimingAlertBanner: React.FC<GoldenTimingAlertBannerProps> = (
   const [notificationGranted, setNotificationGranted] = useState<boolean>(() => {
     return typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted';
   });
+  const [showTools, setShowTools] = useState(false);
 
   const timerRef = useRef<any>(null);
 
@@ -531,15 +532,15 @@ export const GoldenTimingAlertBanner: React.FC<GoldenTimingAlertBannerProps> = (
             <span>{soundEnabled ? 'เสียงเตือน ON' : 'เสียงเตือน OFF'}</span>
           </button>
 
-          {/* Test Chimes: Green Chime & Gold Chime */}
+          {/* Toggle Simulator & Audio Test Tools */}
           <button
-            onClick={playReadyGreenChime}
+            onClick={() => setShowTools(!showTools)}
             style={{
-              padding: '6px 11px',
+              padding: '6px 10px',
               borderRadius: '8px',
-              background: 'rgba(16, 185, 129, 0.16)',
-              border: '1px solid rgba(16, 185, 129, 0.45)',
-              color: '#34D399',
+              background: showTools ? 'rgba(245, 158, 11, 0.18)' : 'var(--bg-card-inner, rgba(255, 255, 255, 0.05))',
+              border: `1px solid ${showTools ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-color, rgba(255, 255, 255, 0.1))'}`,
+              color: showTools ? '#FDE047' : 'var(--text-muted, #94A3B8)',
               fontSize: '11px',
               fontWeight: 800,
               cursor: 'pointer',
@@ -548,128 +549,155 @@ export const GoldenTimingAlertBanner: React.FC<GoldenTimingAlertBannerProps> = (
               gap: '5px',
               transition: 'all 0.15s ease',
             }}
-            title="ทดสอบฟังเสียงสัญญาณเข้าพร้อม (สีเขียว)"
+            title="เครื่องมือทดสอบเสียงและจำลองสถานการณ์"
           >
-            <CheckCircle2 size={13} color="#34D399" />
-            <span>เสียงเข้าพร้อม (เขียว)</span>
+            <span>🧪 ทดสอบ/จำลอง</span>
+            <span style={{ fontSize: 9 }}>{showTools ? '▲' : '▼'}</span>
           </button>
 
-          <button
-            onClick={playSupremeGoldChime}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.3))',
-              border: '1px solid rgba(245, 158, 11, 0.65)',
-              color: '#FDE047',
-              fontSize: '11px',
-              fontWeight: 900,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              boxShadow: '0 0 12px rgba(245, 158, 11, 0.3)',
-              transition: 'all 0.15s ease',
-            }}
-            title="ทดสอบฟังเสียงสัญญาณดีที่สุด (สีทองกระพริบ)"
-          >
-            <Sparkles size={13} color="#FDE047" />
-            <span>เสียงดีสุด (ทอง)</span>
-          </button>
-
-          {/* Browser Desktop Notification Request */}
-          {!notificationGranted && (
-            <button
-              onClick={requestNotification}
-              style={{
-                padding: '6px 11px',
-                borderRadius: '8px',
-                background: 'rgba(6, 182, 212, 0.14)',
-                border: '1px solid rgba(6, 182, 212, 0.35)',
-                color: '#38BDF8',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                transition: 'all 0.15s ease',
-              }}
-              title="เปิดการแจ้งเตือนบนหน้าจอเบราว์เซอร์"
-            >
-              <Send size={12} />
-              <span>แจ้งเตือนบนจอ</span>
-            </button>
-          )}
-
-          {/* Simulation Toggle Buttons (All 4 States) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 0, 0, 0.35)', padding: '3px 4px', borderRadius: '10px', border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))' }}>
-            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-muted, #94A3B8)', padding: '0 6px' }}>
-              ทดสอบ:
-            </span>
-            <button
-              onClick={() => {
-                const next = simMode === 'BEST_GOLD' ? 'LIVE' : 'BEST_GOLD';
-                setSimMode(next);
-                if (next === 'BEST_GOLD' && soundEnabled) playSupremeGoldChime();
-              }}
-              style={{
-                padding: '4px 9px',
-                borderRadius: '6px',
-                background: simMode === 'BEST_GOLD' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'transparent',
-                border: 'none',
-                color: simMode === 'BEST_GOLD' ? '#000000' : '#FDE047',
-                fontSize: '10.5px',
-                fontWeight: 900,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              title="จำลองสัญญาณดีสุด (สีทองกระพริบ)"
-            >
-              👑 สีทองกระพริบ
-            </button>
-
-            <button
-              onClick={() => {
-                const next = simMode === 'READY_GREEN' ? 'LIVE' : 'READY_GREEN';
-                setSimMode(next);
-                if (next === 'READY_GREEN' && soundEnabled) playReadyGreenChime();
-              }}
-              style={{
-                padding: '4px 9px',
-                borderRadius: '6px',
-                background: simMode === 'READY_GREEN' ? 'linear-gradient(135deg, #10B981, #059669)' : 'transparent',
-                border: 'none',
-                color: simMode === 'READY_GREEN' ? '#FFFFFF' : '#34D399',
-                fontSize: '10.5px',
-                fontWeight: 900,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              title="จำลองสัญญาณเข้าพร้อม (สีเขียว)"
-            >
-              🟢 สีเขียว
-            </button>
-
-            {simMode !== 'LIVE' && (
+          {showTools && (
+            <>
+              {/* Test Chimes: Green Chime & Gold Chime */}
               <button
-                onClick={() => setSimMode('LIVE')}
+                onClick={playReadyGreenChime}
                 style={{
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: 'none',
-                  color: 'var(--text-secondary, #CBD5E1)',
-                  fontSize: '10.5px',
+                  padding: '6px 11px',
+                  borderRadius: '8px',
+                  background: 'rgba(16, 185, 129, 0.16)',
+                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                  color: '#34D399',
+                  fontSize: '11px',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease',
                 }}
-                title="กลับสู่สถานะตลาดจริง"
+                title="ทดสอบฟังเสียงสัญญาณเข้าพร้อม (สีเขียว)"
               >
-                ตลาดจริง
+                <CheckCircle2 size={13} color="#34D399" />
+                <span>เสียงเข้าพร้อม (เขียว)</span>
               </button>
-            )}
-          </div>
+
+              <button
+                onClick={playSupremeGoldChime}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.3))',
+                  border: '1px solid rgba(245, 158, 11, 0.65)',
+                  color: '#FDE047',
+                  fontSize: '11px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 0 12px rgba(245, 158, 11, 0.3)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="ทดสอบฟังเสียงสัญญาณดีที่สุด (สีทองกระพริบ)"
+              >
+                <Sparkles size={13} color="#FDE047" />
+                <span>เสียงดีสุด (ทอง)</span>
+              </button>
+
+              {/* Browser Desktop Notification Request */}
+              {!notificationGranted && (
+                <button
+                  onClick={requestNotification}
+                  style={{
+                    padding: '6px 11px',
+                    borderRadius: '8px',
+                    background: 'rgba(6, 182, 212, 0.14)',
+                    border: '1px solid rgba(6, 182, 212, 0.35)',
+                    color: '#38BDF8',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="เปิดการแจ้งเตือนบนหน้าจอเบราว์เซอร์"
+                >
+                  <Send size={12} />
+                  <span>แจ้งเตือนบนจอ</span>
+                </button>
+              )}
+
+              {/* Simulation Toggle Buttons (All 4 States) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 0, 0, 0.35)', padding: '3px 4px', borderRadius: '10px', border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))' }}>
+                <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-muted, #94A3B8)', padding: '0 6px' }}>
+                  ทดสอบ:
+                </span>
+                <button
+                  onClick={() => {
+                    const next = simMode === 'BEST_GOLD' ? 'LIVE' : 'BEST_GOLD';
+                    setSimMode(next);
+                    if (next === 'BEST_GOLD' && soundEnabled) playSupremeGoldChime();
+                  }}
+                  style={{
+                    padding: '4px 9px',
+                    borderRadius: '6px',
+                    background: simMode === 'BEST_GOLD' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'transparent',
+                    border: 'none',
+                    color: simMode === 'BEST_GOLD' ? '#000000' : '#FDE047',
+                    fontSize: '10.5px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="จำลองสัญญาณดีสุด (สีทองกระพริบ)"
+                >
+                  👑 สีทองกระพริบ
+                </button>
+
+                <button
+                  onClick={() => {
+                    const next = simMode === 'READY_GREEN' ? 'LIVE' : 'READY_GREEN';
+                    setSimMode(next);
+                    if (next === 'READY_GREEN' && soundEnabled) playReadyGreenChime();
+                  }}
+                  style={{
+                    padding: '4px 9px',
+                    borderRadius: '6px',
+                    background: simMode === 'READY_GREEN' ? 'linear-gradient(135deg, #10B981, #059669)' : 'transparent',
+                    border: 'none',
+                    color: simMode === 'READY_GREEN' ? '#FFFFFF' : '#34D399',
+                    fontSize: '10.5px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="จำลองสัญญาณเข้าพร้อม (สีเขียว)"
+                >
+                  🟢 สีเขียว
+                </button>
+
+                {simMode !== 'LIVE' && (
+                  <button
+                    onClick={() => setSimMode('LIVE')}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: 'none',
+                      color: 'var(--text-secondary, #CBD5E1)',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                    title="กลับสู่สถานะตลาดจริง"
+                  >
+                    ตลาดจริง
+                  </button>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Jump to Plan Button */}
           {onScrollToPlan && (

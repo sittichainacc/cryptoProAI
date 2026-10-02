@@ -14,6 +14,7 @@ import { GoldBacktestPanel, TagChip } from '../components/gold/GoldBacktestPanel
 import { GoldenTimingAlertBanner } from '../components/gold/GoldenTimingAlertBanner.js';
 import { PrecisionTradePlanCards } from '../components/gold/PrecisionTradePlanCards.js';
 import { ThreePillarsConfidenceSection } from '../components/gold/ThreePillarsConfidenceSection.js';
+import { AlphaFlowDynamics } from '../components/gold/AlphaFlowDynamics.js';
 import { 
   TrendingUp, TrendingDown, Target, Shield, AlertTriangle, ArrowRight, 
   CheckCircle2, XCircle, RefreshCw, Zap, Clock, DollarSign, BarChart3, 
@@ -94,9 +95,11 @@ export const GoldSignalPage: React.FC = () => {
   const [data, setData] = useState<GoldSignalResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'deep' | 'macro' | 'intermarket' | 'flow' | 'news' | 'plan' | 'backtest' | 'sources'>('deep');
+  const [mainTab, setMainTab] = useState<'plan' | 'alpha_flow' | 'three_pillars' | 'chart' | 'news_stats'>('plan');
+  const [threePillarsSubTab, setThreePillarsSubTab] = useState<'all' | 'technical' | 'macro' | 'flow'>('all');
   const [showChart, setShowChart] = useState(true);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showPosForm, setShowPosForm] = useState(false);
   const [lastUpdate, setLastUpdate] = useState('');
   const [posForm, setPosForm] = useState<PosForm>(() => {
     try { return { ...emptyPos, ...JSON.parse(readLS(`${POS_KEY}:${readLS(MODE_KEY) ?? 'XAU_USD_SPOT'}`) ?? '{}') }; } catch { return emptyPos; }
@@ -105,9 +108,12 @@ export const GoldSignalPage: React.FC = () => {
   const tradePlanRef = useRef<HTMLDivElement | null>(null);
 
   const handleScrollToPlan = () => {
-    if (tradePlanRef.current) {
-      tradePlanRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setMainTab('plan');
+    setTimeout(() => {
+      if (tradePlanRef.current) {
+        tradePlanRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
   };
 
   const fetchSignal = useCallback(async () => {
@@ -240,31 +246,20 @@ export const GoldSignalPage: React.FC = () => {
 
   const overallConfidence = Math.min(100, Math.max(0, Math.round(technicalScore * 0.35 + macroScore * 0.35 + flowInterScore * 0.30)));
 
-  const tabs = [
-    { id: 'deep', label: '🎯 เทคนิค & โครงสร้างราคา', icon: Target },
-    { id: 'macro', label: '🏛️ Macro, Fed & Real Yield', icon: Scale },
-    { id: 'intermarket', label: '🌐 Intermarket & DXY', icon: Activity },
-    { id: 'flow', label: '🔄 Order Flow & COT', icon: BarChart3 },
-    { id: 'news', label: '📰 ข่าว & ปัจจัยพื้นฐาน', icon: Flame },
-    { id: 'plan', label: '📌 ติดตาม Position ของคุณ', icon: Compass },
-    { id: 'backtest', label: '🧪 ผลการทดสอบ (Backtest)', icon: Award },
-    { id: 'sources', label: `🛰️ แหล่งข้อมูล${staleSources.length ? ` (${staleSources.length}⚠)` : ''}`, icon: Layers },
-  ];
-
   return (
-    <div className="gold-signal-page" style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
-      {/* ═══ Top Hero Bar ═══ */}
+    <div className="gold-signal-page" style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+      {/* ═══ Top Executive Cockpit Bar ═══ */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(17, 24, 39, 0.95) 45%, rgba(16, 185, 129, 0.08) 100%)',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(17, 24, 39, 0.95) 40%, rgba(16, 185, 129, 0.08) 100%)',
         border: '1px solid rgba(245, 158, 11, 0.25)',
         borderRadius: 20,
-        padding: 'clamp(16px, 2.5vw, 24px)',
+        padding: '16px 20px',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+        boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        gap: 14,
       }}>
         {/* Shimmer line */}
         <div style={{
@@ -272,53 +267,63 @@ export const GoldSignalPage: React.FC = () => {
           top: 0,
           left: 0,
           right: 0,
-          height: '2px',
+          height: '2.5px',
           background: 'linear-gradient(90deg, transparent, #F59E0B, #FFD700, #10B981, transparent)',
         }} />
 
-        {/* ── 1. Top Header Row: Title & Subtitle (Left) + Mode Selector & Actions (Right) ── */}
+        {/* ── 1. Top Controls Bar: Title & Subtitle + Mode Selector & Refresh ── */}
         <div style={{
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 16,
+          gap: 12,
         }}>
-          <div style={{ maxWidth: 840, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 28, filter: 'drop-shadow(0 2px 8px rgba(245, 158, 11, 0.4))' }}>🥇</span>
-              <h1 style={{ fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 900, color: C.text, margin: 0, letterSpacing: '-0.5px' }}>
-                สัญญาณทองคำอัจฉริยะ <span style={{ fontSize: 13.5, fontWeight: 700, color: '#F59E0B' }}>Gold Intelligence & Precision Cockpit</span>
-              </h1>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '3px 9px',
-                borderRadius: 20,
-                fontSize: 10.5,
-                fontWeight: 800,
-                background: price.marketOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(148, 163, 184, 0.15)',
-                color: price.marketOpen ? C.green : C.muted,
-                border: `1px solid ${price.marketOpen ? 'rgba(16, 185, 129, 0.35)' : 'rgba(148, 163, 184, 0.3)'}`,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: price.marketOpen ? C.green : C.muted }} />
-                {price.marketOpen ? 'ตลาดเปิด (LIVE)' : 'ตลาดปิด'}
-              </span>
+          {/* Left: Branding & Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 26, filter: 'drop-shadow(0 2px 8px rgba(245, 158, 11, 0.4))' }}>🥇</span>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: 'clamp(18px, 2.2vw, 22px)', fontWeight: 900, color: C.text, margin: 0, letterSpacing: '-0.3px' }}>
+                  สัญญาณทองคำอัจฉริยะ <span style={{ fontSize: 13, fontWeight: 700, color: '#F59E0B' }}>Gold Intelligence Station</span>
+                </h1>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '2px 8px',
+                  borderRadius: 16,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  background: price.marketOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(148, 163, 184, 0.15)',
+                  color: price.marketOpen ? C.green : C.muted,
+                  border: `1px solid ${price.marketOpen ? 'rgba(16, 185, 129, 0.35)' : 'rgba(148, 163, 184, 0.3)'}`,
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: price.marketOpen ? C.green : C.muted }} />
+                  {price.marketOpen ? 'ตลาดเปิด (LIVE)' : 'ตลาดปิด'}
+                </span>
+                <span style={{
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  padding: '2px 7px',
+                  borderRadius: 14,
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  color: '#FDE047',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                }}>
+                  Alpha Flow V1.2
+                </span>
+              </div>
             </div>
-
-            <p style={{ fontSize: 12.5, color: C.muted, margin: '6px 0 0', lineHeight: 1.55 }}>
-              AI Multi-Factor Gold Decision Engine วิเคราะห์ราคา เทคนิค Real Yield ดอลลาร์ ดอกเบี้ย Fed ตัวเลขแรงงาน CFTC COT ข่าว และสมาคมค้าทองคำ
-            </p>
           </div>
 
-          {/* Mode Switcher & Refresh */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Right: Mode Switcher & Refresh */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <div style={{
               display: 'flex',
-              background: 'var(--bg-card-inner, rgba(0,0,0,0.35))',
-              padding: '4px',
-              borderRadius: 12,
+              background: 'rgba(0, 0, 0, 0.45)',
+              padding: '3px',
+              borderRadius: 10,
               border: '1px solid var(--border-color)',
             }}>
               {MODES.map(m => (
@@ -326,16 +331,16 @@ export const GoldSignalPage: React.FC = () => {
                   key={m.id}
                   onClick={() => changeMode(m.id)}
                   style={{
-                    padding: '6px 13px',
-                    borderRadius: 8,
-                    fontSize: 12,
+                    padding: '5px 12px',
+                    borderRadius: 7,
+                    fontSize: 11.5,
                     fontWeight: 700,
                     cursor: 'pointer',
                     border: 'none',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.15s ease',
                     background: mode === m.id ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'transparent',
-                    color: mode === m.id ? '#FFF' : C.muted,
-                    boxShadow: mode === m.id ? '0 2px 10px rgba(245, 158, 11, 0.35)' : 'none',
+                    color: mode === m.id ? '#FFF' : 'rgba(255, 255, 255, 0.75)',
+                    boxShadow: mode === m.id ? '0 2px 8px rgba(245, 158, 11, 0.35)' : 'none',
                   }}
                 >
                   {m.shortLabel}
@@ -347,9 +352,9 @@ export const GoldSignalPage: React.FC = () => {
               onClick={fetchSignal}
               disabled={loading}
               style={{
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 12,
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11.5,
                 fontWeight: 700,
                 background: 'rgba(255,255,255,0.06)',
                 color: C.text,
@@ -357,53 +362,51 @@ export const GoldSignalPage: React.FC = () => {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                transition: 'all 0.2s',
+                gap: 5,
+                transition: 'all 0.15s ease',
               }}
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>{loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}</span>
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              <span>{loading ? 'รีเฟรช...' : 'รีเฟรช'}</span>
             </button>
-            {lastUpdate && <span style={{ fontSize: 11, color: C.muted }}>อัปเดต {lastUpdate}</span>}
+            {lastUpdate && <span style={{ fontSize: 10.5, color: C.muted }}>{lastUpdate}</span>}
           </div>
         </div>
 
-        {/* ── 2. ราคาปัจจุบันในช่องสัญญาณทองคำอัจฉริยะ (Live Current Price Hero Bar) ── */}
+        {/* ── 2. Executive Decision Ribbon: 3 Clean Grid Cards ── */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16,
-          padding: '12px 20px',
-          borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0%, rgba(245, 158, 11, 0.08) 100%)',
-          border: '1px solid rgba(245, 158, 11, 0.3)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+          gap: 12,
+          alignItems: 'stretch',
         }}>
-          {/* Left: Indicator + Asset Name + Big Gold Price + Change Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 9,
-                height: 9,
-                borderRadius: '50%',
-                backgroundColor: price.marketOpen ? '#10B981' : '#F59E0B',
-                boxShadow: price.marketOpen ? '0 0 10px #10B981' : '0 0 6px #F59E0B',
-                display: 'inline-block',
-              }} />
-              <span style={{ fontSize: 12.5, fontWeight: 800, color: 'rgba(255, 255, 255, 0.85)' }}>
-                ราคาปัจจุบัน ({thaiMode ? 'ทองคำแท่ง 96.5% ขายออก' : mode === 'COMEX_FUTURES' ? 'COMEX GC Futures' : 'XAU/USD Spot'}):
+          {/* Card 1: Real-time Price */}
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.35)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            borderRadius: 14,
+            padding: '12px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 6,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                {thaiMode ? '🇹🇭 ทองคำแท่งขายออก' : mode === 'COMEX_FUTURES' ? '⚡ COMEX GC Futures' : '🌐 XAU/USD Spot'}
+              </span>
+              <span style={{ fontSize: 10.5, color: C.muted }}>
+                USD/THB {price.usdThb ? price.usdThb.toFixed(2) : '—'}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <span style={{
-                fontSize: 'clamp(24px, 3.2vw, 30px)',
+                fontSize: 'clamp(22px, 2.6vw, 28px)',
                 fontWeight: 900,
                 color: '#FFD700',
                 letterSpacing: '-0.5px',
-                textShadow: '0 0 20px rgba(255, 215, 0, 0.45)',
+                textShadow: '0 0 16px rgba(255, 215, 0, 0.35)',
               }}>
                 {thaiMode ? thb(price.thaiGoldBarSell) : mode === 'COMEX_FUTURES' ? usd(price.comexPrice) : usd(price.xauUsd)}
               </span>
@@ -411,361 +414,165 @@ export const GoldSignalPage: React.FC = () => {
               {thaiMode ? (
                 price.thaiGoldChange != null && (
                   <span style={{
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 800,
-                    padding: '3px 10px',
-                    borderRadius: 8,
+                    padding: '2px 8px',
+                    borderRadius: 6,
                     background: price.thaiGoldChange >= 0 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)',
                     color: price.thaiGoldChange >= 0 ? C.green : C.red,
                     border: `1px solid ${price.thaiGoldChange >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                   }}>
-                    {price.thaiGoldChange >= 0 ? '+' : ''}{price.thaiGoldChange}฿ {price.thaiGoldRound ? `(รอบที่ ${price.thaiGoldRound})` : ''}
+                    {price.thaiGoldChange >= 0 ? '+' : ''}{price.thaiGoldChange}฿ {price.thaiGoldRound ? `(รอบ ${price.thaiGoldRound})` : ''}
                   </span>
                 )
               ) : (
                 <span style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 800,
-                  padding: '3px 10px',
-                  borderRadius: 8,
+                  padding: '2px 8px',
+                  borderRadius: 6,
                   background: (price.xauUsdChange24hPct ?? 0) >= 0 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)',
                   color: (price.xauUsdChange24hPct ?? 0) >= 0 ? C.green : C.red,
                   border: `1px solid ${(price.xauUsdChange24hPct ?? 0) >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
+                  gap: 3,
                 }}>
-                  {(price.xauUsdChange24hPct ?? 0) >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                  {(price.xauUsdChange24hPct ?? 0) >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                   {signed(price.xauUsdChange24h, '$', 2)} ({signed(price.xauUsdChange24hPct)})
                 </span>
               )}
             </div>
+
+            <div style={{ fontSize: 10.5, color: 'rgba(255, 255, 255, 0.75)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {thaiMode ? (
+                <>
+                  <span>รับซื้อ: <strong style={{ color: '#FFFFFF' }}>{thb(price.thaiGoldBarBuy)}</strong></span>
+                  <span>·</span>
+                  <span>{price.thaiGoldAsTime ? `ณ ${price.thaiGoldAsTime}` : 'สมาคมค้าทองคำ'}</span>
+                </>
+              ) : (
+                <>
+                  <span>24H H: <strong style={{ color: C.green }}>{usd(price.xauUsdHigh24h)}</strong></span>
+                  <span>·</span>
+                  <span>L: <strong style={{ color: C.red }}>{usd(price.xauUsdLow24h)}</strong></span>
+                  <span>·</span>
+                  <span>COMEX: <strong style={{ color: '#FFFFFF' }}>{usd(price.comexPrice)}</strong></span>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Right: Thai Buyback or 24h High/Low */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            {thaiMode ? (
-              <>
-                {price.thaiGoldBarBuy && (
-                  <div style={{
-                    fontSize: 12,
-                    color: C.muted,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    padding: '4px 12px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                  }}>
-                    รับซื้อ: <strong style={{ color: '#FFFFFF', marginLeft: 4 }}>{thb(price.thaiGoldBarBuy)}</strong>
-                  </div>
-                )}
-                {price.thaiGoldAsTime && (
-                  <span style={{ fontSize: 11, color: C.muted }}>
-                    สมาคมค้าทองคำ ณ {price.thaiGoldAsTime}
-                  </span>
-                )}
-              </>
-            ) : (
-              price.xauUsdHigh24h != null && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  fontSize: 12,
-                  color: C.muted,
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  padding: '5px 14px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                }}>
-                  <span>24H สูงสุด: <strong style={{ color: C.green, marginLeft: 3 }}>{usd(price.xauUsdHigh24h)}</strong></span>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
-                  <span>ต่ำสุด: <strong style={{ color: C.red, marginLeft: 3 }}>{usd(price.xauUsdLow24h)}</strong></span>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        {/* ── 3. ตัวเลขแสดงความมั่นใจ จากการวิเคราะห์ 3 ด้านหลักๆ (คะแนนเต็ม 100) ── */}
-        <div style={{
-          paddingTop: 16,
-          borderTop: '1px solid rgba(245, 158, 11, 0.2)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-        }}>
-          {/* Header Row */}
+          {/* Card 2: Main Action Signal Now */}
           <div style={{
+            background: sig.isBestGold 
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(17, 24, 39, 0.85) 100%)'
+              : `linear-gradient(135deg, ${sig.color}14, rgba(17, 24, 39, 0.85))`,
+            border: sig.isBestGold ? '1.5px solid #F59E0B' : `1.5px solid ${sig.color}55`,
+            borderRadius: 14,
+            padding: '12px 16px',
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
+            gap: 6,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 30,
-                height: 30,
-                borderRadius: 9,
-                background: 'linear-gradient(135deg, #F59E0B, #10B981)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 12px rgba(245, 158, 11, 0.35)',
-              }}>
-                <Shield size={17} color="#FFFFFF" />
-              </div>
-              <span style={{ fontSize: 14.5, fontWeight: 900, color: '#FDE047', letterSpacing: '-0.2px' }}>
-                ตัวเลขแสดงความมั่นใจ จากการวิเคราะห์ 3 ด้านหลักๆ (คะแนนเต็ม 100)
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255, 255, 255, 0.75)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                🎯 การตัดสินใจหลักขณะนี้ (ACTION NOW)
+              </span>
+              <span style={chip(regime.trend.includes('BULL') ? C.green : regime.trend.includes('BEAR') ? C.red : C.amber)}>
+                {regime.labelTh}
               </span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{
-                fontSize: 11,
-                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
                 padding: '3px 10px',
                 borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: C.muted,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                fontSize: 12,
+                fontWeight: 900,
+                background: sig.isBestGold ? 'linear-gradient(135deg, #F59E0B, #D97706)' : `${sig.color}25`,
+                color: sig.isBestGold ? '#FFFFFF' : sig.color,
+                border: sig.isBestGold ? '1px solid #FDE047' : `1px solid ${sig.color}66`,
               }}>
-                AI Decision Engine: เทคนิค 35% • มหภาค 35% • Flow 30%
+                <span>{sig.emoji}</span>
+                <span>{sig.labelTh}</span>
               </span>
-              <span style={{
-                fontSize: 11,
-                fontWeight: 800,
-                padding: '3px 10px',
-                borderRadius: 8,
-                background: conviction.isAllGatesPass ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: conviction.isAllGatesPass ? C.green : C.red,
-                border: `1px solid ${conviction.isAllGatesPass ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
-              }}>
-                {conviction.isAllGatesPass ? '✓ ผ่านเกณฑ์ทุกด้าน (Gates Passed)' : '⚠️ Gate Blocked (เฝ้าระวัง)'}
+
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#FFFFFF' }}>
+                {plan.nowActionTh}
               </span>
+            </div>
+
+            <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span>{sig.descTh}</span>
+              {bestSetup && bestSetup.type !== 'NONE' && (
+                <span style={{ color: '#38BDF8', fontWeight: 700 }}>
+                  · Setup: {SETUP_TH[bestSetup.type] || bestSetup.type}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* 4 Cards Grid: Overall Master Card + Pillar 1 + Pillar 2 + Pillar 3 */}
+          {/* Card 3: Confidence Score & Smart Money Radar */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(270px, 100%), 1fr))',
+            background: 'rgba(0, 0, 0, 0.35)',
+            border: `1.5px solid ${getConfidenceScoreColor(overallConfidence)}44`,
+            borderRadius: 14,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
             gap: 14,
-            alignItems: 'stretch',
           }}>
-            {/* 1. Overall Confidence Score Card (ความมั่นใจรวมของสัญญาณ) */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(245, 158, 11, 0.08) 100%)',
-              border: `1.5px solid ${getConfidenceScoreColor(overallConfidence)}66`,
-              borderRadius: 14,
-              padding: '14px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              boxShadow: `0 0 20px ${getConfidenceScoreColor(overallConfidence)}18`,
-            }}>
-              {/* Circular SVG Gauge */}
-              <div style={{ position: 'relative', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="50" height="50" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle
-                    cx="25"
-                    cy="25"
-                    r={21}
-                    fill="none"
-                    stroke="rgba(255, 255, 255, 0.1)"
-                    strokeWidth="4.5"
-                  />
-                  <circle
-                    cx="25"
-                    cy="25"
-                    r={21}
-                    fill="none"
-                    stroke={getConfidenceScoreColor(overallConfidence)}
-                    strokeWidth="4.5"
-                    strokeDasharray={2 * Math.PI * 21}
-                    strokeDashoffset={(2 * Math.PI * 21) - (overallConfidence / 100) * (2 * Math.PI * 21)}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 1s ease' }}
-                  />
-                </svg>
-                <span
-                  style={{
-                    position: 'absolute',
-                    fontSize: '17px',
-                    fontWeight: 900,
-                    color: getConfidenceScoreColor(overallConfidence),
-                  }}
-                >
-                  {overallConfidence}
+            {/* SVG Circular Gauge */}
+            <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="52" height="52" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="26" cy="26" r={22} fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="4" />
+                <circle
+                  cx="26" cy="26" r={22} fill="none"
+                  stroke={getConfidenceScoreColor(overallConfidence)}
+                  strokeWidth="4"
+                  strokeDasharray={2 * Math.PI * 22}
+                  strokeDashoffset={(2 * Math.PI * 22) - (overallConfidence / 100) * (2 * Math.PI * 22)}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span style={{ position: 'absolute', fontSize: '15px', fontWeight: 900, color: getConfidenceScoreColor(overallConfidence) }}>
+                {overallConfidence}
+              </span>
+            </div>
+
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255, 255, 255, 0.75)', textTransform: 'uppercase' }}>
+                  ความมั่นใจรวมของสัญญาณ
+                </span>
+                <span style={{
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  padding: '2px 7px',
+                  borderRadius: 4,
+                  background: conviction.isAllGatesPass ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.18)',
+                  color: conviction.isAllGatesPass ? '#34D399' : '#F87171',
+                  border: `1px solid ${conviction.isAllGatesPass ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                }}>
+                  {conviction.isAllGatesPass ? '✓ Gates Passed' : '⚠️ Gate Blocked'}
                 </span>
               </div>
 
-              <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--text-muted, #94A3B8)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                  ความมั่นใจรวมของสัญญาณ
-                </div>
-                <div style={{ fontSize: '13.5px', fontWeight: 900, color: getConfidenceScoreColor(overallConfidence), lineHeight: 1.3, marginTop: 2 }}>
-                  {getConfidenceScoreLabel(overallConfidence)}
-                </div>
-                <div style={{ fontSize: '10px', color: C.muted, marginTop: 3 }}>
-                  คะแนนเต็ม 100 ({overallConfidence >= 60 ? 'ผ่านเกณฑ์ความเชื่อมั่น' : 'ต่ำกว่าเกณฑ์ความเชื่อมั่น'})
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Pillar 1: ด้านเทคนิคอล */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.45) 0%, rgba(16, 185, 129, 0.06) 100%)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              borderRadius: 14,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 800, color: '#34D399', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    📊 1. ด้านเทคนิคอล
-                  </span>
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    padding: '1px 7px',
-                    borderRadius: 4,
-                    background: 'rgba(52, 211, 153, 0.15)',
-                    color: '#34D399',
-                    border: '1px solid rgba(52, 211, 153, 0.3)',
-                  }}>
-                    35%
-                  </span>
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2, fontWeight: 500 }}>
-                  กราฟแท่งเทียน, โครงสร้าง & Price Action
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 8 }}>
-                  <span style={{ fontSize: 24, fontWeight: 900, color: scoreColor(technicalScore) }}>
-                    {technicalScore}
-                  </span>
-                  <span style={{ fontSize: 11, color: C.muted }}>/ 100</span>
-                </div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: getConfidenceScoreColor(overallConfidence), marginTop: 2 }}>
+                {getConfidenceScoreLabel(overallConfidence)}
               </div>
 
-              <div>
-                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${technicalScore}%`, background: 'linear-gradient(90deg, #10B981, #34D399)' }} />
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <span>เทรนด์: <strong style={{ color: C.text }}>{technical.trendAlignment.direction}</strong></span>
-                  <span>·</span>
-                  <span>RSI: <strong style={{ color: C.text }}>{technical.rsiMatrix.overallStatus}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Pillar 2: ด้านเศรษฐกิจมหภาค & ดอกเบี้ย Fed */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.45) 0%, rgba(245, 158, 11, 0.06) 100%)',
-              border: '1px solid rgba(245, 158, 11, 0.35)',
-              borderRadius: 14,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 800, color: '#FDE047', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    🏛️ 2. ด้านมหภาค & Fed
-                  </span>
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    padding: '1px 7px',
-                    borderRadius: 4,
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    color: '#FDE047',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                  }}>
-                    35%
-                  </span>
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2, fontWeight: 500 }}>
-                  ดอกเบี้ย Fed & Real Yield 10Y (TIPS)
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 8 }}>
-                  <span style={{ fontSize: 24, fontWeight: 900, color: scoreColor(macroScore) }}>
-                    {macroScore}
-                  </span>
-                  <span style={{ fontSize: 11, color: C.muted }}>/ 100</span>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${macroScore}%`, background: 'linear-gradient(90deg, #F59E0B, #FDE047)' }} />
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <span>Bias: <strong style={{ color: macro.bias >= 0 ? C.green : C.red }}>{macro.bias >= 0 ? 'หนุนราคาทอง' : 'กดดันราคาทอง'}</strong></span>
-                  <span>·</span>
-                  <span>Real Yield: <strong style={{ color: C.text }}>{macro.realYield10y != null ? `${macro.realYield10y.toFixed(2)}%` : '—'}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Pillar 3: ด้านตลาดเชื่อมโยง & Order Flow */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.45) 0%, rgba(6, 182, 212, 0.06) 100%)',
-              border: '1px solid rgba(6, 182, 212, 0.35)',
-              borderRadius: 14,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 800, color: '#67E8F9', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    🌐 3. ด้าน Flow & Intermarket
-                  </span>
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    padding: '1px 7px',
-                    borderRadius: 4,
-                    background: 'rgba(6, 182, 212, 0.15)',
-                    color: '#67E8F9',
-                    border: '1px solid rgba(6, 182, 212, 0.3)',
-                  }}>
-                    30%
-                  </span>
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2, fontWeight: 500 }}>
-                  ดอลลาร์ DXY & COT Smart Money Flow
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 8 }}>
-                  <span style={{ fontSize: 24, fontWeight: 900, color: scoreColor(flowInterScore) }}>
-                    {flowInterScore}
-                  </span>
-                  <span style={{ fontSize: 11, color: C.muted }}>/ 100</span>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${flowInterScore}%`, background: 'linear-gradient(90deg, #06B6D4, #38BDF8)' }} />
-                </div>
-                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <span>DXY: <strong style={{ color: C.text }}>{dxy?.value || '—'}</strong></span>
-                  <span>·</span>
-                  <span>Flow: <strong style={{ color: C.text }}>{orderFlow.cvdDirection}</strong></span>
-                </div>
+              <div style={{ fontSize: 10.5, color: 'rgba(255, 255, 255, 0.7)', marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span>Smart Money: <strong style={{ color: ((data as any).alphaFlow?.smartMoneyScore?.bias || '').includes('BULL') ? C.green : C.red }}>
+                  {(data as any).alphaFlow?.smartMoneyScore?.bias || 'BEARISH'} ({(data as any).alphaFlow?.smartMoneyScore?.score ?? -15})
+                </strong></span>
+                <span>·</span>
+                <span>OBs: <strong style={{ color: C.text }}>{(data as any).alphaFlow?.orderBlocks?.length ?? 6} โซน</strong></span>
               </div>
             </div>
           </div>
@@ -775,540 +582,343 @@ export const GoldSignalPage: React.FC = () => {
       {error && <Banner color={C.red} icon="⚠️" title="รีเฟรชล่าสุดไม่สำเร็จ — แสดงข้อมูลชุดก่อนหน้า" text={error} />}
       {data.alerts.map(a => <Banner key={a.messageTh} color={a.level === 'ERROR' ? C.red : C.amber} icon={a.level === 'ERROR' ? '🛑' : '⚠️'} title={a.level === 'ERROR' ? 'ADMIN ALERT' : 'แจ้งเตือนระบบ'} text={a.messageTh} />)}
 
-      {/* ═══ Golden Timing Alert Banner (แจ้งเตือนเวลาทองที่เข้าซื้อได้ พร้อมเสียง Chime & Simulator) ═══ */}
+      {/* ═══ Golden Timing Alert Banner (Compact & Contextual) ═══ */}
       <GoldenTimingAlertBanner 
         data={data} 
         mode={mode} 
         onScrollToPlan={handleScrollToPlan} 
       />
 
-      {/* ═══ Crystal Clear Entry / Stop Loss / Take Profit Cards (จุดเข้า จุดออก ตัดขาดทุน ชัดเจน สวยงาม) ═══ */}
-      <div ref={tradePlanRef}>
-        <PrecisionTradePlanCards 
-          data={data} 
-          mode={mode} 
-          onOpenCalculator={() => setShowCalculator(true)} 
-        />
-      </div>
-
-      {/* ═══ 3-Pillar Confidence Score Section (คะแนนความมั่นใจ 3 ด้านหลัก เต็ม 100) ═══ */}
-      <ThreePillarsConfidenceSection data={data} />
-
-      {/* ═══ Executive Decision Cockpit: 3-Col Hero Grid ═══ */}
+      {/* ═══ Modern 5-Tab Navigation Bar (Segmented Executive Station) ═══ */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-        gap: 16,
-        alignItems: 'stretch',
-      }}>
-        {/* Card 1: Main Action & Hero Signal */}
-        <div style={{
-          background: sig.isBestGold 
-            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.24) 0%, rgba(17, 24, 39, 0.9) 45%, rgba(253, 224, 71, 0.16) 100%)'
-            : `linear-gradient(135deg, ${sig.color}18, rgba(17, 24, 39, 0.85))`,
-          border: sig.isBestGold ? '2px solid #F59E0B' : `2px solid ${sig.color}66`,
-          borderRadius: 18,
-          padding: '20px',
-          boxShadow: sig.isBestGold ? '0 0 35px rgba(245, 158, 11, 0.45)' : `0 8px 30px ${sig.color}18`,
-          animation: sig.isBestGold ? 'goldFlashBlink 1.6s infinite ease-in-out' : (sig.tier === 'READY_GREEN' ? 'greenReadyPulse 2s infinite ease-in-out' : 'none'),
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 6 }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '4px 12px',
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 900,
-                background: sig.isBestGold ? 'linear-gradient(135deg, #F59E0B, #D97706)' : `${sig.color}22`,
-                color: sig.isBestGold ? '#FFFFFF' : sig.color,
-                border: sig.isBestGold ? '1px solid #FDE047' : `1px solid ${sig.color}55`,
-                boxShadow: sig.isBestGold ? '0 0 16px rgba(245, 158, 11, 0.7)' : 'none',
-              }}>
-                <span style={{ fontSize: 14 }}>{sig.emoji}</span>
-                <span>{sig.labelTh}</span>
-              </span>
-              <span style={{ fontSize: 11, color: C.muted, fontWeight: 700 }}>
-                {thaiMode ? 'ฝั่งซื้อทองคำแท่ง' : 'ฝั่งเทรด: ขาขึ้นเท่านั้น (LONG ONLY)'}
-              </span>
-            </div>
-
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.5 }}>
-              🎯 การตัดสินใจหลักขณะนี้ (ACTION NOW)
-            </div>
-            <div style={{
-              fontSize: 'clamp(18px, 2.5vw, 22px)',
-              fontWeight: 900,
-              color: C.text,
-              marginTop: 6,
-              lineHeight: 1.4,
-            }}>
-              {plan.nowActionTh}
-            </div>
-            <div style={{ fontSize: 12, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-              {sig.descTh}
-            </div>
-
-            {/* Live Current Price Badge inside Action Cockpit Card 1 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'rgba(0, 0, 0, 0.42)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: 12,
-              padding: '8px 14px',
-              marginTop: 12,
-              flexWrap: 'wrap',
-              gap: 8,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: '#10B981',
-                  boxShadow: '0 0 8px #10B981',
-                  display: 'inline-block',
-                }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: C.muted }}>
-                  ราคาปัจจุบัน ({thaiMode ? 'ทองคำแท่งขายออก' : mode === 'COMEX_FUTURES' ? 'COMEX GC' : 'XAU/USD Spot'}):
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontSize: 18, fontWeight: 900, color: '#FFD700', letterSpacing: '-0.3px' }}>
-                  {thaiMode ? thb(price.thaiGoldBarSell) : mode === 'COMEX_FUTURES' ? usd(price.comexPrice) : usd(price.xauUsd)}
-                </span>
-                {thaiMode ? (
-                  price.thaiGoldChange != null && (
-                    <span style={{ fontSize: 11, fontWeight: 800, color: price.thaiGoldChange >= 0 ? C.green : C.red }}>
-                      ({price.thaiGoldChange >= 0 ? '+' : ''}{price.thaiGoldChange}฿)
-                    </span>
-                  )
-                ) : (
-                  price.xauUsdChange24hPct != null && (
-                    <span style={{ fontSize: 11, fontWeight: 800, color: price.xauUsdChange24hPct >= 0 ? C.green : C.red }}>
-                      {signed(price.xauUsdChange24hPct)}
-                    </span>
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* ความมั่นใจรวมของสัญญาณ Badge inside Action Cockpit Card 1 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: 'rgba(0, 0, 0, 0.42)',
-              border: `1.5px solid ${getConfidenceScoreColor(overallConfidence)}66`,
-              borderRadius: 12,
-              padding: '8px 14px',
-              marginTop: 8,
-              boxShadow: `0 0 15px ${getConfidenceScoreColor(overallConfidence)}15`,
-            }}>
-              <div style={{ position: 'relative', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="38" height="38" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="19" cy="19" r={15} fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="3" />
-                  <circle
-                    cx="19" cy="19" r={15} fill="none"
-                    stroke={getConfidenceScoreColor(overallConfidence)}
-                    strokeWidth="3"
-                    strokeDasharray={2 * Math.PI * 15}
-                    strokeDashoffset={(2 * Math.PI * 15) - (overallConfidence / 100) * (2 * Math.PI * 15)}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span style={{ position: 'absolute', fontSize: '13px', fontWeight: 900, color: getConfidenceScoreColor(overallConfidence) }}>
-                  {overallConfidence}
-                </span>
-              </div>
-              <div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted, #94A3B8)', textTransform: 'uppercase' }}>
-                  ความมั่นใจรวมของสัญญาณ
-                </div>
-                <div style={{ fontSize: '12.5px', fontWeight: 800, color: getConfidenceScoreColor(overallConfidence) }}>
-                  {getConfidenceScoreLabel(overallConfidence)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginTop: 16,
-            paddingTop: 12,
-            borderTop: '1px solid var(--border-color)',
-            flexWrap: 'wrap',
-            gap: 8,
-          }}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <span style={chip(regime.trend.includes('BULL') ? C.green : regime.trend.includes('BEAR') ? C.red : C.amber)}>
-                {regime.labelTh}
-              </span>
-              {bestSetup && bestSetup.type !== 'NONE' && (
-                <span style={chip(C.blue)}>
-                  Setup: {SETUP_TH[bestSetup.type] || bestSetup.type}
-                </span>
-              )}
-            </div>
-            <div style={{ fontSize: 11, color: C.muted }}>
-              Directional Bias: <strong style={{ color: C.text }}>{conviction.directionalBias}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Conviction & Model Probability */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 18,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: C.muted }}>
-                📊 CONVICTION & WIN PROBABILITY
-              </div>
-              <span style={chip(conviction.isAllGatesPass ? C.green : C.red)}>
-                {conviction.isAllGatesPass ? '✓ Gates Passed' : '⚠ Gate Blocked'}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 8 }}>
-              <span style={{ fontSize: 44, fontWeight: 900, color: scoreColor(conviction.totalScore), letterSpacing: -1 }}>
-                {conviction.totalScore}
-              </span>
-              <span style={{ fontSize: 18, color: C.muted, fontWeight: 600 }}>/ 100</span>
-              <span style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: scoreColor(conviction.totalScore),
-                background: `${scoreColor(conviction.totalScore)}15`,
-                padding: '2px 8px',
-                borderRadius: 6,
-                marginLeft: 'auto',
-              }}>
-                {conviction.totalScore >= 70 ? 'ความมั่นใจสูง' : conviction.totalScore >= 50 ? 'ความมั่นใจปานกลาง' : 'ความมั่นใจต่ำ'}
-              </span>
-            </div>
-
-            <div style={{ height: 8, background: 'var(--bg-card-inner)', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
-              <div style={{
-                width: `${conviction.totalScore}%`,
-                height: '100%',
-                background: `linear-gradient(90deg, #F59E0B, ${scoreColor(conviction.totalScore)})`,
-                borderRadius: 4,
-              }} />
-            </div>
-
-            {/* Sub-metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
-              <div style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--bg-card-inner)' }}>
-                <div style={{ fontSize: 10, color: C.muted }}>Win Prob P(TP1)</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: validation.winProbability.calibrated ? C.green : C.amber }}>
-                  {validation.winProbability.calibrated ? `${validation.winProbability.pTp1}%` : 'ประเมินจาก Setup'}
-                </div>
-              </div>
-
-              <div style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--bg-card-inner)' }}>
-                <div style={{ fontSize: 10, color: C.muted }}>Data Confidence</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: scoreColor(dataQuality.dataConfidence) }}>
-                  {dataQuality.dataConfidence}/100 ({dataQuality.level})
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 12, lineHeight: 1.5 }}>
-            {validation.winProbability.noteTh}
-          </div>
-        </div>
-
-        {/* Card 3: Live Price Ticker & Thai Gold Association */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 18,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: C.muted }}>
-                {thaiMode ? '🇹🇭 สมาคมค้าทองคำแห่งประเทศไทย' : '🌐 XAU/USD SPOT PRICE'}
-              </div>
-              <span style={{ fontSize: 11, color: C.muted }}>
-                USD/THB {price.usdThb ? price.usdThb.toFixed(2) : '—'}
-              </span>
-            </div>
-
-            {thaiMode ? (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-                  <div>
-                    <span style={{ fontSize: 11, color: C.muted }}>รับซื้อ (Buy back)</span>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: C.text }}>{thb(price.thaiGoldBarBuy)}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: 11, color: C.muted }}>ขายออก (Sell)</span>
-                    <div style={{ fontSize: 26, fontWeight: 900, color: '#F59E0B' }}>{thb(price.thaiGoldBarSell)}</div>
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 10px',
-                  borderRadius: 10,
-                  background: 'var(--bg-card-inner)',
-                  marginTop: 10,
-                  fontSize: 11,
-                }}>
-                  <span>เปลี่ยนแปลงวันนี้:</span>
-                  <strong style={{ color: (price.thaiGoldChange ?? 0) >= 0 ? C.green : C.red }}>
-                    {(price.thaiGoldChange ?? 0) >= 0 ? '+' : ''}{price.thaiGoldChange?.toLocaleString() ?? 0} บาท
-                  </strong>
-                  <span style={{ color: C.muted }}>
-                    {price.thaiGoldRound ? `รอบที่ ${price.thaiGoldRound}` : ''}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 32, fontWeight: 900, color: C.text, letterSpacing: -1 }}>
-                  {usd(price.xauUsd)}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: price.xauUsdChange24hPct >= 0 ? C.green : C.red }}>
-                    {signed(price.xauUsdChange24hPct)}
-                  </span>
-                  <span style={{ fontSize: 11, color: C.muted }}>
-                    (24h: {signed(price.xauUsdChange24h, '$', 2)})
-                  </span>
-                </div>
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>
-                  H: {usd(price.xauUsdHigh24h)} · L: {usd(price.xauUsdLow24h)} · COMEX Basis {signed(price.comexBasis, '', 1)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 14,
-            paddingTop: 10,
-            borderTop: '1px solid var(--border-color)',
-            fontSize: 11,
-            color: C.muted,
-          }}>
-            <span>COMEX GC: {usd(price.comexPrice)}</span>
-            <span>{price.goldSpotSource.split('(')[0]}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ 6 คำตอบหลัก (Executive 6 Core Action Answers) ═══ */}
-      <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 20,
-        padding: '22px',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>🧭</span>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>
-                การตัดสินใจ 6 มิติ (Trade Execution Matrix)
-              </div>
-              <div style={{ fontSize: 11, color: C.muted }}>
-                ตอบโจทย์การเทรดจริง: จังหวะเข้า โซนราคา จุดยอมแพ้ เป้ากำไร การบริหาร และจุดเปลี่ยนแผน
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowCalculator(!showCalculator)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 700,
-              background: showCalculator ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.06)',
-              color: showCalculator ? '#F59E0B' : C.text,
-              border: `1px solid ${showCalculator ? '#F59E0B' : 'var(--border-color)'}`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Calculator size={14} />
-            <span>{showCalculator ? 'ซ่อนเครื่องคำนวณไม้' : 'เปิดเครื่องคำนวณไม้ & ความเสี่ยง'}</span>
-          </button>
-        </div>
-
-        <DecisionGrid d={data} thaiMode={thaiMode} />
-
-        {/* AI In-depth Explanation Box */}
-        <div style={{
-          marginTop: 18,
-          padding: '16px 18px',
-          borderRadius: 14,
-          background: 'var(--bg-card-inner)',
-          border: '1px solid var(--border-color)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 16 }}>🤖</span>
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>
-              AI Executive Summary & Market Context (คำอธิบายกลยุทธ์เชิงลึก)
-            </div>
-          </div>
-          <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-            {plan.aiExplanationTh}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ Position Sizer & Risk Calculator (Collapsible / Prominent) ═══ */}
-      {showCalculator && (
-        <GoldRiskCalculator 
-          mode={mode} 
-          price={price} 
-          plan={plan.entry} 
-          thaiPlan={plan.thaiGoldEntry} 
-        />
-      )}
-
-      {/* ═══ Prominent Hero Technical Chart ═══ */}
-      <div style={{ minWidth: 0 }}>
-        <GoldPlanChart 
-          mode={mode === 'COMEX_FUTURES' ? 'COMEX_FUTURES' : 'XAU_USD_SPOT'} 
-          plan={plan.entry} 
-          thaiPlan={plan.thaiGoldEntry}
-          supports={supports} 
-          resistances={resistances} 
-          currentPrice={thaiMode ? price.thaiGoldBarSell ?? undefined : price.xauUsd}
-        />
-      </div>
-
-      {/* ═══ Factor Cards Grid (Why Now / Why Not / Watch Out / Changes) ═══ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
-        gap: 14,
-      }}>
-        {plan.whyNow.length > 0 && (
-          <FactorCard 
-            title={thaiMode ? '✅ ปัจจัยหนุนการซื้อ' : conviction.side === 'SHORT' ? '✅ WHY SHORT? เหตุผลฝั่งขาย' : '✅ WHY LONG? เหตุผลฝั่งซื้อ'} 
-            mark="✓" 
-            items={plan.whyNow} 
-            color={C.green} 
-          />
-        )}
-        {plan.whyNot.length > 0 && (
-          <FactorCard 
-            title="⚠️ WHAT'S AGAINST? ข้อจำกัด" 
-            mark="✕" 
-            items={plan.whyNot} 
-            color={C.red} 
-          />
-        )}
-        {plan.watchOut.length > 0 && (
-          <FactorCard 
-            title="🚨 WATCH OUT เฝ้าระวัง" 
-            mark="⚠" 
-            items={plan.watchOut} 
-            color={C.amber} 
-          />
-        )}
-        <FactorCard 
-          title="⚡ แผนจะเปลี่ยนเมื่อ (INVALIDATION)" 
-          mark="→" 
-          items={plan.whatChanges} 
-          color={C.purple} 
-        />
-      </div>
-
-      {/* ═══ Navigation Tabs for In-Depth Radar ═══ */}
-      <div style={{
-        display: 'flex',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))',
         gap: 6,
-        overflowX: 'auto',
-        borderBottom: '1px solid var(--border-color)',
-        paddingBottom: 2,
+        background: 'rgba(15, 23, 42, 0.75)',
+        padding: '6px',
+        borderRadius: 14,
+        border: '1px solid var(--border-color)',
+        backdropFilter: 'blur(10px)',
       }}>
-        {tabs.map(t => {
+        {[
+          { id: 'plan', label: '🎯 แผนเทรด & จุดเข้าออก', icon: Target, badge: activePos ? 'มี Position' : undefined },
+          { id: 'alpha_flow', label: '🌊 Alpha Flow V1.2', icon: Zap, badge: 'Smart Money' },
+          { id: 'three_pillars', label: '🏛️ วิเคราะห์ 3 เสาหลัก', icon: Shield, badge: `${overallConfidence}/100` },
+          { id: 'chart', label: '📊 กราฟราคา & ปัจจัย', icon: BarChart3 },
+          { id: 'news_stats', label: '📰 ข่าว & สถิติย้อนหลัง', icon: Activity },
+        ].map(t => {
           const Icon = t.icon;
-          const active = tab === t.id;
+          const active = mainTab === t.id;
           return (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as any)}
+              onClick={() => setMainTab(t.id as any)}
               style={{
-                padding: '10px 16px',
-                borderRadius: '10px 10px 0 0',
+                padding: '9px 12px',
+                borderRadius: 10,
                 fontSize: 12,
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
+                fontWeight: active ? 800 : 600,
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 6,
-                background: active ? 'var(--bg-card)' : 'transparent',
-                color: active ? C.text : C.muted,
-                borderTop: `2px solid ${active ? '#F59E0B' : 'transparent'}`,
-                borderLeft: `1px solid ${active ? 'var(--border-color)' : 'transparent'}`,
-                borderRight: `1px solid ${active ? 'var(--border-color)' : 'transparent'}`,
-                borderBottom: 'none',
+                background: active ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.12))' : 'transparent',
+                color: active ? '#FDE047' : 'rgba(255, 255, 255, 0.75)',
+                border: active ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid transparent',
+                boxShadow: active ? '0 2px 12px rgba(245, 158, 11, 0.25)' : 'none',
               }}
             >
               <Icon size={14} style={{ color: active ? '#F59E0B' : 'inherit' }} />
               <span>{t.label}</span>
+              {t.badge && (
+                <span style={{
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  padding: '1px 5px',
+                  borderRadius: 8,
+                  background: active ? 'rgba(245, 158, 11, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                  color: active ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)',
+                }}>
+                  {t.badge}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* ═══ Tab Contents ═══ */}
-      <div style={{ minHeight: 320 }}>
-        {tab === 'deep' && <DeepTab d={data} thaiMode={thaiMode} />}
-        {tab === 'macro' && <MacroTab d={data} />}
-        {tab === 'intermarket' && <IntermarketTab d={data} />}
-        {tab === 'flow' && <FlowTab d={data} />}
-        {tab === 'news' && <NewsTab d={data} />}
-        {tab === 'plan' && (
-          <PlanTab 
-            d={data} 
-            thaiMode={thaiMode} 
-            form={posForm} 
-            setForm={setPosForm} 
-            onApply={applyPosition} 
-            onClear={clearPosition} 
-            active={!!activePos} 
-          />
-        )}
-        {tab === 'backtest' && <GoldBacktestPanel />}
-        {tab === 'sources' && <SourcesTab d={data} />}
-      </div>
+      {/* ═══ Tab 1: 🎯 สัญญาณ & แผนเทรด (Signal & Plan) ═══ */}
+      {mainTab === 'plan' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Precision Trade Plan Cards */}
+          <div ref={tradePlanRef}>
+            <PrecisionTradePlanCards 
+              data={data} 
+              mode={mode} 
+              onOpenCalculator={() => setShowCalculator(true)} 
+            />
+          </div>
+
+          {/* Quick Action Bar for Plan Tools */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 10,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 14,
+            padding: '10px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>
+                🛠️ เครื่องมือช่วยวางแผน & จัดการไม้:
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowCalculator(!showCalculator)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  background: showCalculator ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.06)',
+                  color: showCalculator ? '#F59E0B' : C.text,
+                  border: `1px solid ${showCalculator ? '#F59E0B' : 'var(--border-color)'}`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Calculator size={14} />
+                <span>{showCalculator ? 'ซ่อนเครื่องคำนวณไม้' : 'เปิดเครื่องคำนวณไม้ & ความเสี่ยง'}</span>
+              </button>
+
+              <button
+                onClick={() => setShowPosForm(!showPosForm)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  background: (showPosForm || activePos) ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.06)',
+                  color: (showPosForm || activePos) ? '#60A5FA' : C.text,
+                  border: `1px solid ${(showPosForm || activePos) ? '#3B82F6' : 'var(--border-color)'}`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Compass size={14} />
+                <span>{showPosForm ? 'ซ่อนระบบติดตามไม้' : activePos ? `ติดตามไม้ (${activePos.side} ${activePos.entry})` : 'บันทึกไม้เทรดของคุณ'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Calculator */}
+          {showCalculator && (
+            <GoldRiskCalculator 
+              mode={mode} 
+              price={price} 
+              plan={plan.entry} 
+              thaiPlan={plan.thaiGoldEntry} 
+            />
+          )}
+
+          {/* Collapsible Position Tracking Form */}
+          {showPosForm && (
+            <PlanTab 
+              d={data} 
+              thaiMode={thaiMode} 
+              form={posForm} 
+              setForm={setPosForm} 
+              onApply={() => { applyPosition(); setShowPosForm(false); }} 
+              onClear={clearPosition} 
+              active={!!activePos} 
+            />
+          )}
+
+          {/* 6 คำตอบหลัก (Executive 6 Core Action Answers) */}
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 18,
+            padding: '20px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 20 }}>🧭</span>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>
+                  การตัดสินใจ 6 มิติ (Trade Execution Matrix)
+                </div>
+                <div style={{ fontSize: 11, color: C.muted }}>
+                  ตอบโจทย์การเทรดจริง: จังหวะเข้า โซนราคา จุดยอมแพ้ เป้ากำไร การบริหาร และจุดเปลี่ยนแผน
+                </div>
+              </div>
+            </div>
+
+            <DecisionGrid d={data} thaiMode={thaiMode} />
+
+            {/* AI Executive Summary Box */}
+            <div style={{
+              marginTop: 16,
+              padding: '14px 16px',
+              borderRadius: 12,
+              background: 'var(--bg-card-inner)',
+              border: '1px solid var(--border-color)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>🤖</span>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>
+                  AI Executive Summary & Market Context (คำอธิบายกลยุทธ์เชิงลึก)
+                </div>
+              </div>
+              <div style={{ fontSize: 12.5, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                {plan.aiExplanationTh}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Tab 2: 🌊 Alpha Flow V1.2 (Smart Money & MTF) ═══ */}
+      {mainTab === 'alpha_flow' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <AlphaFlowDynamics data={data} />
+        </div>
+      )}
+
+      {/* ═══ Tab 3: 🏛️ วิเคราะห์ 3 เสาหลัก (3-Pillars Thesis) ═══ */}
+      {mainTab === 'three_pillars' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Main 3 Pillars Confidence Section */}
+          <ThreePillarsConfidenceSection data={data} />
+
+          {/* Sub-selector for in-depth pillar views */}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            borderBottom: '1px solid var(--border-color)',
+            paddingBottom: 6,
+          }}>
+            {[
+              { id: 'all', label: '📑 ดูภาพรวมทั้งหมด' },
+              { id: 'technical', label: '📊 1. ด้านเทคนิคอล & RSI Matrix' },
+              { id: 'macro', label: '🏛️ 2. ด้าน Fed & Real Yield TIPS' },
+              { id: 'flow', label: '🔄 3. ด้าน Order Flow & COT' },
+            ].map(st => (
+              <button
+                key={st.id}
+                onClick={() => setThreePillarsSubTab(st.id as any)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: threePillarsSubTab === st.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: threePillarsSubTab === st.id ? C.text : C.muted,
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+
+          {(threePillarsSubTab === 'all' || threePillarsSubTab === 'technical') && (
+            <DeepTab d={data} thaiMode={thaiMode} />
+          )}
+
+          {(threePillarsSubTab === 'all' || threePillarsSubTab === 'macro') && (
+            <MacroTab d={data} />
+          )}
+
+          {(threePillarsSubTab === 'all' || threePillarsSubTab === 'flow') && (
+            <FlowTab d={data} />
+          )}
+        </div>
+      )}
+
+      {/* ═══ Tab 4: 📊 กราฟ & โครงสร้างราคา (Chart & Structure) ═══ */}
+      {mainTab === 'chart' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            <GoldPlanChart 
+              mode={mode === 'COMEX_FUTURES' ? 'COMEX_FUTURES' : 'XAU_USD_SPOT'} 
+              plan={plan.entry} 
+              thaiPlan={plan.thaiGoldEntry}
+              supports={supports} 
+              resistances={resistances} 
+              currentPrice={thaiMode ? price.thaiGoldBarSell ?? undefined : price.xauUsd}
+            />
+          </div>
+
+          {/* Factor Cards Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
+            gap: 14,
+          }}>
+            {plan.whyNow.length > 0 && (
+              <FactorCard 
+                title={thaiMode ? '✅ ปัจจัยหนุนการซื้อ' : conviction.side === 'SHORT' ? '✅ WHY SHORT? เหตุผลฝั่งขาย' : '✅ WHY LONG? เหตุผลฝั่งซื้อ'} 
+                mark="✓" 
+                items={plan.whyNow} 
+                color={C.green} 
+              />
+            )}
+            {plan.whyNot.length > 0 && (
+              <FactorCard 
+                title="⚠️ WHAT'S AGAINST? ข้อจำกัด" 
+                mark="✕" 
+                items={plan.whyNot} 
+                color={C.red} 
+              />
+            )}
+            {plan.watchOut.length > 0 && (
+              <FactorCard 
+                title="🚨 WATCH OUT เฝ้าระวัง" 
+                mark="⚠" 
+                items={plan.watchOut} 
+                color={C.amber} 
+              />
+            )}
+            <FactorCard 
+              title="⚡ แผนจะเปลี่ยนเมื่อ (INVALIDATION)" 
+              mark="→" 
+              items={plan.whatChanges} 
+              color={C.purple} 
+            />
+          </div>
+
+          <IntermarketTab d={data} />
+        </div>
+      )}
+
+      {/* ═══ Tab 5: 📰 ข่าวสาร & สถิติ (News, Macro & Backtest) ═══ */}
+      {mainTab === 'news_stats' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))',
+            gap: 16,
+          }}>
+            <NewsTab d={data} />
+            <GoldBacktestPanel />
+          </div>
+
+          <SourcesTab d={data} />
+        </div>
+      )}
 
       {/* ═══ Footer ═══ */}
       <div style={{

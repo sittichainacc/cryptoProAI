@@ -19,3 +19,5 @@ export { GoldExplanationEngine } from './gold_explanation.engine.js';
 export { GoldBacktestEngine } from './gold_backtest.engine.js';
 export { ThaiGoldAdapter } from './thai_gold.adapter.js';
 export { GoldDecisionEngine } from './gold_decision.engine.js';
+export { AlphaFlowEngine } from './gold_alpha_flow.engine.js';
+export type { AlphaFlowResult, OrderBlock, FairValueGap, TrendTunnel, MTFRow, SmartMoneyBias } from './gold_alpha_flow.engine.js';
