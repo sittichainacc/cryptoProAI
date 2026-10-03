@@ -386,8 +386,9 @@ export const App: React.FC = () => {
     const role: ValidRole = validRoles.includes(user.role as ValidRole) ? (user.role as ValidRole) : 'free';
     setUserRole(role);
     localStorage.setItem('cryptopro_auth_role', role);
-    // Reload user-scoped watchlist from Supabase PostgreSQL
+    // Reload user-scoped watchlist and alerts from Supabase PostgreSQL
     api.getWatchlist().then((wl) => setWatchlist(wl)).catch(console.error);
+    api.getRecentAlerts().then((al) => setAlerts(al)).catch(console.error);
   };
 
   // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin ให้กลับหน้า Home
@@ -399,8 +400,9 @@ export const App: React.FC = () => {
     setUserRole('free');
     localStorage.removeItem('cryptopro_auth_role');
     localStorage.removeItem('cryptopro_auth_user');
-    // Reload guest watchlist from Supabase PostgreSQL
+    // Reload guest watchlist and alerts from Supabase PostgreSQL
     api.getWatchlist().then((wl) => setWatchlist(wl)).catch(console.error);
+    api.getRecentAlerts().then((al) => setAlerts(al)).catch(console.error);
   };
 
   // ─── Tier-based access helper ──────────────────────────────────────────────

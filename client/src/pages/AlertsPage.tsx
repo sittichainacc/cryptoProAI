@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { AlertItem, TickerData } from '../types/index.js';
-import { Bell, Plus, CheckCircle, AlertCircle, ShieldAlert, Clock, Trash2, Volume2 } from 'lucide-react';
+import { Bell, Plus, CheckCircle, AlertCircle, ShieldAlert, Clock, Trash2, Volume2, Database, Power, Filter } from 'lucide-react';
 
 interface AlertsPageProps {
   currency: 'THB' | 'USDT';
@@ -46,6 +46,34 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'triggered'>('all');
+
+  const currentUser = (() => {
+    try {
+      const s = localStorage.getItem('cryptopro_auth_user');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const userRole = currentUser?.role || 'free';
+  const maxQuota = currentUser?.maxAlerts || (userRole === 'admin' ? 999 : userRole === 'platinum' ? 100 : userRole === 'premium' ? 25 : userRole === 'gold' ? 10 : 3);
+  const roleBadgeColor = userRole === 'admin' ? '#F43F5E' : userRole === 'platinum' ? '#A78BFA' : userRole === 'premium' ? '#38BDF8' : userRole === 'gold' ? '#F59E0B' : '#94A3B8';
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const updated = await api.toggleAlertStatus(id);
+      if (updated) {
+        setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: updated.status } : a)));
+        setSuccessToast(`เปลี่ยนสถานะการแจ้งเตือนเป็น ${updated.status === 'active' ? 'เปิดใช้งาน (ACTIVE)' : 'ปิดชั่วคราว'} เรียบร้อย`);
+        setTimeout(() => setSuccessToast(null), 2500);
+      }
+    } catch (err: any) {
+      setErrorToast(err.message || 'เปลี่ยนสถานะไม่สำเร็จ');
+      setTimeout(() => setErrorToast(null), 3000);
+    }
+  };
 
   const handleCreateAlert = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,10 +89,12 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
       });
       setAlerts((prev) => [created, ...prev]);
       playNotificationChime();
-      setSuccessToast(`บันทึกการแจ้งเตือนสำหรับ ${selectedCoin} สำเร็จแล้ว`);
-      setTimeout(() => setSuccessToast(null), 3000);
-    } catch (err) {
+      setSuccessToast(`บันทึกการแจ้งเตือนสำหรับ ${selectedCoin} สำเร็จแล้ว (บันทึกลง Supabase DB)`);
+      setTimeout(() => setSuccessToast(null), 3500);
+    } catch (err: any) {
       console.error('Failed to create alert:', err);
+      setErrorToast(err.message || 'บันทึกการแจ้งเตือนไม่สำเร็จ');
+      setTimeout(() => setErrorToast(null), 4500);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,6 +135,17 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             ตั้งการแจ้งเตือนตาม Price, Volume Spike, Technical Score, Breakout, หรือ Signal Change
           </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: `${roleBadgeColor}20`, color: roleBadgeColor, fontWeight: 800, border: `1px solid ${roleBadgeColor}50` }}>
+              👤 {currentUser?.name || currentUser?.username || 'ผู้ใช้งานทั่วไป'} ({userRole.toUpperCase()})
+            </span>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#34D399', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              📊 โควต้าที่ใช้: {alerts.length} / {maxQuota} รายการ
+            </span>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60A5FA', fontWeight: 600, border: '1px solid rgba(59, 130, 246, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Database size={11} /> ซิงก์กับ Supabase PostgreSQL อัตโนมัติ
+            </span>
+          </div>
         </div>
         <button
           onClick={playNotificationChime}
@@ -117,7 +158,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
         </button>
       </div>
 
-      {/* Success Notification Banner */}
+      {/* Success & Error Notification Banners */}
       {successToast && (
         <div
           style={{
@@ -135,6 +176,25 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
         >
           <CheckCircle size={16} color="#10B981" />
           <span>{successToast}</span>
+        </div>
+      )}
+      {errorToast && (
+        <div
+          style={{
+            padding: '10px 16px',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#F87171',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <AlertCircle size={16} color="#EF4444" />
+          <span>{errorToast}</span>
         </div>
       )}
 
@@ -233,14 +293,37 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
 
         {/* Alerts Feed */}
         <div className="crypto-card">
-          <div className="card-header-row">
+          <div className="card-header-row" style={{ flexWrap: 'wrap', gap: '10px' }}>
             <div className="card-title">
               รายการแจ้งเตือนที่ทำงานอยู่ ({alerts.length})
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {(['all', 'active', 'triggered'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setFilterStatus(mode)}
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--border-color)',
+                    background: filterStatus === mode ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
+                    color: filterStatus === mode ? 'var(--neon-cyan)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontWeight: filterStatus === mode ? 700 : 500,
+                  }}
+                >
+                  {mode === 'all' ? 'ทั้งหมด' : mode === 'active' ? 'เฝ้าระวัง' : 'แจ้งเตือนแล้ว'}
+                </button>
+              ))}
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {alerts.map((a) => (
+            {alerts
+              .filter((a) => filterStatus === 'all' || a.status === filterStatus)
+              .map((a) => (
               <div
                 key={a.id}
                 className="alert-feed-item"
@@ -278,8 +361,23 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({ currency }) => {
                     <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{a.time}</div>
                   </div>
                   <button
+                    onClick={() => handleToggleStatus(a.id)}
+                    title={a.status === 'active' ? 'คลิกเพื่อปิดชั่วคราว' : 'คลิกเพื่อเปิดใช้งาน'}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: a.status === 'active' ? '#10B981' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Power size={15} />
+                  </button>
+                  <button
                     onClick={() => handleDeleteAlert(a.id)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    title="ลบการแจ้งเตือนนี้"
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   >
                     <Trash2 size={15} />
                   </button>

@@ -170,6 +170,9 @@ export const api = {
       body: JSON.stringify(alertData),
     });
     const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || json.error || 'Failed to create alert');
+    }
     return json.data;
   },
 
@@ -179,6 +182,14 @@ export const api = {
     });
     const json = await res.json();
     return json.success;
+  },
+
+  async toggleAlertStatus(id: string): Promise<AlertItem> {
+    const res = await authFetch(`${API_BASE}/market/alerts/${encodeURIComponent(id)}/toggle`, {
+      method: 'POST',
+    });
+    const json = await res.json();
+    return json.data;
   },
 
   async getNews(): Promise<CryptoNewsItem[]> {

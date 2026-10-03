@@ -9,6 +9,7 @@ import { TradingPlanEngine } from '../engines/trading_plan.engine.js';
 import { QuantPremiumEngine, DEFAULT_PHASE20_CONFIG } from '../engines/quant_premium.engine.js';
 import { UltimateQualificationEngine, ULTIMATE_POLICY_V1 } from '../engines/ultimate_qualification.engine.js';
 import { WatchlistService } from '../database/watchlist.service.js';
+import { AlertsService } from '../database/alerts.service.js';
 import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
@@ -299,32 +300,56 @@ apiRouter.get('/market/portfolio', (_req, res) => {
 });
 
 /**
- * Recent Alerts
+ * Recent Alerts (Connected to Supabase PostgreSQL per user)
  */
-apiRouter.get('/market/alerts', (_req, res) => {
-  const alerts = marketStore.getAlerts();
-  res.json({ success: true, data: alerts });
-});
-
-apiRouter.post('/market/alerts', (req, res) => {
-  const { symbol, alertType, descriptionTh, currentValue, severity } = req.body;
-  if (!symbol || !alertType || !currentValue) {
-    return res.status(400).json({ success: false, error: 'symbol, alertType, and currentValue are required' });
+apiRouter.get('/market/alerts', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const result = await AlertsService.getUserAlerts(userId, marketStore);
+    res.json({ success: true, data: result.items, quota: result.quota });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
-  const newAlert = marketStore.addAlert({
-    symbol: String(symbol).toUpperCase(),
-    alertType: String(alertType),
-    descriptionTh: descriptionTh || `${symbol} ${alertType} ${currentValue}`,
-    currentValue: String(currentValue),
-    severity: severity || 'important',
-    status: 'active',
-  });
-  res.json({ success: true, data: newAlert });
 });
 
-apiRouter.delete('/market/alerts/:id', (req, res) => {
-  const success = marketStore.deleteAlert(req.params.id);
-  res.json({ success, message: success ? 'Alert deleted' : 'Alert not found' });
+apiRouter.post('/market/alerts', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbol, alertType, descriptionTh, currentValue, severity } = req.body;
+    if (!symbol || !alertType) {
+      return res.status(400).json({ success: false, error: 'symbol and alertType are required' });
+    }
+    const newAlert = await AlertsService.createAlert(userId, {
+      symbol: String(symbol),
+      alertType: String(alertType),
+      conditionValue: currentValue,
+      descriptionTh,
+      severity,
+    });
+    res.json({ success: true, data: newAlert });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message, message: err.message });
+  }
+});
+
+apiRouter.delete('/market/alerts/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const success = await AlertsService.deleteAlert(userId, req.params.id);
+    res.json({ success, message: success ? 'Alert deleted' : 'Alert not found' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/market/alerts/:id/toggle', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const updated = await AlertsService.toggleAlertStatus(userId, req.params.id);
+    res.json({ success: !!updated, data: updated });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
 });
 
 /**
