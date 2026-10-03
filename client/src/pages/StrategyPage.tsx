@@ -19,9 +19,13 @@ import {
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
-  CheckCircle
+  CheckCircle,
+  BookOpen,
+  Database,
+  ShieldCheck,
+  FileEdit
 } from 'lucide-react';
-import { TickerData, PaperTrade } from '../types/index.js';
+import { TickerData, PaperTrade, TradingJournalItem } from '../types/index.js';
 import { api } from '../services/api.js';
 import { getCurrencyMultiplier } from '../utils/currency.js';
 import { realtimeService } from '../services/realtime.js';
@@ -32,7 +36,23 @@ interface StrategyPageProps {
 }
 
 export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, currency }) => {
-  const [activeTab, setActiveTab] = useState<'dca' | 'strategies' | 'expectancy' | 'correlation' | 'paper_trading'>('dca');
+  const [activeTab, setActiveTab] = useState<'dca' | 'strategies' | 'expectancy' | 'correlation' | 'paper_trading' | 'trading_journal'>('dca');
+  const activeUsername = localStorage.getItem('cryptopro_active_username') || 'totokung';
+  const activeRole = localStorage.getItem('cryptopro_auth_role') || 'free';
+
+  // Trading Journal State
+  const [journals, setJournals] = useState<TradingJournalItem[]>([]);
+  const [isLoadingJournals, setIsLoadingJournals] = useState(false);
+  const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
+  const [journalTitle, setJournalTitle] = useState('');
+  const [journalDate, setJournalDate] = useState(new Date().toISOString().slice(0, 10));
+  const [journalSentiment, setJournalSentiment] = useState<'BULLISH' | 'BEARISH' | 'NEUTRAL' | 'VOLATILE'>('BULLISH');
+  const [journalSummary, setJournalSummary] = useState('');
+  const [journalLessons, setJournalLessons] = useState('');
+  const [journalWins, setJournalWins] = useState(0);
+  const [journalLosses, setJournalLosses] = useState(0);
+  const [journalNetPnl, setJournalNetPnl] = useState(0);
+  const [isSavingJournal, setIsSavingJournal] = useState(false);
   
   // DCA Calculator State
   const [dcaSymbol, setDcaSymbol] = useState('BTC');
@@ -83,6 +103,18 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
     }
   };
 
+  const loadJournals = async () => {
+    setIsLoadingJournals(true);
+    try {
+      const data = await api.getJournals();
+      setJournals(data);
+    } catch (e) {
+      console.error('Failed to load journals:', e);
+    } finally {
+      setIsLoadingJournals(false);
+    }
+  };
+
   useEffect(() => {
     api.getCoins().then((coins) => {
       setAvailableCoins(coins);
@@ -95,7 +127,61 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
       }
     });
     loadPaperTradingData();
+    loadJournals();
   }, []);
+
+  const handleAutoFillJournalFromTrades = () => {
+    const closed = paperTrades.filter((t) => t.status === 'CLOSED');
+    const wins = closed.filter((t) => (t.realizedPnl ?? 0) > 0).length;
+    const losses = closed.filter((t) => (t.realizedPnl ?? 0) < 0).length;
+    const netPnl = closed.reduce((sum, t) => sum + (t.realizedPnl ?? 0), 0);
+    setJournalWins(wins);
+    setJournalLosses(losses);
+    setJournalNetPnl(Number(netPnl.toFixed(2)));
+    setJournalTitle(`สรุปผลการเทรดประจำวัน (${new Date().toLocaleDateString('th-TH')})`);
+    setJournalSummary(`บันทึกคำสั่งปิด ${closed.length} ออเดอร์ (ชนะ ${wins} ไม้ / แพ้ ${losses} ไม้) ผลกำไรสุทธิ ${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}`);
+  };
+
+  const handleSaveJournal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!journalTitle.trim()) return;
+    setIsSavingJournal(true);
+    try {
+      await api.createJournal({
+        title: journalTitle,
+        tradeDate: journalDate,
+        marketSentiment: journalSentiment,
+        dailySummaryTh: journalSummary,
+        lessonsLearned: journalLessons,
+        winTrades: Number(journalWins),
+        lossTrades: Number(journalLosses),
+        netPnl: Number(journalNetPnl),
+      });
+      setPaperToast('บันทึก Trading Journal ลงใน Supabase PostgreSQL สำเร็จ!');
+      setTimeout(() => setPaperToast(null), 3000);
+      setIsJournalModalOpen(false);
+      setJournalTitle('');
+      setJournalSummary('');
+      setJournalLessons('');
+      await loadJournals();
+    } catch (err: any) {
+      alert(err.message || 'บันทึกไม่สำเร็จ');
+    } finally {
+      setIsSavingJournal(false);
+    }
+  };
+
+  const handleDeleteJournal = async (id: string) => {
+    if (!confirm('ยืนยันการลบบันทึก Trading Journal นี้ออกจากฐานข้อมูล?')) return;
+    try {
+      await api.deleteJournal(id);
+      setPaperToast('ลบรายการบันทึกออกจากฐานข้อมูลแล้ว');
+      setTimeout(() => setPaperToast(null), 3000);
+      await loadJournals();
+    } catch (err: any) {
+      alert(err.message || 'ลบไม่สำเร็จ');
+    }
+  };
 
   const handleSelectOrderCoin = (sym: string) => {
     setOrderSymbol(sym);
@@ -197,16 +283,50 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Page Header */}
-      <div className="card-header-row" style={{ marginBottom: 0 }}>
+      <div className="card-header-row" style={{ marginBottom: 0, flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <Wrench size={22} color="var(--neon-cyan)" />
             <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
               เครื่องมือ &amp; กลยุทธ์การลงทุน (Strategy &amp; Quant Workstation)
             </h2>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <Database size={12} />
+              <span>Supabase DB Synced</span>
+            </span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#38BDF8',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <ShieldCheck size={12} />
+              <span>ผู้ใช้: {activeUsername} ({activeRole.toUpperCase()})</span>
+            </span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            เครื่องมือวางแผนการลงทุนเชิงปริมาณ, แบบจำลอง DCA ย้อนหลัง, กลยุทธ์ AI 3 รูปแบบ และเมทริกซ์สถิติ
+            เครื่องมือวางแผนการลงทุนเชิงปริมาณ, แบบจำลอง DCA ย้อนหลัง, กลยุทธ์ AI 3 รูปแบบ และสมุดบันทึกการเทรด Trading Journal
           </p>
         </div>
       </div>
@@ -219,6 +339,7 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
           { id: 'expectancy', label: 'คำนวณสถิติความได้เปรียบ (Expectancy & R:R)', icon: Percent },
           { id: 'correlation', label: 'เมทริกซ์สหสัมพันธ์ (Correlation Matrix)', icon: Layers },
           { id: 'paper_trading', label: 'พอร์ตจำลองการเทรด (Live Paper Trading)', icon: TrendingUp },
+          { id: 'trading_journal', label: 'สมุดบันทึกการเทรด (Trading Journal)', icon: BookOpen },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -1178,6 +1299,355 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
               </table>
             </div>
           </div>
+      {/* Tab 6: Trading Journal (Supabase PostgreSQL) */}
+      {activeTab === 'trading_journal' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <BookOpen size={18} color="var(--neon-cyan)" />
+                <span>สมุดบันทึกประวัติและบทเรียนการเทรด (Trading Journal & Psychology)</span>
+              </h3>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                บันทึกแผน อารมณ์ และบทเรียนที่ได้จากการเทรด จัดเก็บถาวรในตาราง <code>public.trading_journals</code>
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  handleAutoFillJournalFromTrades();
+                  setIsJournalModalOpen(true);
+                }}
+                className="btn-secondary"
+                style={{ fontSize: '12px', padding: '7px 12px', gap: '6px' }}
+              >
+                <span>⚡ ดึงสถิติจาก Paper Trades อัตโนมัติ</span>
+              </button>
+              <button
+                onClick={() => setIsJournalModalOpen(true)}
+                className="btn-primary"
+                style={{ fontSize: '12.5px', padding: '7px 14px', gap: '6px' }}
+              >
+                <Plus size={15} />
+                <span>เพิ่มบันทึกใหม่</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Journal Summary Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div className="crypto-card" style={{ padding: '14px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>จำนวนบันทึกทั้งหมด</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--neon-cyan)', marginTop: '4px' }}>
+                {journals.length} รายการ
+              </div>
+            </div>
+
+            <div className="crypto-card" style={{ padding: '14px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ออเดอร์ที่ชนะบันทึกไว้</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--neon-green-light)', marginTop: '4px' }}>
+                {journals.reduce((sum, j) => sum + j.winTrades, 0)} ไม้
+              </div>
+            </div>
+
+            <div className="crypto-card" style={{ padding: '14px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ออเดอร์ที่แพ้บันทึกไว้</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--neon-red)', marginTop: '4px' }}>
+                {journals.reduce((sum, j) => sum + j.lossTrades, 0)} ไม้
+              </div>
+            </div>
+
+            <div className="crypto-card" style={{ padding: '14px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กำไร/ขาดทุนสุทธิที่บันทึก</div>
+              {(() => {
+                const total = journals.reduce((sum, j) => sum + j.netPnl, 0);
+                return (
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: total >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)', marginTop: '4px' }}>
+                    {total >= 0 ? '+' : ''}{prefix}{(total * multiplier).toFixed(2)}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Journal Entries List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {journals.length === 0 ? (
+              <div className="crypto-card" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                ยังไม่มีบันทึก Trading Journal ในฐานข้อมูล — คลิกปุ่ม "เพิ่มบันทึกใหม่" หรือ "ดึงสถิติจาก Paper Trades"
+              </div>
+            ) : (
+              journals.map((journal) => (
+                <div
+                  key={journal.id}
+                  className="crypto-card"
+                  style={{
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            backgroundColor:
+                              journal.marketSentiment === 'BULLISH'
+                                ? 'rgba(16, 185, 129, 0.2)'
+                                : journal.marketSentiment === 'BEARISH'
+                                ? 'rgba(239, 68, 68, 0.2)'
+                                : 'rgba(245, 158, 11, 0.2)',
+                            color:
+                              journal.marketSentiment === 'BULLISH'
+                                ? '#34D399'
+                                : journal.marketSentiment === 'BEARISH'
+                                ? '#F87171'
+                                : '#FBBF24',
+                          }}
+                        >
+                          {journal.marketSentiment}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          📅 {new Date(journal.tradeDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#FFF', margin: '6px 0 0 0' }}>
+                        {journal.title}
+                      </h4>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          Win: {journal.winTrades} | Loss: {journal.lossTrades}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 800, color: journal.netPnl >= 0 ? 'var(--neon-green-light)' : 'var(--neon-red)' }}>
+                          {journal.netPnl >= 0 ? '+' : ''}{prefix}{(journal.netPnl * multiplier).toFixed(2)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteJournal(journal.id)}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                        title="ลบบันทึกนี้"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {journal.dailySummaryTh && (
+                    <div style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: '1.5' }}>
+                      {journal.dailySummaryTh}
+                    </div>
+                  )}
+
+                  {journal.lessonsLearned && (
+                    <div
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                        border: '1px solid rgba(245, 158, 11, 0.25)',
+                        fontSize: '12px',
+                        color: '#FDE68A',
+                        lineHeight: '1.4',
+                      }}
+                    >
+                      💡 <strong>บทเรียนที่ได้:</strong> {journal.lessonsLearned}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Modal: New Journal Entry */}
+          {isJournalModalOpen && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10000,
+                padding: '20px',
+              }}
+              onClick={() => setIsJournalModalOpen(false)}
+            >
+              <div
+                className="crypto-card"
+                style={{
+                  width: '100%',
+                  maxWidth: '540px',
+                  backgroundColor: '#0F172A',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BookOpen size={20} color="var(--neon-cyan)" />
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#FFF' }}>
+                      บันทึก Trading Journal ใหม่
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsJournalModalOpen(false)}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '18px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveJournal} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        วันที่เทรด (Date)
+                      </label>
+                      <input
+                        type="date"
+                        value={journalDate}
+                        onChange={(e) => setJournalDate(e.target.value)}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        สภาวะตลาด (Market Sentiment)
+                      </label>
+                      <select
+                        value={journalSentiment}
+                        onChange={(e) => setJournalSentiment(e.target.value as any)}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none' }}
+                      >
+                        <option value="BULLISH" style={{ backgroundColor: '#0F172A' }}>🟢 BULLISH (ขาขึ้น)</option>
+                        <option value="BEARISH" style={{ backgroundColor: '#0F172A' }}>🔴 BEARISH (ขาลง)</option>
+                        <option value="NEUTRAL" style={{ backgroundColor: '#0F172A' }}>🟡 NEUTRAL (ไซด์เวย์)</option>
+                        <option value="VOLATILE" style={{ backgroundColor: '#0F172A' }}>⚡ VOLATILE (ผันผวนสูง)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                      หัวข้อบันทึก (Title) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น บันทึกการเข้าเทรด SOL และ BTC ตามสัญญาณ Breakout"
+                      value={journalTitle}
+                      onChange={(e) => setJournalTitle(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--neon-green-light)', display: 'block', marginBottom: '4px' }}>
+                        ไม้ที่ชนะ (Wins)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={journalWins}
+                        onChange={(e) => setJournalWins(Number(e.target.value))}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--neon-red)', display: 'block', marginBottom: '4px' }}>
+                        ไม้ที่แพ้ (Losses)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={journalLosses}
+                        onChange={(e) => setJournalLosses(Number(e.target.value))}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        กำไรสุทธิ ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={journalNetPnl}
+                        onChange={(e) => setJournalNetPnl(Number(e.target.value))}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                      สรุปแผนและการปฏิบัติ (Daily Summary)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="อธิบายเหตุการณ์ จังหวะที่เข้า และการปฏิบัติตามวินัย"
+                      value={journalSummary}
+                      onChange={(e) => setJournalSummary(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#FFF', fontSize: '12.5px', outline: 'none', resize: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#FBBF24', display: 'block', marginBottom: '4px' }}>
+                      สิ่งที่ได้เรียนรู้ / ข้อผิดพลาดที่ต้องระวัง (Lessons Learned)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="เช่น อารมณ์ FOMO ตอนราคาพุ่ง, ควรรอสัญญาณ Re-test ก่อนเข้า"
+                      value={journalLessons}
+                      onChange={(e) => setJournalLessons(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.4)', backgroundColor: 'rgba(245, 158, 11, 0.05)', color: '#FFF', fontSize: '12.5px', outline: 'none', resize: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsJournalModalOpen(false)}
+                      className="btn-secondary"
+                      style={{ padding: '8px 14px', fontSize: '12.5px' }}
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingJournal}
+                      className="btn-primary"
+                      style={{ padding: '8px 18px', fontSize: '12.5px' }}
+                    >
+                      {isSavingJournal ? 'กำลังบันทึก...' : 'บันทึกลงฐานข้อมูล'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

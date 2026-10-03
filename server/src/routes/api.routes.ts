@@ -11,6 +11,7 @@ import { UltimateQualificationEngine, ULTIMATE_POLICY_V1 } from '../engines/ulti
 import { WatchlistService } from '../database/watchlist.service.js';
 import { AlertsService } from '../database/alerts.service.js';
 import { portfolioService } from '../database/portfolio.service.js';
+import { journalService } from '../database/journal.service.js';
 import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
@@ -594,6 +595,71 @@ apiRouter.delete('/paper-trading/:id', async (req, res) => {
     res.json({ success });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Trading Journals: Get All Entries for User (Connected to Supabase PostgreSQL)
+ */
+apiRouter.get('/journals', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const journals = await journalService.getJournals(userId);
+    res.json({ success: true, data: journals });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Trading Journals: Create Entry (Connected to Supabase PostgreSQL)
+ */
+apiRouter.post('/journals', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const journal = await journalService.createJournal(userId, req.body);
+    res.json({ success: true, data: journal });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Trading Journals: Update Entry (Connected to Supabase PostgreSQL)
+ */
+apiRouter.put('/journals/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const journal = await journalService.updateJournal(userId, req.params.id, req.body);
+    res.json({ success: true, data: journal });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Trading Journals: Delete Entry (Connected to Supabase PostgreSQL)
+ */
+apiRouter.delete('/journals/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const success = await journalService.deleteJournal(userId, req.params.id);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Reports: User Personal Performance & Stats (Aggregated from DB)
+ */
+apiRouter.get('/reports/performance', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const report = await journalService.getUserPerformanceReport(userId);
+    res.json({ success: true, data: report });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

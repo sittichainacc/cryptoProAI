@@ -26,7 +26,9 @@ import {
   SlippageSimulationResult,
   UltimateEvaluationResponse,
   UltimateCandidate,
-  SimulatedPositionEvaluation
+  SimulatedPositionEvaluation,
+  TradingJournalItem,
+  UserPerformanceReport
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -330,6 +332,56 @@ export const api = {
     const res = await authFetch(`${API_BASE}/paper-trading/${id}`, { method: 'DELETE' });
     const json = await res.json();
     return json.success;
+  },
+
+  // Trading Journals (Supabase PostgreSQL)
+  async getJournals(): Promise<TradingJournalItem[]> {
+    const res = await authFetch(`${API_BASE}/journals`);
+    const json = await res.json();
+    return json.data || [];
+  },
+
+  async createJournal(data: {
+    title: string;
+    tradeDate?: string;
+    marketSentiment?: string;
+    dailySummaryTh?: string;
+    lessonsLearned?: string;
+    winTrades?: number;
+    lossTrades?: number;
+    netPnl?: number;
+  }): Promise<TradingJournalItem> {
+    const res = await authFetch(`${API_BASE}/journals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to create journal');
+    return json.data;
+  },
+
+  async updateJournal(id: string, data: any): Promise<TradingJournalItem> {
+    const res = await authFetch(`${API_BASE}/journals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to update journal');
+    return json.data;
+  },
+
+  async deleteJournal(id: string): Promise<boolean> {
+    const res = await authFetch(`${API_BASE}/journals/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    return json.success;
+  },
+
+  async getUserPerformanceReport(): Promise<UserPerformanceReport> {
+    const res = await authFetch(`${API_BASE}/reports/performance`);
+    const json = await res.json();
+    return json.data;
   },
 
   async getWhaleRadar(): Promise<WhaleRadarSummary> {

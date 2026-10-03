@@ -1977,6 +1977,44 @@ export interface UltimateEvaluationResponse {
   expiresAt: string;
 }
 
+export interface TradingJournalItem {
+  id: string;
+  userId: string;
+  tradeDate: string;
+  title: string;
+  marketSentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL' | 'VOLATILE' | string;
+  dailySummaryTh: string;
+  lessonsLearned: string;
+  winTrades: number;
+  lossTrades: number;
+  netPnl: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
-
-
+export interface UserPerformanceReport {
+  userId: string;
+  userRole: string;
+  totalTrades: number;
+  openTrades: number;
+  closedTrades: number;
+  winTrades: number;
+  lossTrades: number;
+  winRatePct: number;
+  totalRealizedPnl: number;
+  totalUnrealizedPnl: number;
+  totalPnl: number;
+  profitFactor: number;
+  largestWin: number;
+  largestLoss: number;
+  avgWin: number;
+  avgLoss: number;
+  journalCount: number;
+  recentJournals: TradingJournalItem[];
+  performanceBySymbol: {
+    symbol: string;
+    tradesCount: number;
+    realizedPnl: number;
+    winRatePct: number;
+  }[];
+}
