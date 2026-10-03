@@ -777,6 +777,10 @@ export interface FocusPositionData {
   pnl?: number;
   pnlPercent?: number;
   portfolioPercent?: number;
+  stopLoss?: number;
+  takeProfit1?: number;
+  takeProfit2?: number;
+  trailingStopPercent?: number;
 }
 
 export interface FocusItem {

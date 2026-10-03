@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../database/db.js';
 import { resolveUserId } from '../database/auth.middleware.js';
+import { verifyPassword, hashPassword } from '../database/users.service.js';
 
 export const authRouter = Router();
 
@@ -138,15 +139,18 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Fixed credentials fallback for admin accounts
-    const isAdminFallback = (
-      (username === 'fuyu' && password === 'haru') ||
-      (username === 'totokung' && password === 'Ss@crypto')
-    );
-
-    const isPasswordCorrect = user && (user.password === password || isAdminFallback);
+    // Dynamic password verification directly against PostgreSQL public.user_profiles
+    // No hardcoded credentials (no fix code)
+    const isPasswordCorrect = Boolean(user && user.password && verifyPassword(password, user.password));
 
     if (isPasswordCorrect) {
+      // Auto-migrate plaintext passwords to secure PBKDF2 hash upon successful login
+      if (user.password && !user.password.startsWith('pbkdf2:')) {
+        const upgradedHash = hashPassword(password);
+        pool.query('UPDATE public.user_profiles SET password = $1, updated_at = NOW() WHERE id = $2', [upgradedHash, user.id])
+          .catch(e => console.error('[Auth] Error auto-migrating password hash:', e.message));
+      }
+
       // Reset lockout counter on success
       record.attempts = 0;
       record.isLocked = false;

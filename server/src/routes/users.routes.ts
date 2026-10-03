@@ -63,7 +63,7 @@ usersRouter.get('/:id', async (req: Request, res: Response) => {
  */
 usersRouter.post('/', async (req: Request, res: Response) => {
   try {
-    const { username, email, full_name, role, notes } = req.body;
+    const { username, email, full_name, role, notes, password } = req.body;
     if (!username || !email) {
       return res.status(400).json({ success: false, message: 'กรุณากรอก Username และ Email ให้ครบถ้วน' });
     }
@@ -79,6 +79,7 @@ usersRouter.post('/', async (req: Request, res: Response) => {
       full_name,
       role: role as UserRole,
       notes,
+      password,
     });
 
     res.status(201).json({
@@ -144,6 +145,34 @@ usersRouter.patch('/:id/status', async (req: Request, res: Response) => {
       success: true,
       data: updated,
       message: `อัปเดตสถานะของ ${updated.username} เป็น ${status} เรียบร้อยแล้ว`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * PATCH /api/users/:id/password
+ * Update or reset user password directly in PostgreSQL database
+ */
+usersRouter.patch('/:id/password', async (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+    if (!password || typeof password !== 'string' || password.trim().length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร',
+      });
+    }
+
+    const success = await usersService.updateUserPassword(String(req.params.id), password.trim());
+    if (!success) {
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้ที่ต้องการเปลี่ยนรหัสผ่าน' });
+    }
+
+    res.json({
+      success: true,
+      message: 'เปลี่ยนรหัสผ่านผู้ใช้งานในฐานข้อมูลเรียบร้อยแล้ว',
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

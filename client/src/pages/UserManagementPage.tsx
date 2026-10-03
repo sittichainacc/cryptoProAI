@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, Component, ErrorInfo } from 'r
 import {
   Users, Search, Shield, UserX, UserCheck, Trash2, RefreshCw,
   ChevronDown, CheckCircle2, XCircle, Clock, Filter,
-  PlusCircle, X, AlertTriangle, Activity, WifiOff,
+  PlusCircle, X, AlertTriangle, Activity, WifiOff, KeyRound,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -236,7 +236,7 @@ const ConfirmDeleteModal: React.FC<{ username: string; onCancel: () => void; onC
 );
 
 const CreateUserModal: React.FC<{ onClose: () => void; onCreated: (msg: string) => void }> = ({ onClose, onCreated }) => {
-  const [form, setForm] = useState({ username: '', email: '', full_name: '', role: 'free' as UserRole, notes: '' });
+  const [form, setForm] = useState({ username: '', email: '', full_name: '', password: '', role: 'free' as UserRole, notes: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -258,9 +258,10 @@ const CreateUserModal: React.FC<{ onClose: () => void; onCreated: (msg: string) 
   };
 
   const fields: { k: keyof typeof form; l: string; t: string; p: string }[] = [
-    { k: 'username',  l: 'Username *',   t: 'text',  p: 'เช่น john_doe'        },
-    { k: 'email',     l: 'Email *',       t: 'email', p: 'เช่น john@email.com'  },
-    { k: 'full_name', l: 'ชื่อ-นามสกุล', t: 'text',  p: 'ไม่บังคับ'            },
+    { k: 'username',  l: 'Username *',   t: 'text',     p: 'เช่น john_doe' },
+    { k: 'email',     l: 'Email *',       t: 'email',    p: 'เช่น john@email.com' },
+    { k: 'full_name', l: 'ชื่อ-นามสกุล', t: 'text',     p: 'ไม่บังคับ' },
+    { k: 'password',  l: 'รหัสผ่าน (เว้นว่างเพื่อใช้ค่าเริ่มต้น)', t: 'password', p: 'เว้นว่างไว้ใช้ Ss@crypto' },
   ];
 
   return (
@@ -322,6 +323,85 @@ const CreateUserModal: React.FC<{ onClose: () => void; onCreated: (msg: string) 
   );
 };
 
+const ChangePasswordModal: React.FC<{ user: UserProfile; onClose: () => void; onUpdated: (msg: string) => void }> = ({ user, onClose, onUpdated }) => {
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password.trim() || password.trim().length < 4) {
+      setErr('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/users/${user.id}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password.trim() }),
+      });
+      const res = await r.json();
+      if (res.success) {
+        onUpdated(res.message || 'เปลี่ยนรหัสผ่านสำเร็จ');
+        onClose();
+      } else {
+        setErr(res.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+      }
+    } catch {
+      setErr('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 28, width: 400, maxWidth: '96vw' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <span style={{ fontWeight: 800, fontSize: 15, color: '#FFF', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <KeyRound size={17} color="#F59E0B" /> เปลี่ยนรหัสผ่าน ({user.username})
+          </span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+        <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>
+          รหัสผ่านใหม่จะถูกบันทึกและเข้ารหัสความปลอดภัยในฐานข้อมูล PostgreSQL ทันที
+        </p>
+        <form onSubmit={submit}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#94A3B8', marginBottom: 5 }}>รหัสผ่านใหม่</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)..."
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFF', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+              autoFocus
+            />
+          </div>
+          {err && (
+            <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171', fontSize: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertTriangle size={13} /> {err}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: 10, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#CBD5E1', cursor: 'pointer' }}>ยกเลิก</button>
+            <button type="submit" disabled={busy} style={{ flex: 2, padding: 10, borderRadius: 8, background: 'linear-gradient(135deg,#F59E0B,#D97706)', border: 'none', color: '#FFF', fontSize: 13, fontWeight: 800, cursor: busy ? 'wait' : 'pointer' }}>
+              {busy ? 'กำลังบันทึก...' : 'บันทึกรหัสผ่านใหม่'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const UserManagementInner: React.FC = () => {
   const [users,       setUsers]       = useState<UserProfile[]>([]);
@@ -334,6 +414,7 @@ const UserManagementInner: React.FC = () => {
   const [toast,       setToast]       = useState<{ msg: string; ok: boolean } | null>(null);
   const [showCreate,  setShowCreate]  = useState(false);
   const [delUser,     setDelUser]     = useState<UserProfile | null>(null);
+  const [pwUser,      setPwUser]      = useState<UserProfile | null>(null);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -579,7 +660,20 @@ const UserManagementInner: React.FC = () => {
                             : <><UserCheck size={12} /> เปิด</>}
                         </button>
                         <button
+                          onClick={() => setPwUser(u)}
+                          title="เปลี่ยนรหัสผ่านในฐานข้อมูล"
+                          style={{
+                            padding: '5px 8px', borderRadius: 7,
+                            background: 'rgba(245,158,11,0.1)',
+                            border: '1px solid rgba(245,158,11,0.3)',
+                            color: '#F59E0B', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                          }}
+                        >
+                          <KeyRound size={12} />
+                        </button>
+                        <button
                           onClick={() => setDelUser(u)}
+                          title="ลบผู้ใช้งาน"
                           style={{ padding: '5px 8px', borderRadius: 7, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#F87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                         >
                           <Trash2 size={12} />
@@ -601,6 +695,7 @@ const UserManagementInner: React.FC = () => {
       )}
 
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={msg => { showToast(msg); load(); }} />}
+      {pwUser && <ChangePasswordModal user={pwUser} onClose={() => setPwUser(null)} onUpdated={msg => { showToast(msg); }} />}
       {delUser && <ConfirmDeleteModal username={delUser.username} onCancel={() => setDelUser(null)} onConfirm={doDelete} />}
       {toast && <Toast msg={toast.msg} ok={toast.ok} />}
 

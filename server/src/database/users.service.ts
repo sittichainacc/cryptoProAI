@@ -1,4 +1,30 @@
+import crypto from 'crypto';
 import { pool } from './db.js';
+
+/**
+ * Hash a plain text password using PBKDF2 with SHA-512 and random salt
+ */
+export function hashPassword(plainPassword: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const key = crypto.pbkdf2Sync(plainPassword, salt, 100000, 64, 'sha512').toString('hex');
+  return `pbkdf2:${salt}:${key}`;
+}
+
+/**
+ * Verify a plain text password against a stored database password (supporting pbkdf2 hash and legacy plaintext fallback)
+ */
+export function verifyPassword(plainPassword: string, storedPassword: string | null | undefined): boolean {
+  if (!storedPassword) return false;
+  if (storedPassword.startsWith('pbkdf2:')) {
+    const parts = storedPassword.split(':');
+    if (parts.length !== 3) return false;
+    const [, salt, hash] = parts;
+    const key = crypto.pbkdf2Sync(plainPassword, salt, 100000, 64, 'sha512').toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(hash));
+  }
+  // Plain text fallback (for initial database seeds), auto-migrated on successful login
+  return plainPassword === storedPassword;
+}
 
 export type UserRole = 'free' | 'gold' | 'premium' | 'platinum' | 'admin';
 export type UserStatus = 'ACTIVE' | 'BLOCKED' | 'PENDING';
@@ -217,17 +243,19 @@ export class UsersService {
     full_name?: string;
     role?: UserRole;
     notes?: string;
+    password?: string;
   }): Promise<UserProfile | null> {
     const role: UserRole = data.role || 'free';
     const tier = TIER_DEFINITIONS.find(t => t.role === role) || TIER_DEFINITIONS[0];
+    const passwordHash = hashPassword(data.password || 'Ss@crypto');
 
     try {
       const query = `
         INSERT INTO public.user_profiles (
           username, email, full_name, role, status, 
           daily_api_quota, max_watchlists, max_alerts, 
-          can_access_whale_radar, can_access_quant_v3, can_access_focus, can_export_pdf, notes
-        ) VALUES ($1, $2, $3, $4, 'ACTIVE', $5, $6, $7, $8, $9, $10, $11, $12)
+          can_access_whale_radar, can_access_quant_v3, can_access_focus, can_export_pdf, notes, password
+        ) VALUES ($1, $2, $3, $4, 'ACTIVE', $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *;
       `;
       const values = [
@@ -243,6 +271,7 @@ export class UsersService {
         tier.focusWorkstation,
         tier.exportPdf,
         data.notes || null,
+        passwordHash,
       ];
 
       const res = await pool.query(query, values);
@@ -308,6 +337,23 @@ export class UsersService {
       return res.rows[0] || null;
     } catch (err: any) {
       console.error('[UsersService] Error updating user status:', err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Update User Password (hashed with PBKDF2 in database)
+   */
+  async updateUserPassword(id: string, newPassword: string): Promise<boolean> {
+    try {
+      const passwordHash = hashPassword(newPassword);
+      const res = await pool.query(
+        'UPDATE public.user_profiles SET password = $1, updated_at = NOW() WHERE id = $2',
+        [passwordHash, id]
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      console.error('[UsersService] Error updating user password:', err.message);
       throw err;
     }
   }
