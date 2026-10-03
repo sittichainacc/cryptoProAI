@@ -28,7 +28,8 @@ import {
   UltimateCandidate,
   SimulatedPositionEvaluation,
   TradingJournalItem,
-  UserPerformanceReport
+  UserPerformanceReport,
+  FocusComparisonItem
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -600,6 +601,35 @@ export const api = {
     const res = await authFetch(`${API_BASE}/focus/recalculate`, { method: 'POST' });
     const json = await res.json();
     return json.data;
+  },
+
+  // Focus Comparison Sets (Persisted in Supabase PostgreSQL per user)
+  async getFocusComparisons(): Promise<FocusComparisonItem[]> {
+    const res = await authFetch(`${API_BASE}/focus/comparisons`);
+    const json = await res.json();
+    return json.data || [];
+  },
+
+  async saveFocusComparison(payload: {
+    name: string;
+    symbols: string[];
+    notes?: string;
+    isFavorite?: boolean;
+  }): Promise<FocusComparisonItem> {
+    const res = await authFetch(`${API_BASE}/focus/comparisons`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  async deleteFocusComparison(id: string): Promise<{ success: boolean; message: string }> {
+    const res = await authFetch(`${API_BASE}/focus/comparisons/${id}`, {
+      method: 'DELETE',
+    });
+    return await res.json();
   },
 
   async testExchangeConnection(exchange: 'bitkub' | 'binance'): Promise<{

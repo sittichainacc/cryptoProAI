@@ -12,6 +12,7 @@ import { WatchlistService } from '../database/watchlist.service.js';
 import { AlertsService } from '../database/alerts.service.js';
 import { portfolioService } from '../database/portfolio.service.js';
 import { journalService } from '../database/journal.service.js';
+import { FocusService } from '../database/focus.service.js';
 import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
@@ -990,68 +991,132 @@ apiRouter.get('/market/quant-v3-overview', (_req, res) => {
  * ==========================================
  */
 
-// 1. Get all Focus items with live intelligence
-apiRouter.get('/focus', (_req, res) => {
-  const data = marketStore.getFocusList();
-  res.json({ success: true, data });
+// 1. Get all Focus items with live intelligence per user
+apiRouter.get('/focus', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await FocusService.getUserFocusList(userId, marketStore);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 2. Get single Focus coin deep detail
-apiRouter.get('/focus/:symbol/detail', (req, res) => {
-  const data = marketStore.getFocusDetail(req.params.symbol);
-  if (!data) {
-    return res.status(404).json({ success: false, error: 'Focus coin not found' });
+apiRouter.get('/focus/:symbol/detail', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await FocusService.getUserFocusDetail(userId, req.params.symbol, marketStore);
+    if (!data) {
+      return res.status(404).json({ success: false, error: 'Focus coin not found' });
+    }
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
-  res.json({ success: true, data });
 });
 
 // 3. Add coin to Focus
-apiRouter.post('/focus', (req, res) => {
-  const { symbol, priority, mode, positionStatus, position, customTrailingStop, userNotes } = req.body;
-  if (!symbol) {
-    return res.status(400).json({ success: false, error: 'symbol is required' });
+apiRouter.post('/focus', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbol } = req.body;
+    if (!symbol) {
+      return res.status(400).json({ success: false, error: 'symbol is required' });
+    }
+    const item = await FocusService.addFocusItem(userId, symbol, req.body, marketStore);
+    res.json({ success: true, data: item });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
-  const item = marketStore.addFocusItem(symbol, {
-    priority,
-    mode,
-    positionStatus,
-    position,
-    customTrailingStop,
-    userNotes,
-  });
-  res.json({ success: true, data: item });
 });
 
 // 4. Update Focus item
-apiRouter.put('/focus/:id', (req, res) => {
-  const updated = marketStore.updateFocusItem(req.params.id, req.body);
-  if (!updated) {
-    return res.status(404).json({ success: false, error: 'Focus item not found' });
+apiRouter.put('/focus/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const updated = await FocusService.updateFocusItem(userId, req.params.id, req.body, marketStore);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Focus item not found' });
+    }
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
-  res.json({ success: true, data: updated });
 });
 
 // 5. Remove coin from Focus
-apiRouter.delete('/focus/:symbol', (req, res) => {
-  const success = marketStore.removeFocusItem(req.params.symbol);
-  res.json({ success, message: success ? 'Removed from focus' : 'Focus item not found' });
+apiRouter.delete('/focus/:symbol', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const success = await FocusService.removeFocusItem(userId, req.params.symbol);
+    res.json({ success, message: success ? 'Removed from focus' : 'Focus item not found' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 6. Reorder Focus items (Drag & Drop ranking)
-apiRouter.post('/focus/reorder', (req, res) => {
-  const { symbols } = req.body;
-  if (!Array.isArray(symbols)) {
-    return res.status(400).json({ success: false, error: 'symbols array is required' });
+apiRouter.post('/focus/reorder', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbols } = req.body;
+    if (!Array.isArray(symbols)) {
+      return res.status(400).json({ success: false, error: 'symbols array is required' });
+    }
+    const data = await FocusService.reorderFocusItems(userId, symbols, marketStore);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
-  const success = marketStore.reorderFocusItems(symbols);
-  const data = marketStore.getFocusList();
-  res.json({ success, data });
 });
 
 // 7. Force immediate recalculation of all Focus coins
-apiRouter.post('/focus/recalculate', (_req, res) => {
-  const data = marketStore.calculateFocusScores(true);
-  res.json({ success: true, data });
+apiRouter.post('/focus/recalculate', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await FocusService.getUserFocusList(userId, marketStore);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. Multi-coin Comparisons list
+apiRouter.get('/focus/comparisons', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await FocusService.getUserComparisons(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 9. Save comparison set
+apiRouter.post('/focus/comparisons', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { name, symbols, notes, isFavorite } = req.body;
+    if (!name || !Array.isArray(symbols) || symbols.length === 0) {
+      return res.status(400).json({ success: false, error: 'name and symbols array are required' });
+    }
+    const data = await FocusService.saveComparison(userId, name, symbols, notes, isFavorite);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 10. Delete comparison set
+apiRouter.delete('/focus/comparisons/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const success = await FocusService.deleteComparison(userId, req.params.id);
+    res.json({ success, message: success ? 'Comparison deleted' : 'Comparison not found' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**

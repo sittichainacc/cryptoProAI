@@ -1377,6 +1377,17 @@ export interface FocusResponse {
   timestamp: string;
 }
 
+export interface FocusComparisonItem {
+  id: string;
+  user_id: string;
+  name: string;
+  symbols: string[];
+  notes?: string | null;
+  is_favorite: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ==========================================
 // PHASE 20: TOP 5 PREMIUM QUANT ARCHITECTURE
 // ==========================================

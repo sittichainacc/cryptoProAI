@@ -832,6 +832,23 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                 <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
                   🎯 FOCUS COCKPIT
                 </h2>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    color: '#34D399',
+                    fontWeight: 700,
+                  }}
+                  title="ข้อมูล Focus items และ Multi-Coin Compare เชื่อมโยงและบันทึกลงใน Supabase PostgreSQL รายบุคคล"
+                >
+                  ☁️ PostgreSQL Synced
+                </span>
                 {isCollapsed('focusCockpitGroup') && (
                   <span className="collapsible-summary-chip">
                     {displayFocusItems.length} เหรียญ{activeCoin ? ` • Cockpit: ${activeCoin.symbol}` : ''}
