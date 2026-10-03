@@ -12,8 +12,8 @@ interface TopbarProps {
   onSearchSelect?: (symbol: string) => void;
   activeTopTab: string;
   setActiveTopTab: (tab: string) => void;
-  userRole?: 'admin' | 'analyst' | 'investor';
-  setUserRole?: (role: 'admin' | 'analyst' | 'investor') => void;
+  userRole?: 'admin' | 'analyst' | 'investor' | 'gold' | 'platinum' | 'premium' | 'free';
+  setUserRole?: (role: any) => void;
   onMobileMenuToggle?: () => void;
   onOpenLogin?: () => void;
   onLogout?: () => void;

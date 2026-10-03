@@ -26,8 +26,8 @@ import {
 } from 'lucide-react';
 
 interface CryptoAnalystProfileProps {
-  userRole: 'admin' | 'analyst' | 'investor';
-  setUserRole?: (role: 'admin' | 'analyst' | 'investor') => void;
+  userRole?: 'admin' | 'analyst' | 'investor' | 'gold' | 'platinum' | 'premium' | 'free';
+  setUserRole?: (role: any) => void;
   currency: 'THB' | 'USDT';
   setCurrency: (c: 'THB' | 'USDT') => void;
   isDark: boolean;

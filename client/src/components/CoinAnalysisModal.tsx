@@ -8,7 +8,7 @@ interface CoinAnalysisModalProps {
   coin: TickerData | null;
   onClose: () => void;
   currency: 'THB' | 'USDT';
-  userRole?: 'admin' | 'analyst' | 'investor';
+  userRole?: 'admin' | 'analyst' | 'investor' | 'gold' | 'platinum' | 'premium' | 'free';
   onOpenLogin?: () => void;
 }
 

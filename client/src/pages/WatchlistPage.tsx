@@ -22,7 +22,7 @@ import {
 import { getCurrencyMultiplier } from '../utils/currency.js';
 import { PriceCell } from '../components/PriceCell.js';
 import { api } from '../services/api.js';
-import { Edit3, Save, Database, AlertCircle } from 'lucide-react';
+import { Edit3, Save, Database, AlertCircle, X } from 'lucide-react';
 
 interface WatchlistPageProps {
   watchlist: TickerData[];

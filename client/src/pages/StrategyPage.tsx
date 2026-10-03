@@ -1299,6 +1299,9 @@ export const StrategyPage: React.FC<StrategyPageProps> = ({ onSelectCoin, curren
               </table>
             </div>
           </div>
+        </div>
+      )}
+
       {/* Tab 6: Trading Journal (Supabase PostgreSQL) */}
       {activeTab === 'trading_journal' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
