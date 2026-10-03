@@ -203,6 +203,38 @@ export interface CryptoNewsItem {
   impact: 'High' | 'Medium' | 'Low';
 }
 
+export interface PortfolioPosition {
+  symbol: string;
+  name: string;
+  qty: number;
+  avgCost: number;
+  currentPrice: number;
+  value: number;
+  pnl: number;
+  pnlPct: number;
+  weight: number;
+  signal: string;
+  risk: string;
+}
+
+export interface PortfolioSummary {
+  totalValue: number;
+  totalReturnPct: number;
+  totalReturnUsd: number;
+  allocation: {
+    symbol: string;
+    label: string;
+    percentage: number;
+    color: string;
+    value: number;
+  }[];
+  performanceHistory: {
+    time: string;
+    returnPct: number;
+  }[];
+  positions?: PortfolioPosition[];
+}
+
 export interface PaperTrade {
   id: string;
   symbol: string;

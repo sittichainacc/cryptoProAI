@@ -10,6 +10,7 @@ import { QuantPremiumEngine, DEFAULT_PHASE20_CONFIG } from '../engines/quant_pre
 import { UltimateQualificationEngine, ULTIMATE_POLICY_V1 } from '../engines/ultimate_qualification.engine.js';
 import { WatchlistService } from '../database/watchlist.service.js';
 import { AlertsService } from '../database/alerts.service.js';
+import { portfolioService } from '../database/portfolio.service.js';
 import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
@@ -263,40 +264,29 @@ apiRouter.get('/market/analysis/:symbol', async (req, res) => {
 });
 
 /**
- * Portfolio Sample Summary & Allocation (Image 1 reference)
+ * Portfolio Summary & Analytics (Connected to Supabase PostgreSQL per user)
  */
-apiRouter.get('/market/portfolio', (_req, res) => {
-  res.json({
-    success: true,
-    data: {
-      totalValue: 12450.00,
-      totalReturnPct: 12.4,
-      totalReturnUsd: 1372.50,
-      allocation: [
-        { symbol: 'BTC', label: 'Bitcoin', percentage: 30, color: '#F59E0B', value: 3735 },
-        { symbol: 'ETH', label: 'Ethereum', percentage: 20, color: '#3B82F6', value: 2490 },
-        { symbol: 'SOL', label: 'Solana', percentage: 15, color: '#10B981', value: 1867.5 },
-        { symbol: 'LINK', label: 'Chainlink', percentage: 10, color: '#0284C7', value: 1245 },
-        { symbol: 'AAVE', label: 'Aave', percentage: 10, color: '#8B5CF6', value: 1245 },
-        { symbol: 'OTHERS', label: 'อื่นๆ', percentage: 15, color: '#6B7280', value: 1867.5 },
-      ],
-      performanceHistory: [
-        { time: '1W', returnPct: 4.2 },
-        { time: '1M', returnPct: 12.4 },
-        { time: '3M', returnPct: 24.8 },
-        { time: '6M', returnPct: 48.5 },
-        { time: '1Y', returnPct: 92.1 },
-        { time: 'ALL', returnPct: 145.0 },
-      ],
-      positions: [
-        { symbol: 'BTC', name: 'Bitcoin', qty: 0.045, avgCost: 83000, currentPrice: 108432.50, value: 4879.46, pnl: 1144.46, pnlPct: 30.64, weight: 39.2, signal: 'BUY', risk: 'Low' },
-        { symbol: 'ETH', name: 'Ethereum', qty: 0.65, avgCost: 2950, currentPrice: 3842.00, value: 2497.30, pnl: 579.80, pnlPct: 30.24, weight: 20.1, signal: 'BUY', risk: 'Low' },
-        { symbol: 'SOL', name: 'Solana', qty: 10.5, avgCost: 145, currentPrice: 185.45, value: 1947.22, pnl: 424.72, pnlPct: 27.89, weight: 15.6, signal: 'STRONG_BUY', risk: 'Medium' },
-        { symbol: 'LINK', name: 'Chainlink', qty: 55, avgCost: 16.5, currentPrice: 23.41, value: 1287.55, pnl: 380.05, pnlPct: 41.87, weight: 10.3, signal: 'STRONG_BUY', risk: 'Low' },
-        { symbol: 'AAVE', name: 'Aave', qty: 4.2, avgCost: 220, currentPrice: 312.40, value: 1312.08, pnl: 388.08, pnlPct: 42.00, weight: 10.5, signal: 'STRONG_BUY', risk: 'Medium' },
-      ],
-    },
-  });
+apiRouter.get('/market/portfolio', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const analytics = await portfolioService.getPortfolioAnalytics(userId);
+    res.json({ success: true, data: analytics });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Update Portfolio Settings
+ */
+apiRouter.put('/market/portfolio/settings', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const portfolio = await portfolioService.updatePortfolioSettings(userId, req.body);
+    res.json({ success: true, data: portfolio });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
 });
 
 /**
@@ -541,53 +531,70 @@ apiRouter.post('/system/sync', async (_req, res) => {
 });
 
 /**
- * Paper Trading: Get All Trades & Performance Stats
+ * Paper Trading: Get All Trades & Performance Stats (Connected to Supabase PostgreSQL)
  */
-apiRouter.get('/paper-trading', (_req, res) => {
-  const data = marketStore.getPaperTrades();
-  res.json({ success: true, data });
-});
-
-/**
- * Paper Trading: Open New Simulated Position
- */
-apiRouter.post('/paper-trading/order', (req, res) => {
-  const { symbol, type = 'BUY', entryPrice, qty, sl, tp, notes, signalOrigin } = req.body;
-  if (!symbol || !entryPrice || !qty) {
-    return res.status(400).json({ success: false, message: 'symbol, entryPrice, and qty are required' });
+apiRouter.get('/paper-trading', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await portfolioService.getPaperTrades(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
   }
-
-  const trade = marketStore.openPaperTrade({
-    symbol,
-    type,
-    entryPrice: Number(entryPrice),
-    qty: Number(qty),
-    sl: Number(sl || 0),
-    tp: Number(tp || 0),
-    notes,
-    signalOrigin,
-  });
-
-  res.json({ success: true, data: trade });
 });
 
 /**
- * Paper Trading: Close Open Trade
+ * Paper Trading: Open New Simulated Position (Connected to Supabase PostgreSQL)
  */
-apiRouter.post('/paper-trading/close/:id', (req, res) => {
-  const success = marketStore.closePaperTrade(req.params.id);
-  if (!success) {
-    return res.status(404).json({ success: false, message: 'Trade not found or already closed' });
+apiRouter.post('/paper-trading/order', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbol, type = 'BUY', entryPrice, qty, sl, tp, notes, signalOrigin } = req.body;
+    if (!symbol || !entryPrice || !qty) {
+      return res.status(400).json({ success: false, message: 'symbol, entryPrice, and qty are required' });
+    }
+
+    const trade = await portfolioService.openPaperTrade(userId, {
+      symbol,
+      type,
+      entryPrice: Number(entryPrice),
+      qty: Number(qty),
+      sl: sl ? Number(sl) : undefined,
+      tp: tp ? Number(tp) : undefined,
+      notes,
+      signalOrigin,
+    });
+
+    res.json({ success: true, data: trade });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
   }
-  res.json({ success: true, message: 'Trade closed at current market price' });
 });
 
 /**
- * Paper Trading: Delete Trade
+ * Paper Trading: Close Open Trade (Connected to Supabase PostgreSQL)
  */
-apiRouter.delete('/paper-trading/:id', (req, res) => {
-  const success = marketStore.deletePaperTrade(req.params.id);
-  res.json({ success });
+apiRouter.post('/paper-trading/close/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const trade = await portfolioService.closePaperTrade(userId, req.params.id);
+    res.json({ success: true, message: 'Trade closed at current market price', data: trade });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Paper Trading: Delete Trade (Connected to Supabase PostgreSQL)
+ */
+apiRouter.delete('/paper-trading/:id', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const success = await portfolioService.deletePaperTrade(userId, req.params.id);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
 });
 
 /**
