@@ -13,6 +13,7 @@ import { AlertsService } from '../database/alerts.service.js';
 import { portfolioService } from '../database/portfolio.service.js';
 import { journalService } from '../database/journal.service.js';
 import { FocusService } from '../database/focus.service.js';
+import { SettingsService } from '../database/settings.service.js';
 import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
@@ -1120,77 +1121,41 @@ apiRouter.delete('/focus/comparisons/:id', async (req, res) => {
 });
 
 /**
- * Test Exchange API Connection (Bitkub / Binance)
+ * ==========================================
+ * SETTINGS MODULE API ENDPOINTS (Supabase PostgreSQL)
+ * ==========================================
  */
+
+// 1. Get user settings
+apiRouter.get('/settings', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await SettingsService.getUserSettings(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Update user settings
+apiRouter.put('/settings', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const data = await SettingsService.updateUserSettings(userId, req.body);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Test Exchange API Connection (Bitkub / Binance)
 apiRouter.post('/settings/test-connection', async (req, res) => {
   const { exchange } = req.body;
-  const start = Date.now();
-  try {
-    if (exchange === 'bitkub') {
-      const resp = await fetch('https://api.bitkub.com/api/servertime', { signal: AbortSignal.timeout(6000) });
-      const latency = Date.now() - start;
-      if (resp.ok) {
-        return res.json({
-          success: true,
-          data: {
-            exchange: 'bitkub',
-            status: 'online',
-            latencyMs: latency,
-            message: `เชื่อมต่อกับ Bitkub API สำเร็จ (${latency} ms)`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      } else {
-        return res.json({
-          success: false,
-          data: {
-            exchange: 'bitkub',
-            status: 'error',
-            latencyMs: latency,
-            message: `Bitkub API ตอบสนองด้วยสถานะ HTTP ${resp.status}`,
-          },
-        });
-      }
-    } else if (exchange === 'binance') {
-      const resp = await fetch('https://api.binance.com/api/v3/ping', { signal: AbortSignal.timeout(6000) });
-      const latency = Date.now() - start;
-      if (resp.ok) {
-        return res.json({
-          success: true,
-          data: {
-            exchange: 'binance',
-            status: 'online',
-            latencyMs: latency,
-            message: `เชื่อมต่อกับ Binance API สำเร็จ (${latency} ms)`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      } else {
-        return res.json({
-          success: false,
-          data: {
-            exchange: 'binance',
-            status: 'error',
-            latencyMs: latency,
-            message: `Binance API ตอบสนองด้วยสถานะ HTTP ${resp.status}`,
-          },
-        });
-      }
-    } else {
-      return res.status(400).json({ success: false, error: 'Unknown exchange' });
-    }
-  } catch (err: any) {
-    const latency = Date.now() - start;
-    return res.json({
-      success: false,
-      data: {
-        exchange,
-        status: 'timeout',
-        latencyMs: latency,
-        message: `ไม่สามารถเชื่อมต่อได้: ${err.message || 'Timeout / Network Error'}`,
-      },
-    });
+  if (!exchange || (exchange !== 'bitkub' && exchange !== 'binance')) {
+    return res.status(400).json({ success: false, error: 'exchange must be bitkub or binance' });
   }
+  const result = await SettingsService.testConnection(exchange);
+  res.json({ success: result.status === 'online', data: result });
 });
 
 

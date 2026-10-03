@@ -1388,6 +1388,32 @@ export interface FocusComparisonItem {
   updated_at: string;
 }
 
+export interface ClientUserSettings {
+  id: string;
+  userId: string;
+  defaultCurrency: 'THB' | 'USDT';
+  defaultTimeframe: string;
+  defaultRiskPct: number;
+  language: 'th' | 'en';
+  soundEnabled: boolean;
+  theme: 'dark' | 'light';
+  bitkubApiKey: string;
+  bitkubApiSecretMasked: string;
+  hasBitkubSecret: boolean;
+  binanceApiKey: string;
+  binanceApiSecretMasked: string;
+  hasBinanceSecret: boolean;
+  lineNotifyTokenMasked: string;
+  hasLineNotifyToken: boolean;
+  telegramChatId: string;
+  telegramBotTokenMasked: string;
+  hasTelegramBotToken: boolean;
+  notifyWhaleAlerts: boolean;
+  notifyPriceAlerts: boolean;
+  notifyBuySignals: boolean;
+  updatedAt: string;
+}
+
 // ==========================================
 // PHASE 20: TOP 5 PREMIUM QUANT ARCHITECTURE
 // ==========================================

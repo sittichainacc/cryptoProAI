@@ -29,7 +29,8 @@ import {
   SimulatedPositionEvaluation,
   TradingJournalItem,
   UserPerformanceReport,
-  FocusComparisonItem
+  FocusComparisonItem,
+  ClientUserSettings
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -630,6 +631,28 @@ export const api = {
       method: 'DELETE',
     });
     return await res.json();
+  },
+
+  // User Settings & Preferences (Supabase PostgreSQL)
+  async getUserSettings(): Promise<ClientUserSettings> {
+    const res = await authFetch(`${API_BASE}/settings`);
+    const json = await res.json();
+    return json.data;
+  },
+
+  async updateUserSettings(payload: Partial<ClientUserSettings> & {
+    bitkubApiSecret?: string;
+    binanceApiSecret?: string;
+    lineNotifyToken?: string;
+    telegramBotToken?: string;
+  }): Promise<ClientUserSettings> {
+    const res = await authFetch(`${API_BASE}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    return json.data;
   },
 
   async testExchangeConnection(exchange: 'bitkub' | 'binance'): Promise<{
