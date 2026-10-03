@@ -18,7 +18,7 @@ import { api } from '../services/api.js';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: { username: string; name: string; role: 'admin' }) => void;
+  onLoginSuccess: (user: { username: string; name: string; role: string; id?: string }) => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -89,7 +89,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         setIsLocked(false);
         localStorage.removeItem('cryptopro_ip_locked');
         localStorage.removeItem('cryptopro_login_attempts');
-        localStorage.setItem('cryptopro_auth_role', 'admin');
+        localStorage.setItem('cryptopro_auth_role', res.user.role || 'free');
         localStorage.setItem('cryptopro_auth_user', JSON.stringify(res.user));
 
         setTimeout(() => {

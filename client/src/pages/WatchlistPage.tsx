@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { getCurrencyMultiplier } from '../utils/currency.js';
 import { PriceCell } from '../components/PriceCell.js';
+import { api } from '../services/api.js';
+import { Edit3, Save, Database, AlertCircle } from 'lucide-react';
 
 interface WatchlistPageProps {
   watchlist: TickerData[];
@@ -45,6 +47,62 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [editingCoin, setEditingCoin] = useState<TickerData | null>(null);
+  const [targetBuy, setTargetBuy] = useState<string>('');
+  const [targetSell, setTargetSell] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
+  const [priority, setPriority] = useState<number>(1);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<string>('');
+
+  const currentUser = (() => {
+    try {
+      const s = localStorage.getItem('cryptopro_auth_user');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const userRole = currentUser?.role || 'free';
+  const maxQuota = currentUser?.maxWatchlists || (userRole === 'admin' ? 999 : userRole === 'platinum' ? 100 : userRole === 'premium' ? 30 : userRole === 'gold' ? 15 : 5);
+  const roleBadgeColor = userRole === 'admin' ? '#F43F5E' : userRole === 'platinum' ? '#A78BFA' : userRole === 'premium' ? '#38BDF8' : userRole === 'gold' ? '#F59E0B' : '#94A3B8';
+
+  const handleOpenEdit = (coin: TickerData) => {
+    setEditingCoin(coin);
+    setTargetBuy((coin as any).targetBuyPrice ? String((coin as any).targetBuyPrice) : '');
+    setTargetSell((coin as any).targetSellPrice ? String((coin as any).targetSellPrice) : '');
+    setNotes((coin as any).watchlistNotes || '');
+    setPriority((coin as any).watchlistPriority || 1);
+    setStatusMsg('');
+  };
+
+  const handleSaveDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCoin) return;
+    setIsSaving(true);
+    setStatusMsg('');
+    try {
+      await api.saveWatchlistDetails({
+        symbol: editingCoin.symbol,
+        targetBuyPrice: targetBuy ? Number(targetBuy) : null,
+        targetSellPrice: targetSell ? Number(targetSell) : null,
+        notes: notes || null,
+        priority: Number(priority) || 1,
+      });
+      (editingCoin as any).targetBuyPrice = targetBuy ? Number(targetBuy) : null;
+      (editingCoin as any).targetSellPrice = targetSell ? Number(targetSell) : null;
+      (editingCoin as any).watchlistNotes = notes || null;
+      setStatusMsg('✅ บันทึกลงฐานข้อมูล Supabase สำเร็จ!');
+      setTimeout(() => {
+        setEditingCoin(null);
+        setStatusMsg('');
+      }, 1000);
+    } catch (err: any) {
+      setStatusMsg('❌ บันทึกล้มเหลว: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const multiplier = getCurrencyMultiplier(currency);
   const prefix = currency === 'THB' ? '฿' : '$';
@@ -96,6 +154,17 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             ติดตามการเคลื่อนไหว สัญญาณ AI และกรอบราคาของสินทรัพย์ที่คุณคัดสรรอย่างใกล้ชิด
           </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: `${roleBadgeColor}20`, color: roleBadgeColor, fontWeight: 800, border: `1px solid ${roleBadgeColor}50` }}>
+              👤 {currentUser?.name || currentUser?.username || 'ผู้ใช้งานทั่วไป'} ({userRole.toUpperCase()})
+            </span>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#34D399', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              📊 โควต้าที่ใช้: {totalCount} / {maxQuota} เหรียญ
+            </span>
+            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60A5FA', fontWeight: 600, border: '1px solid rgba(59, 130, 246, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Database size={11} /> ซิงก์กับ Supabase PostgreSQL อัตโนมัติ
+            </span>
+          </div>
         </div>
 
         {/* Quick Add Dropdown Search */}
@@ -475,6 +544,148 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
             onToggleFocus={onToggleFocus}
             focusSymbols={focusSymbols}
           />
+        </div>
+      )}
+          {/* Edit Target & Personal Strategy Notes Modal */}
+      {editingCoin && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px',
+          }}
+        >
+          <div
+            className="crypto-card"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              padding: '24px',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              position: 'relative',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CryptoIcon symbol={editingCoin.symbol} size={24} />
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#FFF' }}>
+                  ตั้งค่าเป้าหมาย & โน้ตกลยุทธ์ ({editingCoin.symbol})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCoin(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDetails} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    ราคาเป้าหมายซื้อ (Target Buy {prefix})
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="เช่น 65000"
+                    value={targetBuy}
+                    onChange={(e) => setTargetBuy(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: 'var(--bg-card-inner)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    ราคาเป้าหมายขาย (Target Sell {prefix})
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="เช่น 78000"
+                    value={targetSell}
+                    onChange={(e) => setTargetSell(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: 'var(--bg-card-inner)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                  บันทึกกลยุทธ์ส่วนตัว (Personal Trading Notes)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="เช่น ซื้อสะสมเมื่อย่อแตะ EMA50, Stop Loss หากหลุดแนวรับ..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--bg-card-inner)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              {statusMsg && (
+                <div style={{ fontSize: '12px', fontWeight: 600, padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                  {statusMsg}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingCoin(null)}
+                  className="btn-secondary"
+                  style={{ fontSize: '12px', padding: '6px 14px' }}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="btn-primary"
+                  style={{ fontSize: '12px', padding: '6px 16px', gap: '6px' }}
+                >
+                  <Save size={13} />
+                  <span>{isSaving ? 'กำลังบันทึก...' : 'บันทึกลง Supabase DB'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

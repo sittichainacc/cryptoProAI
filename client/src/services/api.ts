@@ -31,58 +31,88 @@ import {
 
 const API_BASE = '/api';
 
+export function getAuthHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...customHeaders,
+  };
+  try {
+    const userStr = localStorage.getItem('cryptopro_auth_user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.id) {
+        headers['x-user-id'] = user.id;
+      }
+      if (user?.username) {
+        headers['x-username'] = user.username;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return headers;
+}
+
+export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = getAuthHeaders((options.headers as Record<string, string>) || {});
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}
+
+
 export const api = {
   async getKPIs(): Promise<MarketOverviewKPIs> {
-    const res = await fetch(`${API_BASE}/market/kpis`);
+    const res = await authFetch(`${API_BASE}/market/kpis`);
     const json = await res.json();
     return json.data;
   },
 
   async getMovers(): Promise<{ gainers: TickerData[]; losers: TickerData[]; volume: TickerData[] }> {
-    const res = await fetch(`${API_BASE}/market/movers`);
+    const res = await authFetch(`${API_BASE}/market/movers`);
     const json = await res.json();
     return json.data;
   },
 
   async getChartData(symbol: string, interval: string = '1D'): Promise<{ symbol: string; ticker: TickerData; candles: Candle[] }> {
-    const res = await fetch(`${API_BASE}/market/chart/${symbol}?interval=${encodeURIComponent(interval)}`);
+    const res = await authFetch(`${API_BASE}/market/chart/${symbol}?interval=${encodeURIComponent(interval)}`);
     const json = await res.json();
     return json.data;
   },
 
   async getDeepAnalysis(symbol: string, boughtPrice?: number | null): Promise<DeepAnalysisData> {
     const query = boughtPrice ? `?boughtPrice=${encodeURIComponent(boughtPrice)}` : '';
-    const res = await fetch(`${API_BASE}/market/analysis/${symbol}${query}`);
+    const res = await authFetch(`${API_BASE}/market/analysis/${symbol}${query}`);
     const json = await res.json();
     return json.data;
   },
 
   async getHeatmap(): Promise<HeatmapItem[]> {
-    const res = await fetch(`${API_BASE}/market/heatmap`);
+    const res = await authFetch(`${API_BASE}/market/heatmap`);
     const json = await res.json();
     return json.data;
   },
 
   async getSectorStats(): Promise<SectorStatItem[]> {
-    const res = await fetch(`${API_BASE}/market/sectors`);
+    const res = await authFetch(`${API_BASE}/market/sectors`);
     const json = await res.json();
     return json.data;
   },
 
   async getTopAISignals(): Promise<TickerData[]> {
-    const res = await fetch(`${API_BASE}/market/signals`);
+    const res = await authFetch(`${API_BASE}/market/signals`);
     const json = await res.json();
     return json.data;
   },
 
   async getWatchlist(): Promise<TickerData[]> {
-    const res = await fetch(`${API_BASE}/market/watchlist`);
+    const res = await authFetch(`${API_BASE}/market/watchlist`);
     const json = await res.json();
     return json.data;
   },
 
   async toggleWatchlist(symbol: string): Promise<{ symbol: string; isWatchlist: boolean }> {
-    const res = await fetch(`${API_BASE}/market/watchlist/toggle`, {
+    const res = await authFetch(`${API_BASE}/market/watchlist/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ symbol }),
@@ -91,20 +121,50 @@ export const api = {
     return json.data;
   },
 
+  async saveWatchlistDetails(data: {
+    symbol: string;
+    targetBuyPrice?: number | null;
+    targetSellPrice?: number | null;
+    notes?: string | null;
+    priority?: number;
+  }): Promise<any> {
+    const res = await authFetch(`${API_BASE}/market/watchlist/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    return json.data;
+  },
+
+  async removeFromWatchlist(symbol: string): Promise<boolean> {
+    const res = await authFetch(`${API_BASE}/market/watchlist/${encodeURIComponent(symbol)}`, {
+      method: 'DELETE',
+    });
+    const json = await res.json();
+    return json.success;
+  },
+
+  async getAuthMe(): Promise<any> {
+    const res = await authFetch(`${API_BASE}/auth/me`);
+    return await res.json();
+  },
+
+
   async getPortfolio(): Promise<PortfolioSummary> {
-    const res = await fetch(`${API_BASE}/market/portfolio`);
+    const res = await authFetch(`${API_BASE}/market/portfolio`);
     const json = await res.json();
     return json.data;
   },
 
   async getRecentAlerts(): Promise<AlertItem[]> {
-    const res = await fetch(`${API_BASE}/market/alerts`);
+    const res = await authFetch(`${API_BASE}/market/alerts`);
     const json = await res.json();
     return json.data;
   },
 
   async createAlert(alertData: Omit<AlertItem, 'id' | 'time'>): Promise<AlertItem> {
-    const res = await fetch(`${API_BASE}/market/alerts`, {
+    const res = await authFetch(`${API_BASE}/market/alerts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(alertData),
@@ -114,7 +174,7 @@ export const api = {
   },
 
   async deleteAlert(id: string): Promise<boolean> {
-    const res = await fetch(`${API_BASE}/market/alerts/${encodeURIComponent(id)}`, {
+    const res = await authFetch(`${API_BASE}/market/alerts/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     });
     const json = await res.json();
@@ -122,32 +182,32 @@ export const api = {
   },
 
   async getNews(): Promise<CryptoNewsItem[]> {
-    const res = await fetch(`${API_BASE}/market/news`);
+    const res = await authFetch(`${API_BASE}/market/news`);
     const json = await res.json();
     return json.data;
   },
 
   async get24Recommended(): Promise<SectorTopItem[]> {
-    const res = await fetch(`${API_BASE}/market/24-recommended`);
+    const res = await authFetch(`${API_BASE}/market/24-recommended`);
     const json = await res.json();
     return json.data;
   },
 
   async getTop3Overall(): Promise<Top3OverallItem[]> {
-    const res = await fetch(`${API_BASE}/market/top3-overall`);
+    const res = await authFetch(`${API_BASE}/market/top3-overall`);
     const json = await res.json();
     return json.data;
   },
 
   async getCoins(params?: { sector?: string; search?: string; sort?: string; order?: 'asc' | 'desc' }): Promise<TickerData[]> {
     const query = new URLSearchParams(params as any).toString();
-    const res = await fetch(`${API_BASE}/coins?${query}`);
+    const res = await authFetch(`${API_BASE}/coins?${query}`);
     const json = await res.json();
     return json.data;
   },
 
   async runScanner(mode: string, sector?: string, minVolume?: number): Promise<TickerData[]> {
-    const res = await fetch(`${API_BASE}/scanner`, {
+    const res = await authFetch(`${API_BASE}/scanner`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode, sector, minVolume }),
@@ -163,7 +223,7 @@ export const api = {
     stopLossPrice: number;
     targetPrice?: number;
   }): Promise<PositionSizingResult> {
-    const res = await fetch(`${API_BASE}/calculator/position-sizing`, {
+    const res = await authFetch(`${API_BASE}/calculator/position-sizing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -191,7 +251,7 @@ export const api = {
     currentPrice: number;
     history: { period: number; invested: number; value: number }[];
   }> {
-    const res = await fetch(`${API_BASE}/calculator/dca`, {
+    const res = await authFetch(`${API_BASE}/calculator/dca`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -201,13 +261,13 @@ export const api = {
   },
 
   async getSystemStatus(): Promise<any> {
-    const res = await fetch(`${API_BASE}/system/status`);
+    const res = await authFetch(`${API_BASE}/system/status`);
     const json = await res.json();
     return json.data;
   },
 
   async triggerSync(): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/system/sync`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/system/sync`, { method: 'POST' });
     const json = await res.json();
     return json;
   },
@@ -225,7 +285,7 @@ export const api = {
       profitFactor: number;
     };
   }> {
-    const res = await fetch(`${API_BASE}/paper-trading`);
+    const res = await authFetch(`${API_BASE}/paper-trading`);
     const json = await res.json();
     return json.data;
   },
@@ -240,7 +300,7 @@ export const api = {
     notes?: string;
     signalOrigin?: string;
   }): Promise<PaperTrade> {
-    const res = await fetch(`${API_BASE}/paper-trading/order`, {
+    const res = await authFetch(`${API_BASE}/paper-trading/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
@@ -250,32 +310,32 @@ export const api = {
   },
 
   async closePaperTrade(id: string): Promise<boolean> {
-    const res = await fetch(`${API_BASE}/paper-trading/close/${id}`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/paper-trading/close/${id}`, { method: 'POST' });
     const json = await res.json();
     return json.success;
   },
 
   async deletePaperTrade(id: string): Promise<boolean> {
-    const res = await fetch(`${API_BASE}/paper-trading/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE}/paper-trading/${id}`, { method: 'DELETE' });
     const json = await res.json();
     return json.success;
   },
 
   async getWhaleRadar(): Promise<WhaleRadarSummary> {
-    const res = await fetch(`${API_BASE}/market/whale-radar`);
+    const res = await authFetch(`${API_BASE}/market/whale-radar`);
     const json = await res.json();
     return json.data;
   },
 
   // Phase 20 Production Architecture: Top 5 Premium
   async getTop5Premium(): Promise<Phase20EvaluationResponse> {
-    const res = await fetch(`${API_BASE}/market/top5-premium`);
+    const res = await authFetch(`${API_BASE}/market/top5-premium`);
     const json = await res.json();
     return json.data;
   },
 
   async recalculateTop5Premium(config?: any): Promise<Phase20EvaluationResponse> {
-    const res = await fetch(`${API_BASE}/market/top5-premium/recalculate`, {
+    const res = await authFetch(`${API_BASE}/market/top5-premium/recalculate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config }),
@@ -289,13 +349,13 @@ export const api = {
     hardGates: { passed: boolean; reasonCodes: string[] };
     marketRegime: any;
   }> {
-    const res = await fetch(`${API_BASE}/market/top5-premium/focus/${encodeURIComponent(symbol)}`);
+    const res = await authFetch(`${API_BASE}/market/top5-premium/focus/${encodeURIComponent(symbol)}`);
     const json = await res.json();
     return json.data;
   },
 
   async simulateSlippage(symbol: string, capitalThb: number): Promise<SlippageSimulationResult> {
-    const res = await fetch(`${API_BASE}/market/top5-premium/slippage-sim`, {
+    const res = await authFetch(`${API_BASE}/market/top5-premium/slippage-sim`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ symbol, capitalThb }),
@@ -306,13 +366,13 @@ export const api = {
 
   // Phase 21 Production Architecture: Top 5 Ultimate (Institutional No Weak Link)
   async getTop5Ultimate(): Promise<UltimateEvaluationResponse> {
-    const res = await fetch(`${API_BASE}/market/top5-ultimate`);
+    const res = await authFetch(`${API_BASE}/market/top5-ultimate`);
     const json = await res.json();
     return json.data;
   },
 
   async recalculateTop5Ultimate(config?: any): Promise<UltimateEvaluationResponse> {
-    const res = await fetch(`${API_BASE}/market/top5-ultimate/recalculate`, {
+    const res = await authFetch(`${API_BASE}/market/top5-ultimate/recalculate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config }),
@@ -322,7 +382,7 @@ export const api = {
   },
 
   async getTop5UltimateFocus(symbol: string): Promise<UltimateCandidate> {
-    const res = await fetch(`${API_BASE}/market/top5-ultimate/focus/${encodeURIComponent(symbol)}`);
+    const res = await authFetch(`${API_BASE}/market/top5-ultimate/focus/${encodeURIComponent(symbol)}`);
     const json = await res.json();
     return json.data;
   },
@@ -336,7 +396,7 @@ export const api = {
     tp2Price?: number;
     tp3Price?: number;
   }): Promise<SimulatedPositionEvaluation> {
-    const res = await fetch(`${API_BASE}/market/top5-ultimate/position-sim`, {
+    const res = await authFetch(`${API_BASE}/market/top5-ultimate/position-sim`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
@@ -346,31 +406,31 @@ export const api = {
   },
 
   async getTop5(): Promise<Top5Response> {
-    const res = await fetch(`${API_BASE}/market/top5`);
+    const res = await authFetch(`${API_BASE}/market/top5`);
     const json = await res.json();
     return json.data;
   },
 
   async getTop5History(): Promise<Top5SnapshotHistory[]> {
-    const res = await fetch(`${API_BASE}/market/top5/history`);
+    const res = await authFetch(`${API_BASE}/market/top5/history`);
     const json = await res.json();
     return json.data;
   },
 
   async recalculateTop5(): Promise<Top5Response> {
-    const res = await fetch(`${API_BASE}/market/top5/recalculate`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/market/top5/recalculate`, { method: 'POST' });
     const json = await res.json();
     return json.data;
   },
 
   async getBuyNow(): Promise<BuyNowResponse> {
-    const res = await fetch(`${API_BASE}/market/buynow`);
+    const res = await authFetch(`${API_BASE}/market/buynow`);
     const json = await res.json();
     return json.data;
   },
 
   async recalculateBuyNow(): Promise<BuyNowResponse> {
-    const res = await fetch(`${API_BASE}/market/buynow/recalculate`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/market/buynow/recalculate`, { method: 'POST' });
     const json = await res.json();
     return json.data;
   },
@@ -381,7 +441,7 @@ export const api = {
     marketContext: any;
     totalEvaluated: number;
   }> {
-    const res = await fetch(`${API_BASE}/market/opportunities`);
+    const res = await authFetch(`${API_BASE}/market/opportunities`);
     const json = await res.json();
     return json.data;
   },
@@ -391,13 +451,13 @@ export const api = {
     marketContext: any;
     totalEvaluated: number;
   }> {
-    const res = await fetch(`${API_BASE}/market/opportunities/recalculate`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/market/opportunities/recalculate`, { method: 'POST' });
     const json = await res.json();
     return json.data;
   },
 
   async getQuantV3Detail(symbol: string): Promise<QuantV3ApiResponse> {
-    const res = await fetch(`${API_BASE}/market/quant-v3/${symbol}`);
+    const res = await authFetch(`${API_BASE}/market/quant-v3/${symbol}`);
     const json = await res.json();
     return json.data;
   },
@@ -410,20 +470,20 @@ export const api = {
     marketStatus: string;
     marketMessage?: string;
   }> {
-    const res = await fetch(`${API_BASE}/market/quant-v3-overview`);
+    const res = await authFetch(`${API_BASE}/market/quant-v3-overview`);
     const json = await res.json();
     return json.data;
   },
 
   // Focus Module APIs
   async getFocusList(): Promise<FocusResponse> {
-    const res = await fetch(`${API_BASE}/focus`);
+    const res = await authFetch(`${API_BASE}/focus`);
     const json = await res.json();
     return json.data;
   },
 
   async getFocusDetail(symbol: string): Promise<FocusCoinData> {
-    const res = await fetch(`${API_BASE}/focus/${symbol}/detail`);
+    const res = await authFetch(`${API_BASE}/focus/${symbol}/detail`);
     const json = await res.json();
     return json.data;
   },
@@ -437,7 +497,7 @@ export const api = {
     customTrailingStop?: number;
     userNotes?: string;
   }): Promise<FocusCoinData> {
-    const res = await fetch(`${API_BASE}/focus`, {
+    const res = await authFetch(`${API_BASE}/focus`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -447,7 +507,7 @@ export const api = {
   },
 
   async updateFocus(id: string, updates: Partial<FocusItem>): Promise<FocusCoinData> {
-    const res = await fetch(`${API_BASE}/focus/${id}`, {
+    const res = await authFetch(`${API_BASE}/focus/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -457,14 +517,14 @@ export const api = {
   },
 
   async removeFocus(symbol: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/focus/${symbol}`, {
+    const res = await authFetch(`${API_BASE}/focus/${symbol}`, {
       method: 'DELETE',
     });
     return await res.json();
   },
 
   async reorderFocus(symbols: string[]): Promise<FocusResponse> {
-    const res = await fetch(`${API_BASE}/focus/reorder`, {
+    const res = await authFetch(`${API_BASE}/focus/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ symbols }),
@@ -474,7 +534,7 @@ export const api = {
   },
 
   async recalculateFocus(): Promise<FocusResponse> {
-    const res = await fetch(`${API_BASE}/focus/recalculate`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/focus/recalculate`, { method: 'POST' });
     const json = await res.json();
     return json.data;
   },
@@ -489,7 +549,7 @@ export const api = {
       timestamp?: string;
     };
   }> {
-    const res = await fetch(`${API_BASE}/settings/test-connection`, {
+    const res = await authFetch(`${API_BASE}/settings/test-connection`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exchange }),
@@ -506,13 +566,14 @@ export const api = {
     ip?: string;
     message: string;
     user?: {
+      id?: string;
       username: string;
       name: string;
-      role: 'admin';
+      role: 'admin' | 'platinum' | 'premium' | 'gold' | 'free';
       loggedInAt: string;
     };
   }> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await authFetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -530,12 +591,12 @@ export const api = {
       lockedAt?: number;
     };
   }> {
-    const res = await fetch(`${API_BASE}/auth/status`);
+    const res = await authFetch(`${API_BASE}/auth/status`);
     return await res.json();
   },
 
   async resetAuthLock(): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/auth/reset-lock`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/auth/reset-lock`, { method: 'POST' });
     return await res.json();
   },
 };

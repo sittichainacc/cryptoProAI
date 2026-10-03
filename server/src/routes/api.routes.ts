@@ -8,6 +8,8 @@ import { RiskEngine } from '../engines/risk.engine.js';
 import { TradingPlanEngine } from '../engines/trading_plan.engine.js';
 import { QuantPremiumEngine, DEFAULT_PHASE20_CONFIG } from '../engines/quant_premium.engine.js';
 import { UltimateQualificationEngine, ULTIMATE_POLICY_V1 } from '../engines/ultimate_qualification.engine.js';
+import { WatchlistService } from '../database/watchlist.service.js';
+import { resolveUserId } from '../database/auth.middleware.js';
 
 export const apiRouter = Router();
 
@@ -106,20 +108,61 @@ apiRouter.get('/market/signals', (_req, res) => {
 });
 
 /**
- * Watchlist
+ * Watchlist (Connected to Supabase PostgreSQL per user)
  */
-apiRouter.get('/market/watchlist', (_req, res) => {
-  const items = marketStore.getWatchlist();
-  res.json({ success: true, data: items });
+apiRouter.get('/market/watchlist', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const result = await WatchlistService.getUserWatchlist(userId, marketStore);
+    res.json({ success: true, data: result.items, quota: result.quota });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-apiRouter.post('/market/watchlist/toggle', (req, res) => {
-  const { symbol } = req.body;
-  if (!symbol) {
-    return res.status(400).json({ success: false, error: 'Symbol is required' });
+apiRouter.post('/market/watchlist/toggle', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbol } = req.body;
+    if (!symbol) {
+      return res.status(400).json({ success: false, error: 'Symbol is required' });
+    }
+    const result = await WatchlistService.toggleWatchlist(userId, symbol);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message, message: err.message });
   }
-  const isAdded = marketStore.toggleWatchlist(symbol);
-  res.json({ success: true, data: { symbol, isWatchlist: isAdded } });
+});
+
+apiRouter.post('/market/watchlist/save', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const { symbol, targetBuyPrice, targetSellPrice, notes, priority } = req.body;
+    if (!symbol) {
+      return res.status(400).json({ success: false, error: 'Symbol is required' });
+    }
+    const row = await WatchlistService.saveWatchlistDetails(userId, {
+      symbol,
+      targetBuyPrice: targetBuyPrice !== undefined && targetBuyPrice !== null && targetBuyPrice !== '' ? Number(targetBuyPrice) : null,
+      targetSellPrice: targetSellPrice !== undefined && targetSellPrice !== null && targetSellPrice !== '' ? Number(targetSellPrice) : null,
+      notes,
+      priority: priority ? Number(priority) : 1,
+    });
+    res.json({ success: true, data: row });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.delete('/market/watchlist/:symbol', async (req, res) => {
+  try {
+    const userId = await resolveUserId(req);
+    const symbol = req.params.symbol;
+    const removed = await WatchlistService.removeCoin(userId, symbol);
+    res.json({ success: true, data: { symbol, removed } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
 });
 
 /**
