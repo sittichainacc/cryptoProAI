@@ -406,17 +406,17 @@ export const App: React.FC = () => {
   };
 
   // ─── Tier-based access helper ──────────────────────────────────────────────
-  // free: Home + Gold Signal only
-  // gold: + Market, Screener, Technical Chart, News
-  // premium: + AI Signals, Watchlist, Alerts, Reports, Strategy, Settings
-  // platinum: + Top5 Ultimate, Top5 Premium, Top5, Portfolio, Analysis
-  // admin: ALL including Focus, User Management
+  // free: Home + Gold Signal + Watchlist (5) + Alerts (3)
+  // gold: + Market, Screener, Technical Chart, News, Watchlist (15), Alerts (10)
+  // premium: + AI Signals, Reports, Strategy, Settings, Watchlist (30), Alerts (25)
+  // platinum: + Top5 Ultimate, Top5 Premium, Top5, Portfolio, Analysis, Whale Radar, Watchlist (100), Alerts (100)
+  // admin: ALL including Focus Cockpit, User Management Console, Watchlist (999), Alerts (999)
   const canAccess = (tab: string): boolean => {
     if (userRole === 'admin') return true;
-    const freeAccess = ['dashboard', 'gold-signal'];
+    const freeAccess = ['dashboard', 'gold-signal', 'watchlist', 'alerts'];
     const goldAccess = [...freeAccess, 'market', 'screener', 'technical', 'news'];
-    const premiumAccess = [...goldAccess, 'signals', 'watchlist', 'alerts', 'reports', 'strategy', 'settings'];
-    const platinumAccess = [...premiumAccess, 'top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis'];
+    const premiumAccess = [...goldAccess, 'signals', 'reports', 'strategy', 'settings'];
+    const platinumAccess = [...premiumAccess, 'top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'whale-radar'];
     if (userRole === 'platinum') return platinumAccess.includes(tab);
     if (userRole === 'premium') return premiumAccess.includes(tab);
     if (userRole === 'gold') return goldAccess.includes(tab);
@@ -424,13 +424,11 @@ export const App: React.FC = () => {
   };
 
   const getRequiredTier = (tab: string): string => {
-    const platinumOnly = ['top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'focus'];
-    const premiumOnly = ['signals', 'watchlist', 'alerts', 'reports', 'strategy', 'settings'];
-    const goldOnly = ['market', 'screener', 'technical', 'news'];
-    if (platinumOnly.includes(tab)) return 'Platinum';
-    if (premiumOnly.includes(tab)) return 'Premium';
-    if (goldOnly.includes(tab)) return 'Gold';
-    return 'Admin';
+    if (['focus', 'user-management'].includes(tab)) return 'Admin';
+    if (['top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'whale-radar'].includes(tab)) return 'Platinum';
+    if (['signals', 'reports', 'strategy', 'settings'].includes(tab)) return 'Premium';
+    if (['market', 'screener', 'technical', 'news'].includes(tab)) return 'Gold';
+    return 'Free';
   };
 
   // Render Page Content based on active navigation
@@ -604,8 +602,8 @@ export const App: React.FC = () => {
             {/* Row 1: KPI Cards */}
             <KpiCards kpis={kpis} currency={currency} />
 
-            {/* Row 2: Main Trading Section — Admin/Platinum/Premium see live workspace */}
-            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium') ? (
+            {/* Row 2: Main Trading Section — Admin/Platinum/Premium/Gold see live workspace */}
+            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium' || userRole === 'gold') ? (
               <ResizableTradingWorkspace
                 movers={movers}
                 watchlist={watchlist}
@@ -628,8 +626,8 @@ export const App: React.FC = () => {
               />
             )}
 
-            {/* ส่วนถัดจากกราฟ — Admin/Platinum/Premium เห็นส่วนนี้ */}
-            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium') ? (
+            {/* ส่วนถัดจากกราฟ — Admin/Platinum/Premium/Gold เห็นส่วนนี้ */}
+            {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium' || userRole === 'gold') ? (
               <>
                 {/* Complete Crypto Ranking Table - Section 7 */}
                 <CollapsibleSection
@@ -651,14 +649,16 @@ export const App: React.FC = () => {
                   />
                 </CollapsibleSection>
 
-                {/* Special Module: Top 5 Buy Now — เหรียญที่มีจังหวะเข้าซื้อได้ ณ เวลานี้ (ซ่อนอัตโนมัติหากไม่มีเหรียญผ่านเกณฑ์) */}
-                <Top5BuyNowWidget
-                  candidates={buyNowCandidates}
-                  currency={currency}
-                  onSelectCoin={handleSelectCoin}
-                  onOpenAnalysis={handleOpenAnalysis}
-                  onRecalculate={handleRecalculateBuyNow}
-                />
+                {/* Special Module: Top 5 Buy Now — เฉพาะ Premium/Platinum/Admin */}
+                {(userRole === 'admin' || userRole === 'platinum' || userRole === 'premium') && (
+                  <Top5BuyNowWidget
+                    candidates={buyNowCandidates}
+                    currency={currency}
+                    onSelectCoin={handleSelectCoin}
+                    onOpenAnalysis={handleOpenAnalysis}
+                    onRecalculate={handleRecalculateBuyNow}
+                  />
+                )}
 
                 {/* Quick Section Guide Banner */}
                 <div

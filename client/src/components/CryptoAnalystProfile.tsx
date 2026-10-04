@@ -104,24 +104,54 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
   };
 
   const getRoleBadge = () => {
-    if (!isAdmin) {
-      return {
-        title: 'GUEST',
-        subtitle: 'VISITOR',
-        color: '#94A3B8',
-        bg: 'rgba(148, 163, 184, 0.15)',
-        border: 'rgba(148, 163, 184, 0.35)',
-        icon: User,
-      };
+    switch (userRole) {
+      case 'admin':
+        return {
+          title: 'SUPER ADMIN',
+          subtitle: 'LVL 5',
+          color: '#F43F5E',
+          bg: 'rgba(244, 63, 94, 0.15)',
+          border: 'rgba(244, 63, 94, 0.4)',
+          icon: Shield,
+        };
+      case 'platinum':
+        return {
+          title: 'PLATINUM VIP',
+          subtitle: 'LVL 4',
+          color: '#A78BFA',
+          bg: 'rgba(167, 139, 250, 0.15)',
+          border: 'rgba(167, 139, 250, 0.4)',
+          icon: ShieldCheck,
+        };
+      case 'premium':
+        return {
+          title: 'PREMIUM MEMBER',
+          subtitle: 'LVL 3',
+          color: '#38BDF8',
+          bg: 'rgba(56, 189, 248, 0.15)',
+          border: 'rgba(56, 189, 248, 0.4)',
+          icon: Award,
+        };
+      case 'gold':
+        return {
+          title: 'GOLD MEMBER',
+          subtitle: 'LVL 2',
+          color: '#F59E0B',
+          bg: 'rgba(245, 158, 11, 0.15)',
+          border: 'rgba(245, 158, 11, 0.4)',
+          icon: Award,
+        };
+      case 'free':
+      default:
+        return {
+          title: 'FREE TIER',
+          subtitle: 'LVL 1',
+          color: '#94A3B8',
+          bg: 'rgba(148, 163, 184, 0.15)',
+          border: 'rgba(148, 163, 184, 0.35)',
+          icon: User,
+        };
     }
-    return {
-      title: 'SYSTEM ADMIN',
-      subtitle: 'LVL 5',
-      color: '#F59E0B',
-      bg: 'rgba(245, 158, 11, 0.15)',
-      border: 'rgba(245, 158, 11, 0.4)',
-      icon: Shield,
-    };
   };
 
   const roleBadge = getRoleBadge();
@@ -615,25 +645,39 @@ export const CryptoAnalystProfile: React.FC<CryptoAnalystProfileProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {[
                     {
-                      id: 'analyst',
-                      title: 'Analyst (โหมดนักวิเคราะห์)',
-                      desc: 'ปลดล็อก 17 อินดิเคเตอร์, MTF Matrix, Thai Rationale และ Focus Radar',
-                      badge: 'PRO',
-                      color: '#06B6D4',
+                      id: 'free',
+                      title: 'Free Tier (ผู้ใช้งานทั่วไป)',
+                      desc: 'หน้าแรก Overview, สัญญาณทอง, Watchlist 5 เหรียญ, แจ้งเตือน 3 รายการ',
+                      badge: 'LVL 1',
+                      color: '#94A3B8',
                     },
                     {
-                      id: 'investor',
-                      title: 'Investor (โหมดนักลงทุน)',
-                      desc: 'สัญญาณเข้า-ออกชัดเจน พร้อมเป้าหมายกำไร TP และจุดตัดขาดทุน SL',
-                      badge: 'SIMPLIFIED',
-                      color: '#10B981',
+                      id: 'gold',
+                      title: 'Gold Member (ระดับโกลด์)',
+                      desc: 'ปลดล็อกตลาดคริปโต, Screener, กราฟเทคนิคอล 17 ค่า & MTF, ข่าวสาร, Watchlist 15',
+                      badge: 'LVL 2',
+                      color: '#F59E0B',
+                    },
+                    {
+                      id: 'premium',
+                      title: 'Premium Member (ระดับพรีเมียม)',
+                      desc: 'สัญญาณ AI Signals 11 สถานะ, Screener 8 โหมด, เครื่องมือกลยุทธ์, รายงาน & PDF',
+                      badge: 'LVL 3',
+                      color: '#38BDF8',
+                    },
+                    {
+                      id: 'platinum',
+                      title: 'Platinum VIP (ระดับแพลตทินัม)',
+                      desc: 'Top 5 Ultimate/Premium/Classic, วิเคราะห์เชิงลึก Deep Dive, เรดาร์ตรวจจับวาฬ',
+                      badge: 'LVL 4',
+                      color: '#A78BFA',
                     },
                     {
                       id: 'admin',
-                      title: 'Admin (ผู้ดูแลระบบ)',
-                      desc: 'จัดการ Exchange API Keys, System Config และ WebSocket Tuning',
-                      badge: 'CONTROL',
-                      color: '#F59E0B',
+                      title: 'Super Admin (ผู้ดูแลระบบ)',
+                      desc: 'ควบคุมระบบครบวงจร, FOCUS Decision Cockpit, คอนโซลจัดการผู้ใช้งานทั้ง 5 Tiers',
+                      badge: 'SUPER',
+                      color: '#F43F5E',
                     },
                   ].map((r) => {
                     const isSelected = userRole === r.id;

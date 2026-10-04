@@ -72,7 +72,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
             }}
           >
             <Crown size={12} color="#F59E0B" />
-            <span>สำหรับสมาชิก Premium เท่านั้น</span>
+            <span>สำหรับสมาชิก Gold / Premium ขึ้นไป</span>
           </span>
         </div>
 
@@ -113,7 +113,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
               letterSpacing: '-0.3px',
             }}
           >
-            สำหรับสมาชิก Premium เท่านั้น
+            สำหรับสมาชิกระดับ Gold ขึ้นไป
           </h3>
 
           <p
@@ -125,7 +125,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
               margin: '0 0 16px',
             }}
           >
-            หน้าต่าง TRADING WORKSPACE มัลติพาเนล (Movers/Watchlist, กราฟเทรดสด TradingView, และสัญญาณ AI Live Signals) พร้อมฟังก์ชันลากปรับสัดส่วนหน้าจออิสระ <strong>สำหรับสมาชิก Premium เท่านั้น</strong>
+            หน้าต่าง TRADING WORKSPACE มัลติพาเนล (Movers/Watchlist, กราฟเทรดสด TradingView, และสัญญาณ AI Live Signals) พร้อมฟังก์ชันลากปรับสัดส่วนหน้าจออิสระ <strong>สำหรับสมาชิก Gold / Premium / Platinum / Admin</strong>
           </p>
 
           {/* Pricing Highlight Badge */}
@@ -185,7 +185,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F59E0B')}
           >
             <LogIn size={16} />
-            <span>เข้าสู่ระบบในฐานะ Premium</span>
+            <span>เข้าสู่ระบบสมาชิกเพื่อปลดล็อก</span>
           </button>
         </div>
       </div>
@@ -251,7 +251,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
           }}
         >
           <Crown size={12} color="#F59E0B" />
-          <span>สำหรับสมาชิก Premium เท่านั้น</span>
+          <span>สำหรับสมาชิก Gold / Premium ขึ้นไป</span>
         </span>
       </div>
 
@@ -292,7 +292,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
             letterSpacing: '-0.3px',
           }}
         >
-          สำหรับสมาชิก Premium เท่านั้น
+          สำหรับสมาชิกระดับ Gold ขึ้นไป
         </h3>
 
         <p
@@ -304,7 +304,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
             margin: '0 0 16px',
           }}
         >
-          ชุดตารางจัดอันดับเหรียญ, Top 5 Buy Now, ศูนย์วิเคราะห์พอร์ต ข่าว & เรดาร์อัจฉริยะ, 24 เหรียญตามกลุ่มอุตสาหกรรม, และตัวเด่น Top 3 Overall <strong>สำหรับสมาชิก Premium เท่านั้น</strong>
+          ชุดตารางจัดอันดับเหรียญ, ศูนย์วิเคราะห์พอร์ต ข่าว & เรดาร์อัจฉริยะ, 24 เหรียญตามกลุ่มอุตสาหกรรม, และตัวเด่น Top 3 Overall <strong>สำหรับสมาชิก Gold / Premium / Platinum / Admin</strong>
         </p>
 
         {/* Pricing Highlight Badge */}
@@ -390,7 +390,7 @@ export const HomeAdminLockCard: React.FC<HomeAdminLockCardProps> = ({
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F59E0B')}
           >
             <LogIn size={16} />
-            <span>เข้าสู่ระบบในฐานะ Premium</span>
+            <span>เข้าสู่ระบบสมาชิกเพื่อปลดล็อก</span>
           </button>
 
           {onOpenGold && (

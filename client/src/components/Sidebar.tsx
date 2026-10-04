@@ -59,10 +59,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'screener', label: 'สแกนเหรียญ', icon: ScanLine, minRole: 'gold' },
     { id: 'analysis', label: 'วิเคราะห์เชิงลึก', icon: Activity, minRole: 'platinum' },
     { id: 'technical', label: 'วิเคราะห์กราฟ', icon: BarChart2, minRole: 'gold' },
+    { id: 'news', label: 'ข่าวสารคริปโต', icon: FileText, minRole: 'gold' },
     { id: 'signals', label: 'สัญญาณ AI', icon: Sparkles, minRole: 'premium' },
-    { id: 'watchlist', label: 'รายการเฝ้าดู', icon: Eye, minRole: 'premium' },
+    { id: 'watchlist', label: 'รายการเฝ้าดู', icon: Eye, minRole: 'free' },
     { id: 'portfolio', label: 'วิเคราะห์พอร์ต & เสี่ยง', icon: PieChart, minRole: 'platinum' },
-    { id: 'alerts', label: 'การแจ้งเตือน', icon: Bell, minRole: 'premium' },
+    { id: 'alerts', label: 'การแจ้งเตือน', icon: Bell, minRole: 'free' },
     { id: 'reports', label: 'รายงาน & สถิติ', icon: FileSpreadsheet, minRole: 'premium' },
     { id: 'strategy', label: 'เครื่องมือ & กลยุทธ์', icon: Wrench, minRole: 'premium' },
     { id: 'settings', label: 'ตั้งค่าระบบ', icon: Settings, minRole: 'premium' },
@@ -458,7 +459,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         opacity: 0.75,
                         marginLeft: 'auto',
                       }}
-                      title="สำหรับสมาชิก Premium (เดือนละ 10 บาท/ปีละ 110 บาท)"
+                      title={`สำหรับ${getTierLabel(item.minRole || 'free')}`}
                     >
                       <Lock size={12} />
                     </span>
@@ -473,7 +474,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     right: '5px',
                     opacity: 0.65,
                   }}
-                  title="สำหรับสมาชิก Premium (เดือนละ 10 บาท/ปีละ 110 บาท)"
+                  title={`สำหรับ${getTierLabel(item.minRole || 'free')}`}
                 >
                   <Lock size={9} color="#94A3B8" />
                 </div>

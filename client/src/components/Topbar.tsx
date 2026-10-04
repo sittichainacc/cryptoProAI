@@ -866,8 +866,8 @@ export const Topbar: React.FC<TopbarProps> = ({
         )}
         </div>
 
-        {/* Admin Login or Status Badge Button */}
-        {userRole !== 'admin' ? (
+        {/* Role Status Badge or Login / Upgrade Button */}
+        {userRole === 'free' ? (
           onOpenLogin && (
             <button
               onClick={onOpenLogin}
@@ -887,10 +887,10 @@ export const Topbar: React.FC<TopbarProps> = ({
                 boxShadow: '0 0 10px rgba(245, 158, 11, 0.15)',
                 transition: 'all 0.15s ease',
               }}
-              title="เข้าสู่ระบบ Admin เพื่อเข้าถึงส่วนที่จำกัดสิทธิ์"
+              title="เข้าสู่ระบบ หรือ อัปเกรดระดับสมาชิกเพื่อปลดล็อกฟังก์ชันขั้นสูง"
             >
               <Shield size={13} color="#F59E0B" />
-              <span className="topbar-admin-login-text">เข้าสู่ระบบ Admin</span>
+              <span className="topbar-admin-login-text">เข้าสู่ระบบ / อัปเกรด</span>
             </button>
           )
         ) : (
@@ -902,16 +902,44 @@ export const Topbar: React.FC<TopbarProps> = ({
               gap: '6px',
               padding: '5px 10px',
               borderRadius: '8px',
-              background: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.5)',
-              color: '#FBBF24',
+              background: userRole === 'admin'
+                ? 'rgba(244, 63, 94, 0.15)'
+                : userRole === 'platinum'
+                ? 'rgba(167, 139, 250, 0.15)'
+                : userRole === 'premium'
+                ? 'rgba(56, 189, 248, 0.15)'
+                : 'rgba(245, 158, 11, 0.15)',
+              border: `1px solid ${
+                userRole === 'admin'
+                  ? 'rgba(244, 63, 94, 0.5)'
+                  : userRole === 'platinum'
+                  ? 'rgba(167, 139, 250, 0.5)'
+                  : userRole === 'premium'
+                  ? 'rgba(56, 189, 248, 0.5)'
+                  : 'rgba(245, 158, 11, 0.5)'
+              }`,
+              color: userRole === 'admin'
+                ? '#F43F5E'
+                : userRole === 'platinum'
+                ? '#A78BFA'
+                : userRole === 'premium'
+                ? '#38BDF8'
+                : '#FBBF24',
               fontSize: '11px',
               fontWeight: 800,
             }}
-            title="เข้าสู่ระบบในฐานะ Premium เรียบร้อยแล้ว (สมาชิก Premium)"
+            title={`เข้าสู่ระบบในฐานะ ${userRole.toUpperCase()} เรียบร้อยแล้ว`}
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-            <span className="topbar-admin-status-text">PREMIUM MEMBER</span>
+            <span className="topbar-admin-status-text">
+              {userRole === 'admin'
+                ? '👑 SUPER ADMIN'
+                : userRole === 'platinum'
+                ? '💎 PLATINUM VIP'
+                : userRole === 'premium'
+                ? '⭐ PREMIUM MEMBER'
+                : '🥇 GOLD MEMBER'}
+            </span>
           </div>
         )}
 

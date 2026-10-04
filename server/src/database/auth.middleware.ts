@@ -56,3 +56,44 @@ export async function resolveUserContext(req: Request): Promise<UserContext | nu
   );
   return res.rows[0] || null;
 }
+
+export const ROLE_HIERARCHY: Record<string, number> = {
+  free: 1,
+  gold: 2,
+  premium: 3,
+  platinum: 4,
+  admin: 5,
+};
+
+/**
+ * Middleware to enforce minimum role tier requirement
+ */
+export function requireMinRole(minRole: 'free' | 'gold' | 'premium' | 'platinum' | 'admin') {
+  return async (req: Request, res: any, next: any) => {
+    try {
+      const user = await resolveUserContext(req);
+      const userRole = user?.role || 'free';
+      const userLevel = ROLE_HIERARCHY[userRole] ?? 1;
+      const requiredLevel = ROLE_HIERARCHY[minRole] ?? 1;
+
+      if (userLevel < requiredLevel) {
+        return res.status(403).json({
+          success: false,
+          error: `สิทธิ์การเข้าถึงไม่เพียงพอ: ฟังก์ชันนี้ต้องการสมาชิกระดับ ${minRole.toUpperCase()} ขึ้นไป`,
+          requiredRole: minRole,
+          currentRole: userRole,
+        });
+      }
+
+      (req as any).user = user;
+      next();
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  };
+}
+
+/**
+ * Middleware to enforce Super-Admin access only
+ */
+export const requireAdmin = requireMinRole('admin');
