@@ -40,7 +40,11 @@ import {
   TrendingDown as ArrowDown,
   Minimize2,
   Maximize2,
-  Crown
+  Crown,
+  Trash2,
+  Save,
+  Edit3,
+  Database,
 } from 'lucide-react';
 import { 
   FocusCoinData, 
@@ -152,10 +156,17 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     } catch {}
   };
 
-  // Position editing state for selected coin
+  // Focus filter: ALL vs SAVED in PostgreSQL Database
+  const [focusFilter, setFocusFilter] = useState<'ALL' | 'SAVED'>('ALL');
+
+  // Position editing & strategy state for selected coin (persisted in PostgreSQL)
   const [isEditingPosition, setIsEditingPosition] = useState(false);
   const [avgCostInput, setAvgCostInput] = useState('');
   const [amountInput, setAmountInput] = useState('');
+  const [stopLossInput, setStopLossInput] = useState('');
+  const [tp1Input, setTp1Input] = useState('');
+  const [notesInput, setNotesInput] = useState('');
+  const [priorityInput, setPriorityInput] = useState<'critical' | 'high' | 'normal' | 'low'>('high');
 
 
   // Real-time Telemetry & Change Detection States
@@ -513,8 +524,27 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     return [...pinnedItems, ...autoCandidates];
   }, [focusData, buyNowData, autoFocusTopBuyNow]);
 
+  // Derived filtered focus coins: ALL vs SAVED in PostgreSQL DB
+  const filteredFocusItems = useMemo(() => {
+    if (focusFilter === 'SAVED') {
+      return displayFocusItems.filter((i) => i.sourceType === 'PINNED');
+    }
+    return displayFocusItems;
+  }, [displayFocusItems, focusFilter]);
+
   const activeCoin: FocusCoinData | undefined =
     displayFocusItems.find((i) => i.symbol === selectedSymbol) || displayFocusItems[0];
+
+  useEffect(() => {
+    if (activeCoin) {
+      setAvgCostInput(activeCoin.position?.averageCost !== undefined ? String(activeCoin.position.averageCost) : '');
+      setAmountInput(activeCoin.position?.amount !== undefined ? String(activeCoin.position.amount) : '');
+      setStopLossInput(activeCoin.entryIntelligence?.stopLoss !== undefined ? String(activeCoin.entryIntelligence.stopLoss) : '');
+      setTp1Input(activeCoin.entryIntelligence?.tp1 !== undefined ? String(activeCoin.entryIntelligence.tp1) : '');
+      setNotesInput(activeCoin.userNotes || '');
+      setPriorityInput(activeCoin.priority || 'high');
+    }
+  }, [activeCoin?.symbol, activeCoin?.id]);
 
   // Freshness calculation
   const dataAgeSec = Math.max(0.5, Number(((Date.now() - lastTickTime) / 1000).toFixed(1)));
@@ -527,7 +557,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     await api.addFocus(payload);
     await loadData(true);
     setSelectedSymbol(payload.symbol);
-    showToast(`เพิ่ม ${payload.symbol} เข้า Focus สำเร็จ`);
+    showToast(`☁️ บันทึก ${payload.symbol} เข้าสู่ฐานข้อมูล Focus สำเร็จ`);
   };
 
   const handleQuickAdd = async (symbol: string, sourceTh: string) => {
@@ -540,7 +570,23 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     });
     await loadData(true);
     setSelectedSymbol(symbol);
-    showToast(`🔥 เพิ่ม ${symbol} เข้าสู่ Focus เรียบร้อยแล้ว`);
+    showToast(`☁️ บันทึก ${symbol} ลงในฐานข้อมูล PostgreSQL เรียบร้อยแล้ว`);
+  };
+
+  const handleUpdatePriority = async (coin: FocusCoinData, newPriority: 'critical' | 'high' | 'normal' | 'low') => {
+    if (coin.sourceType === 'AUTO') {
+      await api.addFocus({
+        symbol: coin.symbol,
+        priority: newPriority,
+        mode: 'high_focus',
+        positionStatus: 'WATCHING',
+      });
+      showToast(`⭐ บันทึก ${coin.symbol} (Priority: ${newPriority}) ลงฐานข้อมูล Focus เรียบร้อย`);
+    } else {
+      await api.updateFocus(coin.id, { priority: newPriority });
+      showToast(`⭐ อัปเดต Priority ของ ${coin.symbol} เป็น ${newPriority} ในฐานข้อมูลแล้ว`);
+    }
+    await loadData(true);
   };
 
   /** ดูข้อมูล: ถ้าอยู่ใน Focus → เปิด Decision Cockpit ของเหรียญนั้น, ถ้ายังไม่อยู่ → เปิดกราฟวิเคราะห์ */
@@ -557,10 +603,10 @@ export const FocusPage: React.FC<FocusPageProps> = ({
   };
 
   const handleRemoveFocus = async (symbol: string) => {
-    if (confirm(`คุณต้องการนำ ${symbol} ออกจาก Focus ใช่หรือไม่?`)) {
+    if (confirm(`คุณต้องการนำ ${symbol} ออกจากฐานข้อมูล Focus ใช่หรือไม่?`)) {
       await api.removeFocus(symbol);
       await loadData(true);
-      showToast(`นำ ${symbol} ออกจาก Focus แล้ว`);
+      showToast(`🗑️ นำ ${symbol} ออกจากฐานข้อมูล Focus แล้ว`);
     }
   };
 
@@ -573,30 +619,47 @@ export const FocusPage: React.FC<FocusPageProps> = ({
     if (!activeCoin) return;
     const avgCost = parseFloat(avgCostInput);
     const amount = parseFloat(amountInput);
-    if (isNaN(avgCost) || isNaN(amount)) {
-      alert('กรุณากรอกตัวเลขต้นทุนเฉลี่ยและจำนวนเหรียญที่ถูกต้อง');
-      return;
-    }
+    const stopLoss = parseFloat(stopLossInput);
+    const tp1 = parseFloat(tp1Input);
 
-    const currentValue = activeCoin.currentPrice * amount;
-    const costValue = avgCost * amount;
-    const pnl = currentValue - costValue;
-    const pnlPercent = costValue > 0 ? (pnl / costValue) * 100 : 0;
+    const hasPosition = !isNaN(avgCost) && !isNaN(amount) && avgCost > 0 && amount > 0;
+    const currentValue = hasPosition ? activeCoin.currentPrice * amount : undefined;
+    const costValue = hasPosition ? avgCost * amount : undefined;
+    const pnl = (hasPosition && currentValue !== undefined && costValue !== undefined) ? currentValue - costValue : undefined;
+    const pnlPercent = (hasPosition && costValue !== undefined && costValue > 0 && pnl !== undefined) ? (pnl / costValue) * 100 : undefined;
 
-    await api.updateFocus(activeCoin.id, {
-      positionStatus: 'HOLDING',
-      position: {
+    const payload: any = {
+      priority: priorityInput,
+      positionStatus: hasPosition ? 'HOLDING' : (activeCoin.positionStatus || 'WATCHING'),
+      userNotes: notesInput.trim(),
+      position: hasPosition ? {
         averageCost: avgCost,
         amount,
         currentValue,
         pnl,
         pnlPercent,
-        portfolioPercent: 10,
+        stopLoss: !isNaN(stopLoss) ? stopLoss : undefined,
+        takeProfit1: !isNaN(tp1) ? tp1 : undefined,
+      } : {
+        stopLoss: !isNaN(stopLoss) ? stopLoss : undefined,
+        takeProfit1: !isNaN(tp1) ? tp1 : undefined,
       },
-    });
+    };
+
+    if (activeCoin.sourceType === 'AUTO') {
+      await api.addFocus({
+        symbol: activeCoin.symbol,
+        mode: 'high_focus',
+        ...payload,
+      });
+      showToast(`💾 บันทึก ${activeCoin.symbol} เข้าสู่ฐานข้อมูล Focus ใน Cockpit เรียบร้อยแล้ว`);
+    } else {
+      await api.updateFocus(activeCoin.id, payload);
+      showToast(`☁️ อัปเดตข้อมูล ${activeCoin.symbol} ลงฐานข้อมูล PostgreSQL สำเร็จ`);
+    }
+
     setIsEditingPosition(false);
     await loadData(true);
-    showToast('บันทึกสถานะ Position พอร์ตเรียบร้อย');
   };
 
   const getStatusBadgeStyle = (status: string) => {
@@ -1131,6 +1194,22 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                 <span className="collapsible-summary-chip">
                   {displayFocusItems.length} เหรียญ
                 </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                    color: '#C4B5FD',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Database size={11} /> ใน DB: {focusData?.items?.length ?? 0}
+                </span>
                 {isCollapsed('focusCoins') && (
                   <span style={{ fontSize: '11px', color: 'var(--neon-green)', fontWeight: 700 }}>
                     เลือกอยู่: {selectedSymbol} ({activeCoin?.focusScore ?? 0}/100)
@@ -1138,19 +1217,80 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                 )}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                คลิกเลือกเหรียญเพื่อดูการวิเคราะห์เชิงลึก (เรียงตามลำดับความสำคัญและคะแนน Focus Score สด)
+                บันทึกและจัดการเหรียญในฐานข้อมูล PostgreSQL (เรียงตามลำดับความสำคัญและคะแนน Focus Score สด)
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => toggleSection('focusCoins')}
-            className="collapse-toggle-btn"
-            title={isCollapsed('focusCoins') ? 'ขยายรายการเหรียญ Focus' : 'ย่อรายการเหรียญ Focus'}
-          >
-            {isCollapsed('focusCoins') ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-            <span>{isCollapsed('focusCoins') ? 'ขยาย' : 'ย่อ'}</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Filter Toggle: ALL vs DB Only */}
+            <div style={{ display: 'flex', backgroundColor: 'rgba(0, 0, 0, 0.3)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setFocusFilter('ALL'); }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  backgroundColor: focusFilter === 'ALL' ? '#8B5CF6' : 'transparent',
+                  color: focusFilter === 'ALL' ? '#FFFFFF' : 'var(--text-muted)',
+                }}
+              >
+                ทั้งหมด ({displayFocusItems.length})
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setFocusFilter('SAVED'); }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  backgroundColor: focusFilter === 'SAVED' ? '#8B5CF6' : 'transparent',
+                  color: focusFilter === 'SAVED' ? '#FFFFFF' : 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <Database size={11} /> เฉพาะใน DB ({focusData?.items?.length ?? 0})
+              </button>
+            </div>
+
+            {/* Add Focus Button */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(139, 92, 246, 0.25)',
+                border: '1px solid #8B5CF6',
+                color: '#C4B5FD',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s',
+              }}
+              title="เพิ่มเหรียญใหม่เข้าสู่ฐานข้อมูล Focus"
+            >
+              <Plus size={14} /> + เพิ่มเหรียญ Focus
+            </button>
+
+            <button
+              onClick={() => toggleSection('focusCoins')}
+              className="collapse-toggle-btn"
+              title={isCollapsed('focusCoins') ? 'ขยายรายการเหรียญ Focus' : 'ย่อรายการเหรียญ Focus'}
+            >
+              {isCollapsed('focusCoins') ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              <span>{isCollapsed('focusCoins') ? 'ขยาย' : 'ย่อ'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Collapsible Content */}
@@ -1184,7 +1324,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
               gap: '12px',
             }}
           >
-          {displayFocusItems.map((coin, index) => {
+          {filteredFocusItems.map((coin, index) => {
             const isSelected = selectedSymbol === coin.symbol;
             const statusStyle = getStatusBadgeStyle(coin.entryIntelligence.status);
             const scoreFlash = scoreChangeFlashMap[coin.symbol];
@@ -1230,19 +1370,22 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                     <strong style={{ fontSize: '15px', color: '#FFFFFF' }}>{coin.symbol}</strong>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/THB</span>
 
-                    {/* PINNED vs AUTO Badge (Section 21) */}
+                    {/* PINNED vs AUTO Badge */}
                     <span
                       style={{
                         fontSize: '9px',
                         fontWeight: 800,
-                        padding: '1px 5px',
+                        padding: '1px 6px',
                         borderRadius: '4px',
-                        backgroundColor: coin.sourceType === 'AUTO' ? 'rgba(6, 182, 212, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+                        backgroundColor: coin.sourceType === 'AUTO' ? 'rgba(6, 182, 212, 0.2)' : 'rgba(139, 92, 246, 0.25)',
                         color: coin.sourceType === 'AUTO' ? '#22D3EE' : '#C4B5FD',
-                        border: `1px solid ${coin.sourceType === 'AUTO' ? 'rgba(6, 182, 212, 0.4)' : 'rgba(139, 92, 246, 0.4)'}`,
+                        border: `1px solid ${coin.sourceType === 'AUTO' ? 'rgba(6, 182, 212, 0.4)' : 'rgba(139, 92, 246, 0.5)'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
                       }}
                     >
-                      {coin.sourceType || 'PINNED'}
+                      {coin.sourceType === 'AUTO' ? '⚡ Auto แนะนำ' : <><Database size={9} /> DB</>}
                     </span>
                   </div>
 
@@ -1324,9 +1467,152 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                     LIVE
                   </span>
                 </div>
+
+                {/* Database & Priority Action Bar */}
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingTop: '6px',
+                    borderTop: '1px dashed rgba(255, 255, 255, 0.08)',
+                    fontSize: '11px',
+                  }}
+                >
+                  {/* Priority selector */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Priority:</span>
+                    <select
+                      value={coin.priority || 'high'}
+                      onChange={(e) => handleUpdatePriority(coin, e.target.value as any)}
+                      style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                        color: coin.priority === 'critical' ? '#EF4444' : coin.priority === 'high' ? '#F59E0B' : '#A78BFA',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        padding: '1px 4px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                      title="บันทึกความสำคัญ (Priority) ลงฐานข้อมูล PostgreSQL"
+                    >
+                      <option value="critical">🔴 CRITICAL</option>
+                      <option value="high">🟠 HIGH</option>
+                      <option value="normal">🟣 NORMAL</option>
+                      <option value="low">⚪ LOW</option>
+                    </select>
+                  </div>
+
+                  {/* DB Action Button */}
+                  {coin.sourceType === 'AUTO' ? (
+                    <button
+                      onClick={() => handleQuickAdd(coin.symbol, 'Auto Top Candidate')}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '5px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.18)',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        color: '#34D399',
+                        fontSize: '10.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                      title="บันทึกเหรียญแนะนำนี้ลงในฐานข้อมูล Focus ถาวร"
+                    >
+                      <Save size={10} /> + บันทึกลง DB
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleRemoveFocus(coin.symbol)}
+                      style={{
+                        padding: '3px 6px',
+                        borderRadius: '5px',
+                        backgroundColor: 'transparent',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: '#F87171',
+                        fontSize: '10.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                      title="นำเหรียญนี้ออกจากฐานข้อมูล Focus"
+                    >
+                      <Trash2 size={10} /> นำออก
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
+
+          {filteredFocusItems.length === 0 && (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                padding: '36px 20px',
+                textAlign: 'center',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px dashed rgba(255, 255, 255, 0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+              }}
+            >
+              <Database size={36} color="#8B5CF6" />
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#E2E8F0' }}>
+                {focusFilter === 'SAVED' ? 'ยังไม่มีเหรียญที่บันทึกไว้ในฐานข้อมูล PostgreSQL Focus' : 'ไม่พบเหรียญที่ตรงตามตัวกรอง'}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '420px', lineHeight: 1.5 }}>
+                {focusFilter === 'SAVED'
+                  ? 'คุณสามารถสลับไปที่โหมด "ทั้งหมด" เพื่อดูเหรียญแนะนำแล้วกด "+ บันทึกลง DB" หรือกดปุ่มด้านล่างเพื่อเพิ่มเหรียญใหม่เข้าสู่ฐานข้อมูลได้ทันที'
+                  : 'กดปุ่มด้านล่างเพื่อเลือกเหรียญและเพิ่มเข้าสู่ฐานข้อมูล Focus'}
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                {focusFilter === 'SAVED' && (
+                  <button
+                    onClick={() => setFocusFilter('ALL')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#FFF',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ดูรายการทั้งหมด ({displayFocusItems.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: '#8B5CF6',
+                    border: 'none',
+                    color: '#FFF',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Plus size={14} /> + เพิ่มเหรียญเข้า Database
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         )}
       </div>
@@ -1435,6 +1721,46 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                   Trigger: {activeCoin.aiSummary.nextDecisionTrigger}
                 </span>
 
+                {/* Database Status / Save Button */}
+                {activeCoin.sourceType === 'AUTO' ? (
+                  <button
+                    onClick={() => handleQuickAdd(activeCoin.symbol, 'Cockpit Active Focus')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      color: '#34D399',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="บันทึกเหรียญนี้ลงในฐานข้อมูล Focus ถาวร"
+                  >
+                    <Database size={12} /> + บันทึกลง Database
+                  </button>
+                ) : (
+                  <span
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(139, 92, 246, 0.18)',
+                      border: '1px solid rgba(139, 92, 246, 0.35)',
+                      color: '#C4B5FD',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <Database size={12} /> บันทึกใน DB แล้ว ({activeCoin.priority?.toUpperCase() || 'HIGH'})
+                  </span>
+                )}
+
                 <button
                   onClick={() => handleRemoveFocus(activeCoin.symbol)}
                   style={{
@@ -1445,10 +1771,13 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                     color: '#EF4444',
                     fontSize: '11px',
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                   title="นำเหรียญนี้ออกจาก Focus"
                 >
-                  ลบออก
+                  <Trash2 size={12} /> นำออก
                 </button>
 
                 <button
@@ -2469,58 +2798,172 @@ export const FocusPage: React.FC<FocusPageProps> = ({
                 </div>
 
                 {isEditingPosition ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
-                    <div>
-                      <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        ต้นทุนเฉลี่ย (Average Cost USD)
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="เช่น: 2.65"
-                        value={avgCostInput}
-                        onChange={(e) => setAvgCostInput(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        จำนวนเหรียญที่ถือ (Amount)
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="เช่น: 10000"
-                        value={amountInput}
-                        onChange={(e) => setAmountInput(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
-                      />
-                    </div>
-                    <button
-                      onClick={handleSavePosition}
-                      style={{ padding: '8px', borderRadius: '6px', backgroundColor: '#8B5CF6', color: '#FFF', border: 'none', fontWeight: 700, cursor: 'pointer', marginTop: '6px' }}
-                    >
-                      บันทึกสถานะพอร์ต
-                    </button>
-                  </div>
-                ) : activeCoin.position ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                    <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ต้นทุนเฉลี่ย (Avg Cost)</div>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{formatPrice(activeCoin.position.averageCost)}</div>
-                    </div>
-                    <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>จำนวนที่ถือ (Amount)</div>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{activeCoin.position.amount.toLocaleString()} {activeCoin.symbol}</div>
-                    </div>
-                    <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กำไร / ขาดทุน (P/L)</div>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: (activeCoin.position.pnl || 0) >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
-                        {(activeCoin.position.pnl || 0) >= 0 ? '+' : ''}{formatPrice(activeCoin.position.pnl || 0)} ({(activeCoin.position.pnlPercent || 0).toFixed(2)}%)
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          ต้นทุนเฉลี่ย (Average Cost USD)
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          placeholder="เช่น: 2.65"
+                          value={avgCostInput}
+                          onChange={(e) => setAvgCostInput(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
+                        />
                       </div>
+                      <div>
+                        <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          จำนวนเหรียญที่ถือ (Amount)
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          placeholder="เช่น: 1000"
+                          value={amountInput}
+                          onChange={(e) => setAmountInput(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          จุดตัดขาดทุน (Stop Loss USD)
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          placeholder="เช่น: 2.45"
+                          value={stopLossInput}
+                          onChange={(e) => setStopLossInput(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          เป้าหมายทำกำไร (Take Profit 1 USD)
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          placeholder="เช่น: 3.20"
+                          value={tp1Input}
+                          onChange={(e) => setTp1Input(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          ความสำคัญ (Priority)
+                        </label>
+                        <select
+                          value={priorityInput}
+                          onChange={(e) => setPriorityInput(e.target.value as any)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%' }}
+                        >
+                          <option value="critical">🔴 CRITICAL (ด่วนที่สุด)</option>
+                          <option value="high">🟠 HIGH (สำคัญสูง)</option>
+                          <option value="normal">🟣 NORMAL (ปกติ)</option>
+                          <option value="low">⚪ LOW (เฝ้าระวังต่ำ)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        บันทึกกลยุทธ์ส่วนตัว (Personal Strategy Notes)
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="ระบุเหตุผลการเข้าซื้อ แผนการออก หรือบันทึกช่วยจำ..."
+                        value={notesInput}
+                        onChange={(e) => setNotesInput(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', width: '100%', resize: 'vertical' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        onClick={handleSavePosition}
+                        style={{
+                          padding: '9px 18px',
+                          borderRadius: '8px',
+                          backgroundColor: '#8B5CF6',
+                          color: '#FFF',
+                          border: 'none',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <Save size={14} /> บันทึกลงฐานข้อมูล Database
+                      </button>
+                      <button
+                        onClick={() => setIsEditingPosition(false)}
+                        style={{
+                          padding: '9px 14px',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          color: '#CBD5E1',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ยกเลิก
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                    ยังไม่มีข้อมูลการถือครองเหรียญนี้ในพอร์ต กดปุ่ม 'แก้ไข Position' เพื่อระบุต้นทุนและจำนวนเหรียญ
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ต้นทุนเฉลี่ย (Avg Cost)</div>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                          {activeCoin.position?.averageCost !== undefined ? formatPrice(activeCoin.position.averageCost) : '-'}
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>จำนวนที่ถือ (Amount)</div>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                          {activeCoin.position?.amount !== undefined ? `${activeCoin.position.amount.toLocaleString()} ${activeCoin.symbol}` : '-'}
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>กำไร / ขาดทุน (P/L)</div>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: (activeCoin.position?.pnl || 0) >= 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
+                          {activeCoin.position?.pnl !== undefined
+                            ? `${activeCoin.position.pnl >= 0 ? '+' : ''}${formatPrice(activeCoin.position.pnl)} (${(activeCoin.position.pnlPercent || 0).toFixed(2)}%)`
+                            : '-'}
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Stop Loss / TP1</div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#CBD5E1' }}>
+                          SL: <span style={{ color: '#F87171' }}>{activeCoin.entryIntelligence?.stopLoss ? formatPrice(activeCoin.entryIntelligence.stopLoss) : '-'}</span>
+                          {' • '}
+                          TP1: <span style={{ color: '#34D399' }}>{activeCoin.entryIntelligence?.tp1 ? formatPrice(activeCoin.entryIntelligence.tp1) : '-'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {activeCoin.userNotes && (
+                      <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                        <div style={{ fontSize: '11px', color: '#C4B5FD', fontWeight: 700, marginBottom: '2px' }}>📝 บันทึกกลยุทธ์ส่วนตัว:</div>
+                        <div style={{ fontSize: '12.5px', color: '#E2E8F0' }}>{activeCoin.userNotes}</div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#A78BFA' }}>
+                        <Database size={12} />
+                        {activeCoin.sourceType === 'PINNED'
+                          ? `บันทึกในฐานข้อมูล PostgreSQL เรียบร้อย (ID: ${activeCoin.id.substring(0, 8)}...)`
+                          : 'เหรียญนี้เป็นระบบแนะนำอัตโนมัติ — กด "แก้ไข Position" เพื่อบันทึกลง Database'}
+                      </span>
+                      <span>สถานะ: <strong style={{ color: '#FFF' }}>{activeCoin.positionStatus || 'WATCHING'}</strong></span>
+                    </div>
                   </div>
                 )}
               </div>

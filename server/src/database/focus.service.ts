@@ -226,12 +226,12 @@ export class FocusService {
     );
     const nextOrder = (orderRes.rows[0]?.max_order || 0) + 1;
 
-    const avgCost = payload.position?.averageCost ?? null;
-    const amount = payload.position?.amount ?? null;
-    const stopLoss = payload.position?.stopLoss ?? null;
-    const tp1 = payload.position?.takeProfit1 ?? null;
-    const tp2 = payload.position?.takeProfit2 ?? null;
-    const trailingPct = payload.position?.trailingStopPercent ?? null;
+    const avgCost = payload.position?.averageCost ?? payload.averageCost ?? null;
+    const amount = payload.position?.amount ?? payload.positionAmount ?? payload.amount ?? null;
+    const stopLoss = payload.position?.stopLoss ?? payload.stopLoss ?? null;
+    const tp1 = payload.position?.takeProfit1 ?? payload.takeProfit1 ?? null;
+    const tp2 = payload.position?.takeProfit2 ?? payload.takeProfit2 ?? null;
+    const trailingPct = payload.position?.trailingStopPercent ?? payload.trailingStopPercent ?? null;
 
     const insertRes = await pool.query<FocusItemRow>(
       `INSERT INTO public.focus_items (
@@ -246,6 +246,10 @@ export class FocusService {
             user_notes = CASE WHEN EXCLUDED.user_notes <> '' THEN EXCLUDED.user_notes ELSE public.focus_items.user_notes END,
             average_cost = COALESCE(EXCLUDED.average_cost, public.focus_items.average_cost),
             position_amount = COALESCE(EXCLUDED.position_amount, public.focus_items.position_amount),
+            stop_loss = COALESCE(EXCLUDED.stop_loss, public.focus_items.stop_loss),
+            take_profit1 = COALESCE(EXCLUDED.take_profit1, public.focus_items.take_profit1),
+            take_profit2 = COALESCE(EXCLUDED.take_profit2, public.focus_items.take_profit2),
+            trailing_stop_percent = COALESCE(EXCLUDED.trailing_stop_percent, public.focus_items.trailing_stop_percent),
             custom_trailing_stop = COALESCE(EXCLUDED.custom_trailing_stop, public.focus_items.custom_trailing_stop),
             is_active = true,
             updated_at = NOW()
@@ -288,12 +292,12 @@ export class FocusService {
     const userNotes = updates.userNotes !== undefined ? updates.userNotes : row.user_notes;
     const customTrailingStop = updates.customTrailingStop !== undefined ? updates.customTrailingStop : row.custom_trailing_stop;
 
-    const avgCost = updates.position?.averageCost !== undefined ? updates.position.averageCost : row.average_cost;
-    const amount = updates.position?.amount !== undefined ? updates.position.amount : row.position_amount;
-    const stopLoss = updates.position?.stopLoss !== undefined ? updates.position.stopLoss : row.stop_loss;
-    const tp1 = updates.position?.takeProfit1 !== undefined ? updates.position.takeProfit1 : row.take_profit1;
-    const tp2 = updates.position?.takeProfit2 !== undefined ? updates.position.takeProfit2 : row.take_profit2;
-    const trailingPct = updates.position?.trailingStopPercent !== undefined ? updates.position.trailingStopPercent : row.trailing_stop_percent;
+    const avgCost = updates.position?.averageCost !== undefined ? updates.position.averageCost : (updates.averageCost !== undefined ? updates.averageCost : row.average_cost);
+    const amount = updates.position?.amount !== undefined ? updates.position.amount : (updates.positionAmount !== undefined ? updates.positionAmount : (updates.amount !== undefined ? updates.amount : row.position_amount));
+    const stopLoss = updates.position?.stopLoss !== undefined ? updates.position.stopLoss : (updates.stopLoss !== undefined ? updates.stopLoss : row.stop_loss);
+    const tp1 = updates.position?.takeProfit1 !== undefined ? updates.position.takeProfit1 : (updates.takeProfit1 !== undefined ? updates.takeProfit1 : row.take_profit1);
+    const tp2 = updates.position?.takeProfit2 !== undefined ? updates.position.takeProfit2 : (updates.takeProfit2 !== undefined ? updates.takeProfit2 : row.take_profit2);
+    const trailingPct = updates.position?.trailingStopPercent !== undefined ? updates.position.trailingStopPercent : (updates.trailingStopPercent !== undefined ? updates.trailingStopPercent : row.trailing_stop_percent);
 
     const updateRes = await pool.query<FocusItemRow>(
       `UPDATE public.focus_items
