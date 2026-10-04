@@ -54,7 +54,7 @@ export const FocusCompareModal: React.FC<FocusCompareModalProps> = ({
   const handleSelectSet = (set: FocusComparisonItem) => {
     setActiveSetId(set.id);
     // Find matching coins that exist in focusCoins or filter
-    const valid = set.symbols.filter((s) => focusCoins.some((c) => c.symbol === s));
+    const valid = set.symbols.filter((s) => (focusCoins || []).some((c) => c.symbol === s));
     if (valid.length >= 2) {
       setSelectedSymbols(valid.slice(0, 5));
     } else {

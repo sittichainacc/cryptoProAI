@@ -70,7 +70,7 @@ export const TopMoversCard: React.FC<TopMoversCardProps> = ({
   };
 
   const isStarred = (coin: TickerData) =>
-    coin.isWatchlist ?? watchlist.some((w) => w.symbol === coin.symbol);
+    coin.isWatchlist ?? (Array.isArray(watchlist) && watchlist.some((w) => w.symbol === coin.symbol));
 
   const renderChangeCell = (change: number) => (
     <span

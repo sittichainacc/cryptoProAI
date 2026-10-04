@@ -36,7 +36,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({ onSelectCoin }) => {
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       const matchTitle = item.title.toLowerCase().includes(q);
-      const matchCoin = item.relatedCoins.some((c) => c.toLowerCase().includes(q));
+      const matchCoin = Array.isArray(item.relatedCoins) && item.relatedCoins.some((c) => c.toLowerCase().includes(q));
       const matchSource = item.source.toLowerCase().includes(q);
       if (!matchTitle && !matchCoin && !matchSource) return false;
     }

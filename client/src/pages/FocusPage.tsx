@@ -256,14 +256,16 @@ export const FocusPage: React.FC<FocusPageProps> = ({
         }
 
         const newScoresMap: Record<string, number> = {};
-        fData.items.forEach((item) => {
-          newScoresMap[item.symbol] = item.focusScore;
-        });
+        if (Array.isArray(fData?.items)) {
+          fData.items.forEach((item) => {
+            newScoresMap[item.symbol] = item.focusScore;
+          });
+        }
         setPrevScoresMap(newScoresMap);
 
         setFocusData(fData);
 
-        if (fData.items.length > 0) {
+        if (Array.isArray(fData?.items) && fData.items.length > 0) {
           if (!selectedSymbol || !fData.items.some((i) => i.symbol === selectedSymbol)) {
             setSelectedSymbol(fData.items[0].symbol);
           }
@@ -591,7 +593,7 @@ export const FocusPage: React.FC<FocusPageProps> = ({
 
   /** ดูข้อมูล: ถ้าอยู่ใน Focus → เปิด Decision Cockpit ของเหรียญนั้น, ถ้ายังไม่อยู่ → เปิดกราฟวิเคราะห์ */
   const handleViewPick = (symbol: string) => {
-    if (displayFocusItems.some((i) => i.symbol === symbol)) {
+    if (Array.isArray(displayFocusItems) && displayFocusItems.some((i) => i.symbol === symbol)) {
       setSelectedSymbol(symbol);
       if (isCollapsed('focusCockpitGroup')) toggleSection('focusCockpitGroup');
       setTimeout(() => document.getElementById('focus-cockpit-group')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);

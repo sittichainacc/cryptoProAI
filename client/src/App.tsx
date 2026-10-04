@@ -193,16 +193,16 @@ export const App: React.FC = () => {
       if (kpisData?.usdThbRate) {
         setGlobalUsdThbRate(kpisData.usdThbRate);
       }
-      setKpis(kpisData);
-      setMovers(moversData);
-      setSignals(signalsData);
-      setWatchlist(watchlistData);
-      setPortfolio(portfolioData);
-      setAlerts(alertsData);
-      setNews(newsData);
-      setSector24(sector24Data);
-      setTop3Overall(top3Data);
-      setAllCoins(coinsData);
+      setKpis(kpisData || null);
+      setMovers(moversData?.gainers ? moversData : { gainers: [], losers: [], volume: [] });
+      setSignals(Array.isArray(signalsData) ? signalsData : []);
+      setWatchlist(Array.isArray(watchlistData) ? watchlistData : []);
+      setPortfolio(portfolioData || null);
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
+      setNews(Array.isArray(newsData) ? newsData : []);
+      setSector24(Array.isArray(sector24Data) ? sector24Data : []);
+      setTop3Overall(Array.isArray(top3Data) ? top3Data : []);
+      setAllCoins(Array.isArray(coinsData) ? coinsData : []);
       if (buyNowData?.candidates) {
         setBuyNowCandidates(buyNowData.candidates);
       }
@@ -227,7 +227,7 @@ export const App: React.FC = () => {
 
   const handleToggleFocus = async (symbol: string) => {
     try {
-      const isFocused = focusData?.items.some((i) => i.symbol === symbol);
+      const isFocused = Array.isArray(focusData?.items) ? focusData.items.some((i) => i.symbol === symbol) : false;
       if (isFocused) {
         await api.removeFocus(symbol);
       } else {
@@ -378,7 +378,9 @@ export const App: React.FC = () => {
     }
   };
 
-  const isCurrentInWatchlist = watchlist.some((c) => c.symbol === selectedSymbol);
+  const isCurrentInWatchlist = Array.isArray(watchlist)
+    ? watchlist.some((c) => c.symbol === selectedSymbol)
+    : false;
 
   const handleLoginSuccess = (user: { username: string; name: string; role: string; id?: string }) => {
     const validRoles = ['admin', 'platinum', 'premium', 'gold', 'free'] as const;
@@ -387,8 +389,8 @@ export const App: React.FC = () => {
     setUserRole(role);
     localStorage.setItem('cryptopro_auth_role', role);
     // Reload user-scoped watchlist and alerts from Supabase PostgreSQL
-    api.getWatchlist().then((wl) => setWatchlist(wl)).catch(console.error);
-    api.getRecentAlerts().then((al) => setAlerts(al)).catch(console.error);
+    api.getWatchlist().then((wl) => setWatchlist(Array.isArray(wl) ? wl : [])).catch(console.error);
+    api.getRecentAlerts().then((al) => setAlerts(Array.isArray(al) ? al : [])).catch(console.error);
   };
 
   // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin ให้กลับหน้า Home
@@ -401,8 +403,8 @@ export const App: React.FC = () => {
     localStorage.removeItem('cryptopro_auth_role');
     localStorage.removeItem('cryptopro_auth_user');
     // Reload guest watchlist and alerts from Supabase PostgreSQL
-    api.getWatchlist().then((wl) => setWatchlist(wl)).catch(console.error);
-    api.getRecentAlerts().then((al) => setAlerts(al)).catch(console.error);
+    api.getWatchlist().then((wl) => setWatchlist(Array.isArray(wl) ? wl : [])).catch(console.error);
+    api.getRecentAlerts().then((al) => setAlerts(Array.isArray(al) ? al : [])).catch(console.error);
   };
 
   // ─── Tier-based access helper ──────────────────────────────────────────────
@@ -532,7 +534,7 @@ export const App: React.FC = () => {
             selectedSymbol={selectedSymbol}
             onSelectCoin={handleSelectCoin}
             currency={currency}
-            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+            focusSymbols={Array.isArray(focusData?.items) ? focusData.items.map((i) => i.symbol) : []}
             onToggleFocus={handleToggleFocus}
           />
         );
@@ -542,7 +544,7 @@ export const App: React.FC = () => {
             selectedSymbol={selectedSymbol}
             onSelectCoin={handleSelectCoin}
             currency={currency}
-            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+            focusSymbols={Array.isArray(focusData?.items) ? focusData.items.map((i) => i.symbol) : []}
             onToggleFocus={handleToggleFocus}
           />
         );
@@ -569,7 +571,7 @@ export const App: React.FC = () => {
             onOpenAnalysis={handleOpenAnalysis}
             currency={currency}
             onToggleFocus={handleToggleFocus}
-            focusSymbols={focusData?.items.map((i) => i.symbol) || []}
+            focusSymbols={Array.isArray(focusData?.items) ? focusData.items.map((i) => i.symbol) : []}
           />
         );
       case 'portfolio':
@@ -947,7 +949,7 @@ export const App: React.FC = () => {
         isOpen={isFocusAddModalOpen}
         onClose={() => setIsFocusAddModalOpen(false)}
         coins={allCoins}
-        existingFocusSymbols={focusData?.items.map((i) => i.symbol) || []}
+        existingFocusSymbols={Array.isArray(focusData?.items) ? focusData.items.map((i) => i.symbol) : []}
         onAddFocus={async (payload) => {
           await api.addFocus(payload);
           await handleRecalculateFocus();

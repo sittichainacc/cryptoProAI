@@ -120,11 +120,11 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
   const bullishRatio = totalCount ? Math.round((positiveCoinsCount / totalCount) * 100) : 0;
 
   // Best Conviction Setups in Watchlist (Sorted by AI Score)
-  const topConviction = [...watchlist].sort((a, b) => b.aiScore - a.aiScore).slice(0, 3);
+  const topConviction = (Array.isArray(watchlist) ? [...watchlist] : []).sort((a, b) => b.aiScore - a.aiScore).slice(0, 3);
 
   // Coins available to add
-  const availableToAdd = allCoins.filter(
-    (c) => !watchlist.some((w) => w.symbol === c.symbol) &&
+  const availableToAdd = (allCoins || []).filter(
+    (c) => !(Array.isArray(watchlist) && watchlist.some((w) => w.symbol === c.symbol)) &&
       (c.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || c.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 

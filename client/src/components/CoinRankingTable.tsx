@@ -66,7 +66,7 @@ export const CoinRankingTable: React.FC<CoinRankingTableProps> = ({
     if (viewMode !== 'search' && selectedCategory !== 'all' && c.sector !== selectedCategory) return false;
 
     if (viewMode === 'watchlist') {
-      return c.isWatchlist || watchlist.some(w => w.symbol === c.symbol);
+      return Boolean(c.isWatchlist || (Array.isArray(watchlist) && watchlist.some(w => w.symbol === c.symbol)));
     }
     if (viewMode === 'buy_interest') {
       return (c.signal === 'BUY' || c.signal === 'STRONG_BUY' || c.signal === 'WATCH') && c.change24h >= -1;

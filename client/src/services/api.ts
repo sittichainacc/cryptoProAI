@@ -64,55 +64,90 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
   });
 }
 
+async function safeJson<T>(res: Response, fallback: T): Promise<T> {
+  try {
+    if (!res.ok) return fallback;
+    const json = await res.json();
+    return json?.data !== undefined ? json.data : (json ?? fallback);
+  } catch {
+    return fallback;
+  }
+}
 
 export const api = {
-  async getKPIs(): Promise<MarketOverviewKPIs> {
-    const res = await authFetch(`${API_BASE}/market/kpis`);
-    const json = await res.json();
-    return json.data;
+  async getKPIs(): Promise<MarketOverviewKPIs | null> {
+    try {
+      const res = await authFetch(`${API_BASE}/market/kpis`);
+      return await safeJson<MarketOverviewKPIs | null>(res, null);
+    } catch {
+      return null;
+    }
   },
 
   async getMovers(): Promise<{ gainers: TickerData[]; losers: TickerData[]; volume: TickerData[] }> {
-    const res = await authFetch(`${API_BASE}/market/movers`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/movers`);
+      return await safeJson(res, { gainers: [], losers: [], volume: [] });
+    } catch {
+      return { gainers: [], losers: [], volume: [] };
+    }
   },
 
-  async getChartData(symbol: string, interval: string = '1D'): Promise<{ symbol: string; ticker: TickerData; candles: Candle[] }> {
-    const res = await authFetch(`${API_BASE}/market/chart/${symbol}?interval=${encodeURIComponent(interval)}`);
-    const json = await res.json();
-    return json.data;
+  async getChartData(symbol: string, interval: string = '1D'): Promise<{ symbol: string; ticker: TickerData | undefined; candles: Candle[] }> {
+    try {
+      const res = await authFetch(`${API_BASE}/market/chart/${symbol}?interval=${encodeURIComponent(interval)}`);
+      return await safeJson(res, { symbol, ticker: undefined, candles: [] });
+    } catch {
+      return { symbol, ticker: undefined, candles: [] };
+    }
   },
 
-  async getDeepAnalysis(symbol: string, boughtPrice?: number | null): Promise<DeepAnalysisData> {
-    const query = boughtPrice ? `?boughtPrice=${encodeURIComponent(boughtPrice)}` : '';
-    const res = await authFetch(`${API_BASE}/market/analysis/${symbol}${query}`);
-    const json = await res.json();
-    return json.data;
+  async getDeepAnalysis(symbol: string, boughtPrice?: number | null): Promise<DeepAnalysisData | null> {
+    try {
+      const query = boughtPrice ? `?boughtPrice=${encodeURIComponent(boughtPrice)}` : '';
+      const res = await authFetch(`${API_BASE}/market/analysis/${symbol}${query}`);
+      return await safeJson<DeepAnalysisData | null>(res, null);
+    } catch {
+      return null;
+    }
   },
 
   async getHeatmap(): Promise<HeatmapItem[]> {
-    const res = await authFetch(`${API_BASE}/market/heatmap`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/heatmap`);
+      return await safeJson<HeatmapItem[]>(res, []);
+    } catch {
+      return [];
+    }
   },
 
   async getSectorStats(): Promise<SectorStatItem[]> {
-    const res = await authFetch(`${API_BASE}/market/sectors`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/sectors`);
+      return await safeJson<SectorStatItem[]>(res, []);
+    } catch {
+      return [];
+    }
   },
 
   async getTopAISignals(): Promise<TickerData[]> {
-    const res = await authFetch(`${API_BASE}/market/signals`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/signals`);
+      const data = await safeJson<TickerData[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async getWatchlist(): Promise<TickerData[]> {
-    const res = await authFetch(`${API_BASE}/market/watchlist`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/watchlist`);
+      const data = await safeJson<TickerData[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async toggleWatchlist(symbol: string): Promise<{ symbol: string; isWatchlist: boolean }> {
@@ -197,28 +232,44 @@ export const api = {
   },
 
   async getNews(): Promise<CryptoNewsItem[]> {
-    const res = await authFetch(`${API_BASE}/market/news`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/news`);
+      const data = await safeJson<CryptoNewsItem[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async get24Recommended(): Promise<SectorTopItem[]> {
-    const res = await authFetch(`${API_BASE}/market/24-recommended`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/24-recommended`);
+      const data = await safeJson<SectorTopItem[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async getTop3Overall(): Promise<Top3OverallItem[]> {
-    const res = await authFetch(`${API_BASE}/market/top3-overall`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const res = await authFetch(`${API_BASE}/market/top3-overall`);
+      const data = await safeJson<Top3OverallItem[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async getCoins(params?: { sector?: string; search?: string; sort?: string; order?: 'asc' | 'desc' }): Promise<TickerData[]> {
-    const query = new URLSearchParams(params as any).toString();
-    const res = await authFetch(`${API_BASE}/coins?${query}`);
-    const json = await res.json();
-    return json.data;
+    try {
+      const query = new URLSearchParams(params as any).toString();
+      const res = await authFetch(`${API_BASE}/coins?${query}`);
+      const data = await safeJson<TickerData[]>(res, []);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   },
 
   async runScanner(mode: string, sector?: string, minVolume?: number): Promise<TickerData[]> {
@@ -489,9 +540,18 @@ export const api = {
   },
 
   async getBuyNow(): Promise<BuyNowResponse> {
-    const res = await authFetch(`${API_BASE}/market/buynow`);
-    const json = await res.json();
-    return json.data;
+    const fallback: BuyNowResponse = {
+      candidates: [],
+      marketStatus: 'NORMAL',
+      evaluatedTotal: 0,
+      timestamp: new Date().toISOString(),
+    };
+    try {
+      const res = await authFetch(`${API_BASE}/market/buynow`);
+      return await safeJson<BuyNowResponse>(res, fallback);
+    } catch {
+      return fallback;
+    }
   },
 
   async recalculateBuyNow(): Promise<BuyNowResponse> {
@@ -542,9 +602,20 @@ export const api = {
 
   // Focus Module APIs
   async getFocusList(): Promise<FocusResponse> {
-    const res = await authFetch(`${API_BASE}/focus`);
-    const json = await res.json();
-    return json.data;
+    const fallback: FocusResponse = {
+      items: [],
+      totalCount: 0,
+      activeCount: 0,
+      averageScore: 0,
+      marketRegime: 'NEUTRAL',
+      timestamp: new Date().toISOString(),
+    };
+    try {
+      const res = await authFetch(`${API_BASE}/focus`);
+      return await safeJson<FocusResponse>(res, fallback);
+    } catch {
+      return fallback;
+    }
   },
 
   async getFocusDetail(symbol: string): Promise<FocusCoinData> {

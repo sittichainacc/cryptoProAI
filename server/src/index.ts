@@ -59,23 +59,26 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Serve frontend static files if client/dist or public folder exists (Production Container)
-const clientDistPath = path.resolve(__dirname, '../../client/dist');
-const altClientDistPath = path.resolve(__dirname, '../public');
-const containerPublicPath = path.resolve(process.cwd(), 'public');
+const possibleStaticDirs = [
+  path.resolve(__dirname, '../../client/dist'),
+  path.resolve(__dirname, '../public'),
+  path.resolve(process.cwd(), 'public'),
+  path.resolve(process.cwd(), 'client/dist'),
+  path.resolve(__dirname, './public'),
+];
 
-const staticDir = fs.existsSync(clientDistPath)
-  ? clientDistPath
-  : fs.existsSync(altClientDistPath)
-  ? altClientDistPath
-  : fs.existsSync(containerPublicPath)
-  ? containerPublicPath
-  : null;
+const staticDir = possibleStaticDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || null;
 
 if (staticDir) {
   console.log(`[Static] Serving frontend static assets from: ${staticDir}`);
   app.use(express.static(staticDir));
   app.get('*', (_req, res) => {
     res.sendFile(path.join(staticDir, 'index.html'));
+  });
+} else {
+  console.warn(`[Static] ⚠️ No frontend build found. Looked in: ${possibleStaticDirs.join(', ')}`);
+  app.get('/', (_req, res) => {
+    res.send('CryptoPro AI API Server is running. Frontend static build not found.');
   });
 }
 
