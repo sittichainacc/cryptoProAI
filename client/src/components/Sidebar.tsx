@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Home', icon: Home, minRole: 'free' },
-    { id: 'gold-signal', label: '🥇 สัญญาณทอง', icon: Gem, badge: 'LIVE', minRole: 'free' },
+    { id: 'gold-signal', label: 'สัญญาณทอง', icon: Gem, badge: 'LIVE', minRole: 'free' },
     { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', minRole: 'admin' },
     { id: 'user-management', label: 'จัดการผู้ใช้งาน', icon: ShieldCheck, badge: 'ADMIN', minRole: 'admin' },
     { id: 'top5-ultimate', label: 'Top 5 Ultimate', icon: Crown, badge: 'NEW', minRole: 'platinum' },
@@ -125,15 +125,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand Header */}
       <div
         style={{
-          padding: '20px 16px',
+          padding: isCollapsed && !isMobileOpen ? '16px 8px' : '18px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed && !isMobileOpen ? 'center' : 'space-between',
           borderBottom: '1px solid var(--border-color)',
+          flexDirection: isCollapsed && !isMobileOpen ? 'column' : 'row',
+          gap: isCollapsed && !isMobileOpen ? '10px' : '0',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
+            onClick={isCollapsed && !isMobileOpen ? () => setIsCollapsed(false) : undefined}
             style={{
               width: '36px',
               height: '36px',
@@ -144,7 +147,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               justifyContent: 'center',
               boxShadow: '0 0 14px rgba(6, 182, 212, 0.45)',
               flexShrink: 0,
+              cursor: isCollapsed && !isMobileOpen ? 'pointer' : 'default',
             }}
+            title={isCollapsed && !isMobileOpen ? 'คลิกเพื่อขยายแถบเมนู (Expand)' : undefined}
           >
             <Sparkles size={20} color="#FFFFFF" />
           </div>
@@ -180,22 +185,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <X size={18} />
           </button>
-        ) : (
+        ) : isCollapsed ? (
+          /* Expand Button when sidebar is collapsed */
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => setIsCollapsed(false)}
             style={{
-              background: 'rgba(255,255,255,0.05)',
+              background: 'rgba(59, 130, 246, 0.15)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              color: 'var(--neon-cyan)',
+              borderRadius: '7px',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 0 10px rgba(6, 182, 212, 0.25)',
+            }}
+            title="ขยายแถบเมนู (Expand Sidebar)"
+          >
+            <ChevronRight size={16} />
+          </button>
+        ) : (
+          /* Collapse Button when sidebar is open */
+          <button
+            onClick={() => setIsCollapsed(true)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid var(--border-color)',
               color: 'var(--text-secondary)',
               borderRadius: '6px',
               width: '26px',
               height: '26px',
-              display: isCollapsed ? 'none' : 'flex',
+              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
-            title={isCollapsed ? 'ขยายแถบเมนู' : 'ย่อแถบเมนู'}
+            title="หุบแถบเมนู (Collapse Sidebar)"
           >
             <ChevronLeft size={16} />
           </button>
@@ -354,43 +383,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 style={isHome || isGold ? { filter: isActive ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.7))' : 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.4))' } : undefined}
               />
               {!isCollapsed && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: '8px' }}>
                   <span style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px',
                     color: isHome || isGold ? (isActive ? '#FDE047' : '#FBBF24') : undefined,
-                    letterSpacing: isHome || isGold ? '0.4px' : undefined 
+                    letterSpacing: isHome || isGold ? '0.3px' : undefined,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    minWidth: 0,
                   }}>
                     {item.label}
                     {isHome && (
                       <Sparkles 
                         size={12} 
                         color={isActive ? '#FDE047' : '#F59E0B'} 
-                        style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))' }} 
-                      />
-                    )}
-                    {isGold && (
-                      <Gem 
-                        size={12} 
-                        color={isActive ? '#FDE047' : '#F59E0B'} 
-                        style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))' }} 
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.7))', flexShrink: 0 }} 
                       />
                     )}
                   </span>
                   {'badge' in item && item.badge && (
                     <span
                       style={{
-                        fontSize: '9.5px',
+                        fontSize: '9px',
                         fontWeight: 800,
-                        padding: '1px 6px',
-                        borderRadius: '6px',
+                        padding: '1.5px 6px',
+                        borderRadius: '5px',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
                         background: item.id === 'top5-ultimate'
                           ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.35), rgba(168, 85, 247, 0.35))'
                           : item.id === 'focus' 
                           ? 'rgba(16, 185, 129, 0.2)' 
                           : item.id === 'gold-signal'
-                          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.35))'
+                          ? 'rgba(245, 158, 11, 0.2)'
                           : item.id === 'top5-premium'
                           ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(168, 85, 247, 0.3))'
                           : 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25))',
@@ -405,16 +433,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? '1px solid rgba(34, 211, 238, 0.6)'
                           : item.id === 'focus' 
                           ? '1px solid rgba(16, 185, 129, 0.4)' 
-                          : item.id === 'gold-signal' || item.id === 'top5-premium'
+                          : item.id === 'gold-signal'
+                          ? '1px solid rgba(245, 158, 11, 0.5)'
+                          : item.id === 'top5-premium'
                           ? '1px solid rgba(245, 158, 11, 0.6)'
                           : '1px solid rgba(245, 158, 11, 0.4)',
-                        letterSpacing: '0.4px',
-                        display: 'flex',
+                        letterSpacing: '0.3px',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
                         boxShadow: item.id === 'top5-ultimate' 
                           ? '0 0 10px rgba(6, 182, 212, 0.45)' 
-                          : item.id === 'gold-signal' || item.id === 'top5-premium'
+                          : item.id === 'gold-signal'
+                          ? '0 0 8px rgba(245, 158, 11, 0.3)'
+                          : item.id === 'top5-premium'
                           ? '0 0 10px rgba(245, 158, 11, 0.35)' 
                           : 'none'
                       }}
@@ -425,8 +457,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <span
                           className="live-green-pulse"
                           style={{
-                            width: '5.5px',
-                            height: '5.5px',
+                            width: '5px',
+                            height: '5px',
                             borderRadius: '50%',
                             backgroundColor: '#F59E0B',
                             boxShadow: '0 0 6px #F59E0B',
@@ -587,7 +619,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {!isCollapsed && (
         <div
           style={{
-            padding: '14px 16px',
+            padding: '12px 16px',
             borderTop: '1px solid var(--border-color)',
             fontSize: '11px',
             color: 'var(--text-muted)',
@@ -602,6 +634,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Dedicated Expand / Collapse Bar at Bottom of Sidebar */}
+      <div
+        style={{
+          borderTop: '1px solid var(--border-color)',
+          backgroundColor: 'rgba(0, 0, 0, 0.25)',
+          padding: isCollapsed && !isMobileOpen ? '8px 6px' : '8px 12px',
+          flexShrink: 0,
+        }}
+      >
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          style={{
+            width: '100%',
+            padding: isCollapsed && !isMobileOpen ? '9px 0' : '9px 12px',
+            borderRadius: '8px',
+            background: isCollapsed && !isMobileOpen
+              ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15))'
+              : 'rgba(255, 255, 255, 0.04)',
+            border: isCollapsed && !isMobileOpen
+              ? '1px solid rgba(6, 182, 212, 0.35)'
+              : '1px solid var(--border-color)',
+            color: isCollapsed && !isMobileOpen ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isCollapsed && !isMobileOpen ? 'center' : 'space-between',
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.18)';
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.45)';
+            e.currentTarget.style.color = '#FFFFFF';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isCollapsed && !isMobileOpen
+              ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15))'
+              : 'rgba(255, 255, 255, 0.04)';
+            e.currentTarget.style.borderColor = isCollapsed && !isMobileOpen
+              ? '1px solid rgba(6, 182, 212, 0.35)'
+              : '1px solid var(--border-color)';
+            e.currentTarget.style.color = isCollapsed && !isMobileOpen ? 'var(--neon-cyan)' : 'var(--text-secondary)';
+          }}
+          title={isCollapsed ? 'คลิกเพื่อขยายแถบเมนู (Expand Sidebar)' : 'คลิกเพื่อหุบแถบเมนู (Collapse Sidebar)'}
+        >
+          {isCollapsed && !isMobileOpen ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+              <ChevronRight size={18} color="var(--neon-cyan)" />
+              <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--neon-cyan)', letterSpacing: '0.4px' }}>ขยาย</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ChevronLeft size={16} />
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>หุบแถบเมนู</span>
+              </div>
+              <span
+                style={{
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                ย่อ
+              </span>
+            </>
+          )}
+        </button>
+      </div>
     </aside>
   );
 };
