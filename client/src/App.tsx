@@ -700,11 +700,33 @@ export const App: React.FC = () => {
                       gap: '14px',
                     }}
                   >
-                    <PortfolioWidgets portfolio={portfolio} currency={currency} />
-                    <RecentAlertsCard alerts={alerts} onViewAll={() => setActiveSidebarTab('alerts')} />
-                    <AIScannerQuickCard onRunScanner={handleRunScanner} currency={currency} />
-                    <CryptoNewsCard news={news} onViewAll={() => setActiveSidebarTab('news')} />
-                    <QuoteBannerCard />
+                    <PortfolioWidgets
+                      portfolio={portfolio}
+                      currency={currency}
+                      onSelectCoin={handleSelectCoin}
+                      onViewFullPortfolio={() => handleSidebarNavigation('portfolio')}
+                    />
+                    <RecentAlertsCard
+                      alerts={alerts}
+                      onSelectCoin={handleSelectCoin}
+                      onViewAll={() => handleSidebarNavigation('alerts')}
+                    />
+                    <AIScannerQuickCard
+                      onRunScanner={handleRunScanner}
+                      onSelectCoin={handleSelectCoin}
+                      onAddToFocus={(sym) => api.addFocus({ symbol: sym, priority: 'high', mode: 'high_focus', userNotes: 'เพิ่มจาก AI Scanner เรดาร์สด' })}
+                      currency={currency}
+                    />
+                    <CryptoNewsCard
+                      news={news}
+                      onSelectCoin={handleSelectCoin}
+                      onViewAll={() => handleSidebarNavigation('news')}
+                    />
+                    <QuoteBannerCard
+                      currency={currency}
+                      onSelectCoin={handleSelectCoin}
+                      onViewAllRadar={() => handleSidebarNavigation('market')}
+                    />
                   </div>
                 </CollapsibleSection>
 

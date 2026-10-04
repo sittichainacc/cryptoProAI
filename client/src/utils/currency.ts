@@ -38,3 +38,15 @@ export const formatCurrencyValue = (
   if (val < 1) return `${prefix}${val.toFixed(4)}`;
   return `${prefix}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
+
+export const formatPrice = (price: number): string => {
+  if (price === undefined || price === null || isNaN(price)) return '-';
+  if (price >= 1000) {
+    return `฿${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (price >= 1) {
+    return `฿${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+  }
+  return `฿${price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 })}`;
+};
+
