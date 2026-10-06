@@ -8,6 +8,8 @@ import { apiRouter } from './routes/api.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { goldRouter } from './routes/gold.routes.js';
 import { usersRouter } from './routes/users.routes.js';
+import { stocksRouter } from './modules/stocks/routes/stocks.routes.js';
+import { runStockMigrations } from './modules/stocks/migrations/migrate.js';
 import { marketService } from './services/market.service.js';
 import { testDbConnection, pool } from './database/db.js';
 
@@ -25,6 +27,7 @@ app.use('/api', apiRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/gold', goldRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/stocks', stocksRouter);
 
 // Database Health & Status check
 app.get('/api/db/status', async (_req, res) => {
@@ -92,6 +95,9 @@ app.listen(PORT, '0.0.0.0', async () => {
   
   // Test connection to Supabase PostgreSQL database
   await testDbConnection();
+
+  // Run Global Equity Multi-Agent Database Migrations (Phase 0)
+  await runStockMigrations();
 
   // Auto-create user_profiles table if not exists
   try {

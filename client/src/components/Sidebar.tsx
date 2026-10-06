@@ -22,6 +22,7 @@ import {
   Crown,
   Target,
   Gem,
+  Globe,
   Lock,
   X,
 } from 'lucide-react';
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Home', icon: Home, minRole: 'free' },
+    { id: 'global-stocks', label: 'หุ้นต่างประเทศ', icon: Globe, badge: 'AI-41', minRole: 'free' },
     { id: 'gold-signal', label: 'สัญญาณทอง', icon: Gem, badge: 'LIVE', minRole: 'free' },
     { id: 'focus', label: 'FOCUS', icon: Target, badge: 'LIVE', minRole: 'admin' },
     { id: 'user-management', label: 'จัดการผู้ใช้งาน', icon: ShieldCheck, badge: 'ADMIN', minRole: 'admin' },

@@ -56,7 +56,9 @@ import { Top5UltimatePage } from './pages/Top5UltimatePage.js';
 import { Top5PremiumPage } from './pages/Top5PremiumPage.js';
 import { Top5Page } from './pages/Top5Page.js';
 import { GoldSignalPage } from './pages/GoldSignalPage.js';
+import { GlobalStocksPage } from './pages/GlobalStocksPage.js';
 import { GoldHomeQuickBanner } from './components/gold/GoldHomeQuickBanner.js';
+import { GlobalStocksQuickBanner } from './components/GlobalStocksQuickBanner.js';
 import { FocusPage } from './pages/FocusPage.js';
 import { WatchlistPage } from './pages/WatchlistPage.js';
 import { PermissionDeniedGuard } from './components/PermissionDeniedGuard.js';
@@ -415,7 +417,7 @@ export const App: React.FC = () => {
   // admin: ALL including Focus Cockpit, User Management Console, Watchlist (999), Alerts (999)
   const canAccess = (tab: string): boolean => {
     if (userRole === 'admin') return true;
-    const freeAccess = ['dashboard', 'gold-signal', 'watchlist', 'alerts'];
+    const freeAccess = ['dashboard', 'global-stocks', 'gold-signal', 'watchlist', 'alerts'];
     const goldAccess = [...freeAccess, 'market', 'screener', 'technical', 'news'];
     const premiumAccess = [...goldAccess, 'signals', 'reports', 'strategy', 'settings'];
     const platinumAccess = [...premiumAccess, 'top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'whale-radar'];
@@ -502,6 +504,8 @@ export const App: React.FC = () => {
         );
       case 'gold-signal':
         return <GoldSignalPage />;
+      case 'global-stocks':
+        return <GlobalStocksPage />;
       case 'top5':
         return (
           <Top5Page
@@ -598,6 +602,9 @@ export const App: React.FC = () => {
       default:
         return (
           <>
+            {/* Quick Access: Global Stocks Multi-Agent Intelligence Banner */}
+            <GlobalStocksQuickBanner onOpenStocks={() => setActiveSidebarTab('global-stocks')} />
+
             {/* Quick Access: Gold Intelligence Banner (Accessible to everyone) */}
             <GoldHomeQuickBanner onOpenGold={() => setActiveSidebarTab('gold-signal')} />
 

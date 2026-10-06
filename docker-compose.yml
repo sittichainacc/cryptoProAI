@@ -1,0 +1,16 @@
+services:
+  cryptocurrency-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cryptocurrency-ai:latest
+    container_name: cryptocurrency-ai
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+      - "8080:8080"
+    env_file:
+      - ./server/.env
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
