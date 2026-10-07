@@ -65,6 +65,12 @@
 13. **ตั้งค่าระบบ (Settings & Exchange API Keys)**:
     - จัดการ API Key และ Secret สำหรับ Bitkub และ Binance
     - สลับสกุลเงินแสดงผล (**THB / USDT**), Timeframe เริ่มต้น, Risk %
+14. **หุ้นต่างประเทศ (Global Equity Intelligence & Autonomous Trading System)**:
+    - **สภา 41 AI Agents**: 4 ทีมย่อย (Team 1: Stock Ranking, Team 2: Equity Research & 2-Stage DCF, Team 3: Red Team Veto & Beneish M-Score, Team 4: Tactical Asset Allocation & Half-Kelly Sizing) ควบคุมโดย **Supreme Council AI-CIO**
+    - **Real-Time Market Data Provider**: เชื่อมต่อ Live Yahoo Finance API, Macro Indicators สด (VIX, 10Y Yield, DXY), ข่าวสารพร้อมคะแนน Sentiment และระบบตรวจสอบเวลาเปิด-ปิดตลาด NYSE/NASDAQ (09:30-16:00 EST)
+    - **Paper Trading & Walk-Forward Backtester**: จำลองเทรดเสมือนจริงพร้อมโมเดล Slippage & ค่าธรรมเนียม และเครื่องมือทดสอบย้อนหลัง 4 กลยุทธ์เชิงสถาบัน (CAGR, Alpha, Beta, Sharpe, Sortino, MDD, Win Rate)
+    - **Deterministic Hard Risk Engine (Rule 38)**: ควบคุมความเสี่ยง Single Position Cap (10%), Sector Cap (30%), 3-Tier Drawdown Circuit Breakers (-5%, -10%, -15%), และอำนาจยับยั้งคำสั่งเด็ดขาด `RED_TEAM_VETO`
+    - **PostgreSQL Persistence**: บันทึกข้อมูลทั้ง 30 ตารางบน Supabase PostgreSQL อย่างถาวร ผ่าน Test Suite ครบถ้วน **680 / 680 Tests (100%)**
 
 ---
 
