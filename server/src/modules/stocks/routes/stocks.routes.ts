@@ -15,6 +15,7 @@ import { cioConsensusEngine } from '../engine/cio_consensus.engine.js';
 import { portfolioRiskEngine } from '../engine/portfolio_risk.engine.js';
 import { paperTradingEngine } from '../engine/paper_trading.engine.js';
 import { backtestEngine } from '../engine/backtest.engine.js';
+import { marketDataProvider } from '../providers/market_data_provider.service.js';
 
 export const stocksRouter = Router();
 
@@ -1066,3 +1067,78 @@ stocksRouter.get('/backtest/run/:id', (req: Request, res: Response) => {
     data: run,
   });
 });
+
+// ============================================================================
+// Real-Time Market Data Provider Endpoints
+// ============================================================================
+
+// Provider connection health & market status
+stocksRouter.get('/providers/status', async (_req: Request, res: Response) => {
+  const isMarketOpen = marketDataProvider.isMarketOpen();
+  const macro = await marketDataProvider.getMacroIndicators();
+  res.json({
+    success: true,
+    provider: marketDataProvider.providerName,
+    isMarketOpen,
+    exchange: 'NYSE / NASDAQ',
+    marketHours: '09:30 - 16:00 EST (Mon-Fri)',
+    macroSummary: {
+      us10y: `${macro.us10yYield}%`,
+      vix: macro.vix,
+      dxy: macro.dxyIndex,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Live quote for a specific symbol
+stocksRouter.get('/live/quote/:symbol', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
+  const quote = await marketDataProvider.getQuote(symbol);
+  if (!quote) {
+    return res.status(404).json({ success: false, error: `ไม่พบข้อมูลสำหรับหุ้น ${symbol}` });
+  }
+  res.json({
+    success: true,
+    data: quote,
+  });
+});
+
+// Live macro indicators
+stocksRouter.get('/live/macro', async (_req: Request, res: Response) => {
+  const macro = await marketDataProvider.getMacroIndicators();
+  res.json({
+    success: true,
+    data: macro,
+  });
+});
+
+// Live company news & sentiment
+stocksRouter.get('/live/news/:symbol', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
+  const limit = req.query.limit ? parseInt(String(req.query.limit)) : 5;
+  const news = await marketDataProvider.getCompanyNews(symbol, limit);
+  res.json({
+    success: true,
+    count: news.length,
+    data: news,
+  });
+});
+
+// Sync universe in stockStore with live market data
+stocksRouter.post('/sync-live', async (_req: Request, res: Response) => {
+  try {
+    const result = await marketDataProvider.syncStoreWithLiveData();
+    res.json({
+      success: true,
+      message: `✅ อัปเดตข้อมูลราคาตลาดสดสำเร็จ (${result.syncedCount} ตัว)`,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
