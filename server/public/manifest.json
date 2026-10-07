@@ -1,0 +1,20 @@
+{
+  "short_name": "CryptoPro AI",
+  "name": "CryptoPro AI – Crypto Investment Analysis System",
+  "description": "ระบบวิเคราะห์ คัดกรอง และตัดสินใจลงทุน Cryptocurrency 100% เชื่อมโยง Bitkub & Binance",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "categories": ["finance", "productivity"],
+  "background_color": "#080C15",
+  "theme_color": "#080C15",
+  "display": "standalone",
+  "orientation": "any"
+}
