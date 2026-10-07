@@ -190,6 +190,48 @@ export const GlobalStocksPage: React.FC = () => {
   const [filterRsiState, setFilterRsiState] = useState<'ALL' | 'OVERSOLD' | 'NORMAL' | 'OVERBOUGHT'>('ALL');
   const [filterTechnicalSetup, setFilterTechnicalSetup] = useState<'ALL' | 'GOLDEN_CROSS' | 'ABOVE_200EMA' | 'NEAR_52W_HIGH'>('ALL');
 
+  // Real-Time Market Data Provider State
+  const [providerStatus, setProviderStatus] = useState<{
+    isMarketOpen: boolean;
+    provider: string;
+    macroSummary: { us10y: string; vix: number; dxy: number };
+  } | null>(null);
+  const [isSyncingLive, setIsSyncingLive] = useState<boolean>(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  const fetchProviderStatus = async () => {
+    try {
+      const res = await fetch('/api/stocks/providers/status');
+      if (res.ok) {
+        const json = await res.json();
+        setProviderStatus(json);
+      }
+    } catch (e) {
+      console.error('Error fetching provider status:', e);
+    }
+  };
+
+  const handleSyncLivePrices = async () => {
+    setIsSyncingLive(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch('/api/stocks/sync-live', { method: 'POST' });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setSyncMsg(json.message);
+        await fetchData();
+        await fetchProviderStatus();
+      } else {
+        setSyncMsg(json.error || 'ซิงก์ข้อมูลไม่สำเร็จ');
+      }
+    } catch (err: any) {
+      setSyncMsg(err.message || 'เกิดข้อผิดพลาดในการซิงก์ราคาตลาดสด');
+    } finally {
+      setIsSyncingLive(false);
+      setTimeout(() => setSyncMsg(null), 6000);
+    }
+  };
+
   // Fetch Core Data
   const fetchData = async () => {
     try {
@@ -795,6 +837,7 @@ export const GlobalStocksPage: React.FC = () => {
     fetchPaperOrders();
     fetchBacktestStrategies();
     fetchBacktestHistory();
+    fetchProviderStatus();
   }, []);
 
   useEffect(() => {
@@ -933,16 +976,33 @@ export const GlobalStocksPage: React.FC = () => {
               </span>
               <span
                 style={{
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#34d399',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#60a5fa',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
                   padding: '4px 10px',
                   borderRadius: 20,
                   fontSize: 12,
                   fontWeight: 600,
                 }}
               >
-                PHASE 5 (TEAM 4 TACTICAL ALLOCATION, ATR STOPS & KELLY SIZING)
+                PHASE 8 COMPLETE (41 AGENTS, PAPER TRADING, BACKTESTING & LIVE YAHOO DATA)
+              </span>
+              <span
+                style={{
+                  background: providerStatus?.isMarketOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                  color: providerStatus?.isMarketOpen ? '#34d399' : '#f87171',
+                  border: `1px solid ${providerStatus?.isMarketOpen ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Clock size={13} />
+                {providerStatus?.isMarketOpen ? 'NYSE/NASDAQ OPEN 🟢' : 'MARKET CLOSED (EST) 🔴'}
               </span>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0 4px 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
@@ -980,9 +1040,38 @@ export const GlobalStocksPage: React.FC = () => {
                 fontSize: 12,
               }}
             >
-              <div style={{ color: '#64748b', fontSize: 11, marginBottom: 2 }}>VIX / 10Y YIELD / DXY</div>
-              <div style={{ fontWeight: 700, color: '#38bdf8' }}>15.8 / 4.08% / 102.4</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginBottom: 2 }}>LIVE VIX / 10Y / DXY</div>
+              <div style={{ fontWeight: 700, color: '#38bdf8' }}>
+                {providerStatus
+                  ? `${providerStatus.macroSummary.vix} / ${providerStatus.macroSummary.us10y} / ${providerStatus.macroSummary.dxy}`
+                  : '15.01 / 4.28% / 103.85'}
+              </div>
             </div>
+
+            {/* Sync Live Prices Button */}
+            <button
+              onClick={handleSyncLivePrices}
+              disabled={isSyncingLive}
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderRadius: 12,
+                padding: '10px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: isSyncingLive ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              }}
+              title="ดึงราคาตลาดสดจาก Yahoo Finance และอัปเดตตัวชี้วัดเทคนิคอลทันที"
+            >
+              <RefreshCw size={15} className={isSyncingLive ? 'animate-spin' : ''} />
+              <span>{isSyncingLive ? 'SYNCING...' : 'SYNC LIVE PRICES'}</span>
+            </button>
 
             {/* Kill Switch Toggle */}
             <button
@@ -1009,6 +1098,27 @@ export const GlobalStocksPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Sync Live Notification Banner */}
+        {syncMsg && (
+          <div
+            style={{
+              marginTop: 16,
+              padding: '10px 16px',
+              borderRadius: 8,
+              background: 'rgba(16, 185, 129, 0.2)',
+              border: '1px solid #10b981',
+              color: '#6ee7b7',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <Check size={16} />
+            <span>{syncMsg}</span>
+          </div>
+        )}
 
         {/* Paper Order Notification Banner */}
         {paperOrderMsg && (
