@@ -1,91 +1,12 @@
 import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { apiRouter } from './routes/api.routes.js';
-import { authRouter } from './routes/auth.routes.js';
-import { goldRouter } from './routes/gold.routes.js';
-import { usersRouter } from './routes/users.routes.js';
-import { stocksRouter } from './modules/stocks/routes/stocks.routes.js';
+import { app } from './app.js';
 import { runStockMigrations } from './modules/stocks/migrations/migrate.js';
 import { marketService } from './services/market.service.js';
 import { testDbConnection, pool } from './database/db.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
-app.use(cors());
-app.use(express.json());
-
-// API Routes
-app.use('/api', apiRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/gold', goldRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/stocks', stocksRouter);
-
-// Database Health & Status check
-app.get('/api/db/status', async (_req, res) => {
-  try {
-    const start = Date.now();
-    const result = await pool.query('SELECT NOW() as current_time, version()');
-    const latency = Date.now() - start;
-    res.json({
-      connected: true,
-      provider: 'Supabase PostgreSQL',
-      host: process.env.DB_HOST || 'db.sfotlpjydhdpcmkooqwr.supabase.co',
-      database: process.env.DB_NAME || 'postgres',
-      time: result.rows[0].current_time,
-      version: result.rows[0].version,
-      latencyMs: latency,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      connected: false,
-      provider: 'Supabase PostgreSQL',
-      error: error.message,
-    });
-  }
-});
-
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
-});
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
-// Serve frontend static files if client/dist or public folder exists (Production Container)
-const possibleStaticDirs = [
-  path.resolve(__dirname, '../../client/dist'),
-  path.resolve(__dirname, '../public'),
-  path.resolve(process.cwd(), 'public'),
-  path.resolve(process.cwd(), 'client/dist'),
-  path.resolve(__dirname, './public'),
-];
-
-const staticDir = possibleStaticDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || null;
-
-if (staticDir) {
-  console.log(`[Static] Serving frontend static assets from: ${staticDir}`);
-  app.use(express.static(staticDir));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(staticDir, 'index.html'));
-  });
-} else {
-  console.warn(`[Static] ⚠️ No frontend build found. Looked in: ${possibleStaticDirs.join(', ')}`);
-  app.get('/', (_req, res) => {
-    res.send('CryptoPro AI API Server is running. Frontend static build not found.');
-  });
-}
-
-// Start Server & Poller
+// Start Server & Poller (Standalone / Container / Dev runtime)
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`====================================================`);
   console.log(` CryptoPro AI Backend Server Running on Port ${PORT}`);
@@ -137,4 +58,5 @@ app.listen(PORT, '0.0.0.0', async () => {
   await marketService.start();
 });
 
-
+export { app };
+export default app;

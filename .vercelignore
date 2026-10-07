@@ -1,0 +1,14 @@
+.git
+.github
+.agents
+.openai
+.gemini
+Dockerfile
+docker-compose.yml
+cloudbuild.yaml
+deploy-cloudrun.bat
+deploy-cloudrun.sh
+start-all.bat
+scratch/
+server/tests/
+*.log

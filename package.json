@@ -2,6 +2,7 @@
   "name": "cryptopro-ai",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "npm --prefix client run build && npm --prefix server run build",
     "start": "node server/dist/index.js",
@@ -9,5 +10,13 @@
     "dev:client": "npm --prefix client run dev",
     "build:client": "npm --prefix client run build",
     "test": "npm --prefix server run test"
+  },
+  "dependencies": {
+    "@supabase/server": "^1.9.0",
+    "@supabase/supabase-js": "^2.117.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.23.1"
   }
 }
