@@ -311,6 +311,8 @@ async function runPhase8TestSuite() {
 
   if (passedTests !== totalTests) {
     process.exit(1);
+  } else {
+    process.exit(0);
   }
 }
 

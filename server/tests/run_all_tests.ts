@@ -1,5 +1,5 @@
 // ============================================================================
-// Master Regression Test Suite Runner (All Phases 0 - 9)
+// Master Regression Test Suite Runner (All Phases 0 - 10)
 // Executes tests for all modules and ensures 100% compliance
 // ============================================================================
 
@@ -21,21 +21,26 @@ const testFiles = [
   'stocks_phase7.test.ts',
   'stocks_phase8.test.ts',
   'stocks_providers.test.ts',
+  'stocks_phase10.test.ts',
 ];
 
 console.log('========================================================');
-console.log('🧪 MASTER REGRESSION TEST SUITE (PHASES 0 - 9)');
+console.log('🧪 MASTER REGRESSION TEST SUITE (PHASES 0 - 10)');
 console.log(`📋 Total Test Files: ${testFiles.length}`);
 console.log('========================================================\n');
 
 let passedFiles = 0;
 let failedFiles = 0;
 
+const tsxBin = process.platform === 'win32'
+  ? path.join(__dirname, '..', 'node_modules', '.bin', 'tsx.cmd')
+  : path.join(__dirname, '..', 'node_modules', '.bin', 'tsx');
+
 for (const file of testFiles) {
   const filePath = path.join(__dirname, file);
   console.log(`▶️ Executing: ${file}...`);
   try {
-    execSync(`npx tsx "${filePath}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    execSync(`"${tsxBin}" "${filePath}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..'), timeout: 60000 });
     passedFiles++;
     console.log(`\n✅ ${file} COMPLETED SUCCESSFULLY\n`);
   } catch {

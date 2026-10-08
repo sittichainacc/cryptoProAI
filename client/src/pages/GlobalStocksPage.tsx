@@ -40,8 +40,11 @@ import {
   XCircle,
   Clock,
   Send,
-  Wallet
+  Wallet,
+  Bell,
+  Radio
 } from 'lucide-react';
+import { NotificationChannelManager } from '../components/NotificationChannelManager.js';
 import {
   GlobalStockItem,
   AgentDefinition,
@@ -80,7 +83,9 @@ import {
 } from '../types/stocks.js';
 
 export const GlobalStocksPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'opportunities' | 'cio' | 'portfolio' | 'paper' | 'ranking' | 'research' | 'redteam' | 'tactical' | 'screener' | 'technical' | 'filings' | 'agents' | 'risk'>('opportunities');
+  const [activeTab, setActiveTab] = useState<'opportunities' | 'cio' | 'portfolio' | 'paper' | 'ranking' | 'research' | 'redteam' | 'tactical' | 'notifications' | 'screener' | 'technical' | 'filings' | 'agents' | 'risk'>('opportunities');
+  const [sseConnected, setSseConnected] = useState<boolean>(false);
+  const [sseStats, setSseStats] = useState<{ activeClients: number; totalBroadcasts: number; uptimeSeconds: number } | undefined>(undefined);
   const [universe, setUniverse] = useState<GlobalStockItem[]>([]);
   const [tradePlans, setTradePlans] = useState<TradePlan[]>([]);
   const [agents, setAgents] = useState<AgentDefinition[]>([]);
@@ -840,6 +845,60 @@ export const GlobalStocksPage: React.FC = () => {
     fetchProviderStatus();
   }, []);
 
+  // Phase 10: Real-Time Server-Sent Events (SSE) Listener
+  useEffect(() => {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource('/api/stocks/stream');
+
+      es.addEventListener('connected', () => {
+        setSseConnected(true);
+      });
+
+      es.addEventListener('market_tick', (e: any) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload?.symbol && payload?.price) {
+            setUniverse((prev) =>
+              prev.map((s) => (s.ticker === payload.symbol ? { ...s, price: payload.price } : s))
+            );
+          }
+        } catch {}
+      });
+
+      es.addEventListener('notification_alert', (e: any) => {
+        try {
+          const payload = JSON.parse(e.data);
+          setSyncMsg(`🚨 [${payload.severity}] ${payload.title}: ${payload.message}`);
+          setTimeout(() => setSyncMsg(null), 8000);
+          fetchPortfolioRisk();
+        } catch {}
+      });
+
+      es.onerror = () => {
+        setSseConnected(false);
+      };
+    } catch {
+      setSseConnected(false);
+    }
+
+    // Periodic SSE Stats Poller
+    const statsTimer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/stocks/stream/stats');
+        if (res.ok) {
+          const json = await res.json();
+          setSseStats(json.data);
+        }
+      } catch {}
+    }, 20000);
+
+    return () => {
+      es?.close();
+      clearInterval(statsTimer);
+    };
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'portfolio') {
       fetchPortfolioRisk();
@@ -985,7 +1044,7 @@ export const GlobalStocksPage: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                PHASE 8 COMPLETE (41 AGENTS, PAPER TRADING, BACKTESTING & LIVE YAHOO DATA)
+                PHASE 10 COMPLETE (41 AGENTS, REAL-TIME SSE & MULTI-CHANNEL ALERTS)
               </span>
               <span
                 style={{
@@ -1003,6 +1062,23 @@ export const GlobalStocksPage: React.FC = () => {
               >
                 <Clock size={13} />
                 {providerStatus?.isMarketOpen ? 'NYSE/NASDAQ OPEN 🟢' : 'MARKET CLOSED (EST) 🔴'}
+              </span>
+              <span
+                style={{
+                  background: sseConnected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                  color: sseConnected ? '#34d399' : '#facc15',
+                  border: `1px solid ${sseConnected ? 'rgba(16, 185, 129, 0.4)' : 'rgba(234, 179, 8, 0.4)'}`,
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Radio size={13} className={sseConnected ? 'animate-pulse' : ''} />
+                {sseConnected ? 'LIVE SSE CONNECTED 🟢' : 'SSE RECONNECTING 🟡'}
               </span>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0 4px 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
@@ -1148,6 +1224,7 @@ export const GlobalStocksPage: React.FC = () => {
             { id: 'cio', label: 'AI-CIO Committee Chamber (มติ 41 Agents & ดีเบต)', icon: Scale },
             { id: 'portfolio', label: '🛡️ Portfolio & Risk Monitor (ความเสี่ยงพอร์ต & Circuit Breaker)', icon: ShieldAlert },
             { id: 'paper', label: '📊 Paper Trading & Backtest (พอร์ตจำลอง & Backtest)', icon: Play },
+            { id: 'notifications', label: '🔔 แจ้งเตือน & Realtime SSE (Telegram / Discord)', icon: Bell },
             { id: 'ranking', label: 'AI Stock Ranking (Team 1 จัดอันดับหุ้น)', icon: Award },
             { id: 'research', label: 'Equity Research & DCF (Team 2 ปัจจัยพื้นฐาน)', icon: BarChart3 },
             { id: 'redteam', label: 'Red Team Adversarial & VETO (Team 3 ตรวจสอบความเสี่ยง)', icon: AlertTriangle },
@@ -6345,6 +6422,17 @@ export const GlobalStocksPage: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PHASE 10 TAB: REAL-TIME SSE STREAM & MULTI-CHANNEL NOTIFICATIONS */}
+      {/* ========================================================================= */}
+      {activeTab === 'notifications' && (
+        <NotificationChannelManager
+          sseConnected={sseConnected}
+          sseStats={sseStats}
+          onRefreshData={fetchData}
+        />
       )}
 
       {/* ========================================================================= */}

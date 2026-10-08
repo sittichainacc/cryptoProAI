@@ -16,6 +16,8 @@ import { portfolioRiskEngine } from '../engine/portfolio_risk.engine.js';
 import { paperTradingEngine } from '../engine/paper_trading.engine.js';
 import { backtestEngine } from '../engine/backtest.engine.js';
 import { marketDataProvider } from '../providers/market_data_provider.service.js';
+import { realtimeSSEService } from '../realtime/realtime_sse.service.js';
+import { notificationDispatcher } from '../notifications/notification_dispatcher.service.js';
 
 export const stocksRouter = Router();
 
@@ -1141,4 +1143,118 @@ stocksRouter.post('/sync-live', async (_req: Request, res: Response) => {
     });
   }
 });
+
+// ============================================================================
+// Phase 10: Real-Time SSE Streaming & Multi-Channel Notification Endpoints
+// ============================================================================
+
+// Server-Sent Events (SSE) Stream Endpoint
+stocksRouter.get('/stream', (req: Request, res: Response) => {
+  const ip = req.ip || req.socket.remoteAddress;
+  const userAgent = String(req.headers['user-agent'] || '');
+  const clientId = realtimeSSEService.registerClient(res, ip, userAgent);
+  console.log(`[SSE] Client connected: ${clientId} from ${ip}`);
+});
+
+// SSE Stream Status and Telemetry
+stocksRouter.get('/stream/stats', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: realtimeSSEService.getStats(),
+  });
+});
+
+// Broadcast manual tick or custom event to all connected SSE clients
+stocksRouter.post('/stream/broadcast', (req: Request, res: Response) => {
+  const { event, data } = req.body || {};
+  if (!event) {
+    return res.status(400).json({ success: false, error: 'Event name is required' });
+  }
+  realtimeSSEService.broadcast(event, data || {});
+  res.json({
+    success: true,
+    message: `Broadcasted event '${event}' to ${realtimeSSEService.getStats().activeClients} clients`,
+  });
+});
+
+// List all configured notification channels
+stocksRouter.get('/notifications/channels', async (_req: Request, res: Response) => {
+  try {
+    const channels = await notificationDispatcher.getChannels();
+    res.json({
+      success: true,
+      count: channels.length,
+      data: channels,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create or update a notification channel
+stocksRouter.post('/notifications/channels', async (req: Request, res: Response) => {
+  try {
+    const channel = await notificationDispatcher.saveChannel(req.body);
+    res.json({
+      success: true,
+      message: `บันทึกช่องทางแจ้งเตือน '${channel.channelName}' เรียบร้อย`,
+      data: channel,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete a notification channel
+stocksRouter.delete('/notifications/channels/:id', async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await notificationDispatcher.deleteChannel(id);
+    res.json({
+      success: true,
+      message: `ลบช่องทางแจ้งเตือน ${id} สำเร็จ`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Test notification dispatch
+stocksRouter.post('/notifications/test', async (req: Request, res: Response) => {
+  try {
+    const { channelType, channelName } = req.body || {};
+    const testPayload = {
+      eventType: 'SYSTEM_TEST',
+      severity: 'INFO' as const,
+      title: 'CryptoPro AI Test Notification',
+      message: `🔔 ทดสอบการแจ้งเตือนจากระบบ CryptoPro AI (${channelName || channelType || 'Universal'}) เวลา ${new Date().toLocaleTimeString('th-TH')}`,
+      data: { testTime: new Date().toISOString() },
+    };
+
+    const result = await notificationDispatcher.dispatch(testPayload);
+    res.json({
+      success: true,
+      message: `ส่งข้อความทดสอบสำเร็จ (${result.delivered} ช่องทาง, ล้มเหลว ${result.failed})`,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get notification audit delivery logs
+stocksRouter.get('/notifications/logs', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? parseInt(String(req.query.limit)) : 30;
+    const logs = await notificationDispatcher.getLogs(limit);
+    res.json({
+      success: true,
+      count: logs.length,
+      data: logs,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 

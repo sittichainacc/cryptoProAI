@@ -7,6 +7,7 @@
 import { globalStockStore } from './stock_store.js';
 import { hardRiskEngine } from './risk_engine.js';
 import { pool } from '../../../database/db.js';
+import { notificationDispatcher } from '../notifications/notification_dispatcher.service.js';
 
 export type CircuitBreakerLevel = 0 | 1 | 2 | 3;
 
@@ -442,6 +443,7 @@ export class PortfolioRiskEngine {
       this.eventHistory.unshift(event);
       console.warn(`[PortfolioRiskEngine] ⚠️ CIRCUIT BREAKER LEVEL ${newLevel} TRIGGERED! Action: ${action}`);
       this.persistCircuitBreakerEvent(event);
+      notificationDispatcher.notifyCircuitBreaker(newLevel, ddPct / 100, action).catch(() => {});
     }
 
     return {

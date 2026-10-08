@@ -407,6 +407,37 @@ CREATE TABLE IF NOT EXISTS public.stock_backtest_runs (
 );
 CREATE INDEX IF NOT EXISTS idx_backtest_runs_strategy ON public.stock_backtest_runs(strategy_id);
 CREATE INDEX IF NOT EXISTS idx_backtest_runs_created ON public.stock_backtest_runs(created_at DESC);
+
+-- 23. Notification Channels (Phase 10)
+CREATE TABLE IF NOT EXISTS public.notification_channels (
+    id VARCHAR(64) PRIMARY KEY,
+    channel_type VARCHAR(30) NOT NULL,
+    channel_name VARCHAR(100) NOT NULL,
+    webhook_url TEXT,
+    bot_token TEXT,
+    chat_id VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    subscribed_events TEXT[] NOT NULL DEFAULT ARRAY['CIRCUIT_BREAKER', 'RED_TEAM_VETO', 'CIO_BUY'],
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notification_channels_active ON public.notification_channels(is_active);
+
+-- 24. Notification Logs (Phase 10)
+CREATE TABLE IF NOT EXISTS public.notification_logs (
+    id VARCHAR(64) PRIMARY KEY,
+    channel_id VARCHAR(64),
+    channel_type VARCHAR(30) NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL DEFAULT 'INFO',
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DELIVERED',
+    error_message TEXT,
+    sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notify_logs_event ON public.notification_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_notify_logs_sent ON public.notification_logs(sent_at DESC);
 `;
 
 export async function runStockMigrations(): Promise<boolean> {
