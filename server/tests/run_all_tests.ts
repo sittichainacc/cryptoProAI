@@ -22,10 +22,11 @@ const testFiles = [
   'stocks_phase8.test.ts',
   'stocks_providers.test.ts',
   'stocks_phase10.test.ts',
+  'stocks_phase11.test.ts',
 ];
 
 console.log('========================================================');
-console.log('🧪 MASTER REGRESSION TEST SUITE (PHASES 0 - 10)');
+console.log('🧪 MASTER REGRESSION TEST SUITE (PHASES 0 - 11)');
 console.log(`📋 Total Test Files: ${testFiles.length}`);
 console.log('========================================================\n');
 

@@ -18,6 +18,7 @@ import { backtestEngine } from '../engine/backtest.engine.js';
 import { marketDataProvider } from '../providers/market_data_provider.service.js';
 import { realtimeSSEService } from '../realtime/realtime_sse.service.js';
 import { notificationDispatcher } from '../notifications/notification_dispatcher.service.js';
+import { aiCIOAssistant, QuickActionType, BriefingType } from '../assistant/ai_cio_assistant.service.js';
 
 export const stocksRouter = Router();
 
@@ -1256,5 +1257,130 @@ stocksRouter.get('/notifications/logs', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// ============================================================================
+// Phase 11: AI-CIO Dialectical Chat Assistant & Executive Briefings
+// ============================================================================
+
+// Conversational Dialectical Chat Endpoint
+stocksRouter.post('/assistant/chat', async (req: Request, res: Response) => {
+  try {
+    const { sessionId, message, ticker } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ success: false, error: 'ข้อความคำถาม (message) เป็นสิ่งจำเป็น' });
+    }
+
+    const targetSessionId = sessionId || 'session_default_cio';
+    const result = await aiCIOAssistant.chat(targetSessionId, message);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Executive Investment Briefing (Markdown & Natural Audio Script)
+stocksRouter.get('/assistant/briefing', async (req: Request, res: Response) => {
+  try {
+    const type = (req.query.type as BriefingType) || 'MORNING';
+    const forceRefresh = req.query.forceRefresh === 'true';
+
+    const briefing = await aiCIOAssistant.generateDailyBriefing(type, forceRefresh);
+    res.json({
+      success: true,
+      data: briefing,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Assistant Quick Action Diagnostic
+stocksRouter.post('/assistant/quick-action', async (req: Request, res: Response) => {
+  try {
+    const { action } = req.body || {};
+    if (!action) {
+      return res.status(400).json({ success: false, error: 'QuickAction type is required' });
+    }
+
+    const response = await aiCIOAssistant.executeQuickAction(action as QuickActionType);
+    res.json({
+      success: true,
+      data: response,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Live Executive Context Snapshot
+stocksRouter.get('/assistant/context', (_req: Request, res: Response) => {
+  try {
+    const context = aiCIOAssistant.compileExecutiveContext();
+    res.json({
+      success: true,
+      data: context,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// List Chat Sessions or Messages within Session
+stocksRouter.get('/assistant/history', async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.query;
+    if (sessionId && typeof sessionId === 'string') {
+      const messages = await aiCIOAssistant.getSessionMessages(sessionId);
+      return res.json({
+        success: true,
+        sessionId,
+        count: messages.length,
+        data: messages,
+      });
+    }
+
+    const sessions = await aiCIOAssistant.getSessions();
+    res.json({
+      success: true,
+      count: sessions.length,
+      data: sessions,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create New Chat Session
+stocksRouter.post('/assistant/history/new', async (req: Request, res: Response) => {
+  try {
+    const { title } = req.body || {};
+    const session = await aiCIOAssistant.createSession(title);
+    res.json({
+      success: true,
+      data: session,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete Chat Session
+stocksRouter.delete('/assistant/history/:sessionId', async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    await aiCIOAssistant.deleteSession(String(sessionId));
+    res.json({
+      success: true,
+      message: `ลบเซสชัน ${sessionId} เรียบร้อย`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 

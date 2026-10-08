@@ -42,9 +42,11 @@ import {
   Send,
   Wallet,
   Bell,
-  Radio
+  Radio,
+  Bot
 } from 'lucide-react';
 import { NotificationChannelManager } from '../components/NotificationChannelManager.js';
+import { AICIOChatAssistant } from '../components/AICIOChatAssistant.js';
 import {
   GlobalStockItem,
   AgentDefinition,
@@ -83,7 +85,7 @@ import {
 } from '../types/stocks.js';
 
 export const GlobalStocksPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'opportunities' | 'cio' | 'portfolio' | 'paper' | 'ranking' | 'research' | 'redteam' | 'tactical' | 'notifications' | 'screener' | 'technical' | 'filings' | 'agents' | 'risk'>('opportunities');
+  const [activeTab, setActiveTab] = useState<'opportunities' | 'assistant' | 'cio' | 'portfolio' | 'paper' | 'ranking' | 'research' | 'redteam' | 'tactical' | 'notifications' | 'screener' | 'technical' | 'filings' | 'agents' | 'risk'>('opportunities');
   const [sseConnected, setSseConnected] = useState<boolean>(false);
   const [sseStats, setSseStats] = useState<{ activeClients: number; totalBroadcasts: number; uptimeSeconds: number } | undefined>(undefined);
   const [universe, setUniverse] = useState<GlobalStockItem[]>([]);
@@ -1221,6 +1223,7 @@ export const GlobalStocksPage: React.FC = () => {
         <div style={{ display: 'flex', gap: 10, marginTop: 24, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: 16, flexWrap: 'wrap' }}>
           {[
             { id: 'opportunities', label: 'Top Opportunities & แผนซื้อขาย', icon: Target },
+            { id: 'assistant', label: '🤖 ผู้ช่วย AI-CIO (Dialectical Chat & Audio Briefing)', icon: Bot },
             { id: 'cio', label: 'AI-CIO Committee Chamber (มติ 41 Agents & ดีเบต)', icon: Scale },
             { id: 'portfolio', label: '🛡️ Portfolio & Risk Monitor (ความเสี่ยงพอร์ต & Circuit Breaker)', icon: ShieldAlert },
             { id: 'paper', label: '📊 Paper Trading & Backtest (พอร์ตจำลอง & Backtest)', icon: Play },
@@ -6432,6 +6435,18 @@ export const GlobalStocksPage: React.FC = () => {
           sseConnected={sseConnected}
           sseStats={sseStats}
           onRefreshData={fetchData}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* PHASE 11 TAB: AI-CIO DIALECTICAL ASSISTANT & AUDIO/TEXT BRIEFING */}
+      {/* ========================================================================= */}
+      {activeTab === 'assistant' && (
+        <AICIOChatAssistant
+          defaultTicker={selectedStock}
+          onSelectTicker={(ticker) => {
+            setSelectedStock(ticker);
+          }}
         />
       )}
 

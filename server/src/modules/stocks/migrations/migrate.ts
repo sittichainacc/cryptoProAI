@@ -438,6 +438,40 @@ CREATE TABLE IF NOT EXISTS public.notification_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_notify_logs_event ON public.notification_logs(event_type);
 CREATE INDEX IF NOT EXISTS idx_notify_logs_sent ON public.notification_logs(sent_at DESC);
+
+-- 25. CIO Chat Sessions (Phase 11)
+CREATE TABLE IF NOT EXISTS public.cio_chat_sessions (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cio_sessions_updated ON public.cio_chat_sessions(updated_at DESC);
+
+-- 26. CIO Chat Messages (Phase 11)
+CREATE TABLE IF NOT EXISTS public.cio_chat_messages (
+    id VARCHAR(64) PRIMARY KEY,
+    session_id VARCHAR(64) NOT NULL REFERENCES public.cio_chat_sessions(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cio_messages_session ON public.cio_chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_cio_messages_created ON public.cio_chat_messages(created_at ASC);
+
+-- 27. CIO Daily Investment Briefings (Phase 11)
+CREATE TABLE IF NOT EXISTS public.cio_daily_briefings (
+    id VARCHAR(64) PRIMARY KEY,
+    briefing_type VARCHAR(30) NOT NULL DEFAULT 'MORNING',
+    title VARCHAR(255) NOT NULL,
+    full_text TEXT NOT NULL,
+    audio_script TEXT NOT NULL,
+    metrics JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cio_briefings_type ON public.cio_daily_briefings(briefing_type);
+CREATE INDEX IF NOT EXISTS idx_cio_briefings_created ON public.cio_daily_briefings(created_at DESC);
 `;
 
 export async function runStockMigrations(): Promise<boolean> {
