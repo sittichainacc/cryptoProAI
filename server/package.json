@@ -8,7 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx tests/run_all_tests.ts"
+    "test": "tsx tests/run_all_tests.ts",
+    "migrate": "tsx scripts/run-all-migrations.ts"
   },
   "keywords": [
     "crypto",
