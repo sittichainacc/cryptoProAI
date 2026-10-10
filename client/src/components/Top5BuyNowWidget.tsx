@@ -106,6 +106,19 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
               >
                 {candidates.length} เหรียญผ่านเกณฑ์บังคับ
               </span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '20px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: 'var(--neon-cyan)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                }}
+              >
+                🇹🇭 Bitkub THB
+              </span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '3px 0 0 0' }}>
               คัดกรองเฉพาะเหรียญที่ R:R ≥ 1:2, สัญญาณกราฟไม่ Overextended, ไม่ใช่การไล่ราคา และอยู่ในตำแหน่ง Entry ที่เหมาะสม
@@ -247,7 +260,22 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   <CryptoIcon symbol={item.symbol} size={28} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{item.symbol}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {item.pair || `${item.symbol}/THB`}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          fontWeight: 800,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                          color: 'var(--neon-green-light)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        THB
+                      </span>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.name}</span>
                     </div>
                     <div style={{ fontSize: '10.5px', color: '#10B981', fontWeight: 600 }}>
@@ -257,6 +285,7 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>ราคา ({currency})</div>
                   <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
                     {currencyPrefix}{formattedPrice}
                   </div>
@@ -354,21 +383,21 @@ export const Top5BuyNowWidget: React.FC<Top5BuyNowWidgetProps> = ({
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🎯 โซนเข้า (Entry)</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🎯 โซนเข้า (Entry - THB)</div>
                     <div style={{ fontWeight: 700, color: '#34D399', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
                       {currencyPrefix}{formattedEntryMin} – {formattedEntryMax}
                     </div>
                   </div>
 
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🛑 ตัดขาดทุน (SL)</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🛑 ตัดขาดทุน (SL - THB)</div>
                     <div style={{ fontWeight: 700, color: '#F87171', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
                       {currencyPrefix}{formattedSL} (-{item.riskPct}%)
                     </div>
                   </div>
 
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🚀 เป้าแรก (TP1)</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>🚀 เป้าแรก (TP1 - THB)</div>
                     <div style={{ fontWeight: 700, color: '#60A5FA', marginTop: '2px', wordBreak: 'break-word', fontSize: '10.5px' }}>
                       {currencyPrefix}{formattedTP1} (+{item.rewardPct}%)
                     </div>

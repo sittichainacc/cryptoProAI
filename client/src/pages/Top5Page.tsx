@@ -291,9 +291,22 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                   >
                     11-MODEL CONSENSUS
                   </span>
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                      color: 'var(--neon-cyan)',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                    }}
+                  >
+                    🇹🇭 BITKUB THB PAIRS
+                  </span>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '5px 0 0 0' }}>
-                  แยกขาด 21 Decoupled Scores | ปรับน้ำหนักตาม 12 สภาวะตลาด | Bitkub Primary + Composite Global Price Index | LLM มีหน้าที่อธิบายเท่านั้น
+                  แยกขาด 21 Decoupled Scores | ปรับน้ำหนักตาม 12 สภาวะตลาด | Bitkub Primary (THB) + Composite Global Price Index | LLM มีหน้าที่อธิบายเท่านั้น
                 </p>
               </div>
             </div>
@@ -303,7 +316,7 @@ export const Top5Page: React.FC<Top5PageProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--text-muted)' }}>
               <div>คำนวณล่าสุด: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{lastFetchTime || '-'}</span></div>
-              <div style={{ color: 'var(--neon-green)', fontWeight: 600 }}>● Bitkub Universe + Global Telemetry</div>
+              <div style={{ color: 'var(--neon-green)', fontWeight: 600 }}>● Bitkub THB (เรท {data?.usdThbRate || 33.24} THB/USD)</div>
             </div>
 
             <button
@@ -740,8 +753,23 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                           )}
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
-                          <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{coin.symbol}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>
+                            {coin.pair || `${coin.symbol} / THB`}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                              color: 'var(--neon-green-light)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                            }}
+                          >
+                            🇹🇭 Bitkub THB
+                          </span>
                           <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{coin.name}</span>
                           {coin.sector && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>• {coin.sector}</span>}
                         </div>
@@ -750,6 +778,9 @@ export const Top5Page: React.FC<Top5PageProps> = ({
 
                     {/* Price & Change */}
                     <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                        ราคา ({currency === 'THB' ? 'THB' : currency})
+                      </div>
                       <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)' }}>
                         <PriceCell price={coin.price * multiplier} prefix={prefix} />
                       </div>
@@ -886,37 +917,37 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                     }}
                   >
                     <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>โซนเข้าซื้อ (Entry Zone)</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>โซนเข้าซื้อ (Entry Zone - THB)</span>
                       <strong style={{ color: 'var(--neon-cyan)', fontSize: '12.5px' }}>
-                        {prefix}{(coin.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })} – {prefix}{(coin.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                        {prefix}{(coin.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })} – {prefix}{(coin.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                       </strong>
                     </div>
 
                     <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>แนวรับ (S1 / S2)</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>แนวรับ (S1 / S2 - THB)</span>
                       <strong style={{ color: 'var(--text-primary)' }}>
-                        {prefix}{((coin.dynamicLevels?.support1 || coin.support) * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                        {prefix}{((coin.dynamicLevels?.support1 || coin.support) * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                       </strong>
                     </div>
 
                     <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>เป้า 1 (TP1) [R:R {coin.dynamicLevels?.rrTp1 || 2.2}]</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>เป้า 1 (TP1 - THB) [R:R {coin.dynamicLevels?.rrTp1 || 2.2}]</span>
                       <strong style={{ color: 'var(--neon-green-light)' }}>
-                        {prefix}{((coin.dynamicLevels?.tp1 || coin.target1) * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                        {prefix}{((coin.dynamicLevels?.tp1 || coin.target1) * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                       </strong>
                     </div>
 
                     <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>เป้า 2 (TP2) [R:R {coin.dynamicLevels?.rrTp2 || 3.5}]</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>เป้า 2 (TP2 - THB) [R:R {coin.dynamicLevels?.rrTp2 || 3.5}]</span>
                       <strong style={{ color: 'var(--neon-green-light)' }}>
-                        {prefix}{((coin.dynamicLevels?.tp2 || coin.target2) * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                        {prefix}{((coin.dynamicLevels?.tp2 || coin.target2) * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                       </strong>
                     </div>
 
                     <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>จุดตัดขาดทุน (Invalidation)</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>จุดตัดขาดทุน (Invalidation - THB)</span>
                       <strong style={{ color: 'var(--neon-red)' }}>
-                        {prefix}{(coin.invalidation * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                        {prefix}{(coin.invalidation * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                       </strong>
                     </div>
 
@@ -964,7 +995,7 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                             <span>แผน Trailing Stop (Section 40 — เลื่อนขึ้นเท่านั้น):</span>
                           </div>
                           <div style={{ color: 'var(--text-secondary)' }}>
-                            วิธี: <strong style={{ color: 'var(--text-primary)' }}>{coin.trailingStopPlan.stopType}</strong> | จุดขยับ: <strong style={{ color: '#A855F7' }}>{prefix}{(coin.trailingStopPlan.currentStopPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}</strong>
+                            วิธี: <strong style={{ color: 'var(--text-primary)' }}>{coin.trailingStopPlan.stopType}</strong> | จุดขยับ: <strong style={{ color: '#A855F7' }}>{prefix}{(coin.trailingStopPlan.currentStopPrice * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}</strong>
                           </div>
                           <div style={{ color: 'var(--text-muted)', fontSize: '10.5px' }}>
                             {coin.trailingStopPlan.recommendedAction}
@@ -1151,12 +1182,20 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                     {/* Coin Icon */}
                     <CryptoIcon symbol={opp.symbol} size={30} />
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-primary)' }}>{opp.symbol}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-primary)' }}>
+                          {opp.pair || `${opp.symbol} / THB`}
+                        </span>
+                        <span style={{ fontSize: '9.5px', padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--neon-green-light)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                          THB
+                        </span>
+                      </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{opp.sector || opp.leadLagRole}</div>
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>ราคา ({currency})</div>
                     <div style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-primary)' }}>
                       <PriceCell price={opp.price * multiplier} prefix={prefix} />
                     </div>
@@ -1308,8 +1347,23 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                     {/* Coin Icon */}
                     <CryptoIcon symbol={coin.symbol} size={42} />
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{coin.symbol}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>
+                          {coin.pair || `${coin.symbol} / THB`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                            color: 'var(--neon-green-light)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                          }}
+                        >
+                          🇹🇭 Bitkub THB
+                        </span>
                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{coin.name}</span>
                         <span style={{ fontSize: '11px', fontWeight: 800, padding: '2px 8px', borderRadius: '5px', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--neon-green)' }}>
                           BUY NOW SCORE: {coin.buyNowScore}p
@@ -1322,6 +1376,9 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                      ราคา ({currency === 'THB' ? 'THB' : currency})
+                    </div>
                     <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)' }}>
                       <PriceCell price={coin.price * multiplier} prefix={prefix} />
                     </div>
@@ -1345,27 +1402,27 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                   }}
                 >
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>Entry Zone</span>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>Entry Zone (THB)</span>
                     <strong style={{ color: 'var(--neon-cyan)', fontSize: '12.5px' }}>
-                      {prefix}{(coin.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })} – {prefix}{(coin.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                      {prefix}{(coin.entryZone.min * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })} – {prefix}{(coin.entryZone.max * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                     </strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>Stop Loss</span>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>Stop Loss (THB)</span>
                     <strong style={{ color: 'var(--neon-red)' }}>
-                      {prefix}{(coin.stopLoss * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                      {prefix}{(coin.stopLoss * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                     </strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>TP1 ({coin.rrTp1 ? `R:R ${coin.rrTp1}` : 'R:R 2.2'})</span>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>TP1 (THB) ({coin.rrTp1 ? `R:R ${coin.rrTp1}` : 'R:R 2.2'})</span>
                     <strong style={{ color: 'var(--neon-green)' }}>
-                      {prefix}{(coin.tp1 * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                      {prefix}{(coin.tp1 * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                     </strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>TP2</span>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '10px' }}>TP2 (THB)</span>
                     <strong style={{ color: 'var(--neon-green)' }}>
-                      {prefix}{(coin.tp2 * multiplier).toLocaleString(undefined, { maximumFractionDigits: coin.price < 1 ? 4 : 2 })}
+                      {prefix}{(coin.tp2 * multiplier).toLocaleString(undefined, { maximumFractionDigits: (coin.price * multiplier) < 1 ? 4 : 2 })}
                     </strong>
                   </div>
                   <div>
@@ -1467,7 +1524,7 @@ export const Top5Page: React.FC<Top5PageProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--neon-amber)' }}>#{item.rank}</span>
                         <div>
-                          <div style={{ fontWeight: 800, fontSize: '12px', color: 'var(--text-primary)' }}>{item.symbol}</div>
+                          <div style={{ fontWeight: 800, fontSize: '12px', color: 'var(--text-primary)' }}>{item.pair || `${item.symbol}/THB`}</div>
                           <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.role}</div>
                         </div>
                       </div>

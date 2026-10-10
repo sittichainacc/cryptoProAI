@@ -379,8 +379,9 @@ export class QuantV3Engine {
     ethTicker?: TickerData;
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
+    usdThbRate?: number;
   }): QuantV3FullEvaluation {
-    const { coins, btcTicker, ethTicker, kpis, news = [] } = params;
+    const { coins, btcTicker, ethTicker, kpis, news = [], usdThbRate = 33.24 } = params;
 
     // SECTION 8: Market Regime
     const regimeData = this.detectMarketRegime({ kpis, btcTicker, ethTicker, coins });
@@ -424,7 +425,9 @@ export class QuantV3Engine {
     for (const item of eligibleCoins) {
       const coin = item.coin;
       const sym = coin.symbol.toUpperCase();
+      const pair = `${sym}/THB`;
       const price = coin.price;
+      const priceThb = Number((price * usdThbRate).toFixed(price * usdThbRate < 0.01 ? 6 : price * usdThbRate < 1 ? 4 : 2));
       const change24h = coin.change24h;
       const change7d = coin.change7d;
       const volume24h = coin.volume24h;
@@ -801,14 +804,20 @@ export class QuantV3Engine {
       ).toFixed(1));
 
       // Construct Top Overall Candidate Item
+      const tp1Thb = Number((tp1 * usdThbRate).toFixed(tp1 * usdThbRate < 1 ? 4 : 2));
+      const invalidationThb = Number((invalidation * usdThbRate).toFixed(invalidation * usdThbRate < 1 ? 4 : 2));
+
       const candidateItem: Top5CandidateItem = {
         rank: 1,
         role: 'Best Overall',
         roleTh: '',
         badgeColor: '#F59E0B',
         symbol: sym,
+        pair,
         name: coin.name || sym,
         price,
+        priceThb,
+        denominatedCurrency: 'THB',
         change24h,
         change7d,
         volume24h,
@@ -863,7 +872,7 @@ export class QuantV3Engine {
           `จุดเข้าซื้อสมดุล (Entry Score ${entryScore}/100) R:R คุ้มค่า ${riskReward}`,
           isUnlockRisk ? 'มีรอบปลดเหรียญที่ต้องระวัง' : 'ไม่มีแรงกดดันจากการปลดเหรียญรอบใหญ่ใน 30 วันข้างหน้า',
         ],
-        aiSummaryTh: `${sym} ผ่านเกณฑ์ Quant V3 คะแนนรวม ${finalScore}/100 (คุณภาพ ${coinQualityScore}p • โอกาส ${opportunityScore}p • จุดเข้า ${entryScore}p) สถานะ [${entryStatus}] สภาวะตลาด [${regimeData.regimeTh}] เป้าหมายแรก ${tp1} จุดตัดขาดทุนชัดเจนที่ ${invalidation}`,
+        aiSummaryTh: `${pair} ผ่านเกณฑ์ Quant V3 คะแนนรวม ${finalScore}/100 (คุณภาพ ${coinQualityScore}p • โอกาส ${opportunityScore}p • จุดเข้า ${entryScore}p) สถานะ [${entryStatus}] สภาวะตลาด [${regimeData.regimeTh}] เป้าหมายแรก ฿${tp1Thb.toLocaleString()} จุดตัดขาดทุนชัดเจนที่ ฿${invalidationThb.toLocaleString()} (Bitkub THB)`,
         confidence: confidenceScore >= 85 ? 'High' : confidenceScore >= 70 ? 'Medium' : 'Low',
         freshness: 'Quant V3 Live (< 30s)',
         timestamp: new Date().toISOString(),
@@ -876,8 +885,11 @@ export class QuantV3Engine {
         opportunityItems.push({
           rank: 0,
           symbol: sym,
+          pair,
           name: coin.name || sym,
           price,
+          priceThb,
+          denominatedCurrency: 'THB',
           opportunityScore,
           breakoutQualityScore,
           earlyOpportunityScore,
@@ -932,8 +944,11 @@ export class QuantV3Engine {
         buyNowPassedItems.push({
           rank: 0,
           symbol: sym,
+          pair,
           name: coin.name || sym,
           price,
+          priceThb,
+          denominatedCurrency: 'THB',
           buyNowScore,
           coinQualityScore,
           opportunityScore,
@@ -1059,6 +1074,8 @@ export class QuantV3Engine {
         dataFreshness: 'Live Feed (< 30s)',
       },
       evaluatedTotal: eligibleCoins.length,
+      denominatedCurrency: 'THB',
+      usdThbRate,
     };
   }
 

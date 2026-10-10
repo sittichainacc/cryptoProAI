@@ -518,6 +518,7 @@ export class MarketStore {
         trendTh: coin.trend || 'แนวโน้มแข็งแรง',
         risk: coin.riskLevel || 'Medium',
         colorType,
+        pair: `${coin.symbol}/THB`,
       };
     };
 
@@ -1057,11 +1058,11 @@ export class MarketStore {
         timestamp: new Date(now - 120 * 60000).toISOString(),
         timeLabel: '2 ชม. ที่แล้ว',
         top5: [
-          { rank: 1, symbol: 'SOL', finalScore: 92.4, role: 'Best Overall', change24h: 3.2, movement: 'SAME' },
-          { rank: 2, symbol: 'LINK', finalScore: 89.8, role: 'Best Early Uptrend', change24h: 4.1, movement: 'UP', previousRank: 3 },
-          { rank: 3, symbol: 'SUI', finalScore: 88.5, role: 'Best Breakout', change24h: 6.8, movement: 'DOWN', previousRank: 2 },
-          { rank: 4, symbol: 'AAVE', finalScore: 86.7, role: 'Best Momentum', change24h: 2.5, movement: 'SAME' },
-          { rank: 5, symbol: 'NEAR', finalScore: 85.0, role: 'Best Risk/Reward', change24h: 1.8, movement: 'NEW' },
+          { rank: 1, symbol: 'SOL', pair: 'SOL/THB', finalScore: 92.4, role: 'Best Overall', change24h: 3.2, movement: 'SAME' },
+          { rank: 2, symbol: 'LINK', pair: 'LINK/THB', finalScore: 89.8, role: 'Best Early Uptrend', change24h: 4.1, movement: 'UP', previousRank: 3 },
+          { rank: 3, symbol: 'SUI', pair: 'SUI/THB', finalScore: 88.5, role: 'Best Breakout', change24h: 6.8, movement: 'DOWN', previousRank: 2 },
+          { rank: 4, symbol: 'AAVE', pair: 'AAVE/THB', finalScore: 86.7, role: 'Best Momentum', change24h: 2.5, movement: 'SAME' },
+          { rank: 5, symbol: 'NEAR', pair: 'NEAR/THB', finalScore: 85.0, role: 'Best Risk/Reward', change24h: 1.8, movement: 'NEW' },
         ],
       },
       {
@@ -1069,11 +1070,11 @@ export class MarketStore {
         timestamp: new Date(now - 60 * 60000).toISOString(),
         timeLabel: '1 ชม. ที่แล้ว',
         top5: [
-          { rank: 1, symbol: 'LINK', finalScore: 93.1, role: 'Best Overall', change24h: 4.8, movement: 'UP', previousRank: 2 },
-          { rank: 2, symbol: 'SOL', finalScore: 91.5, role: 'Best Early Uptrend', change24h: 2.8, movement: 'DOWN', previousRank: 1 },
-          { rank: 3, symbol: 'SUI', finalScore: 89.2, role: 'Best Breakout', change24h: 7.2, movement: 'SAME', previousRank: 3 },
-          { rank: 4, symbol: 'RENDER', finalScore: 87.4, role: 'Best Momentum', change24h: 5.1, movement: 'NEW' },
-          { rank: 5, symbol: 'AAVE', finalScore: 86.2, role: 'Best Risk/Reward', change24h: 2.1, movement: 'DOWN', previousRank: 4 },
+          { rank: 1, symbol: 'LINK', pair: 'LINK/THB', finalScore: 93.1, role: 'Best Overall', change24h: 4.8, movement: 'UP', previousRank: 2 },
+          { rank: 2, symbol: 'SOL', pair: 'SOL/THB', finalScore: 91.5, role: 'Best Early Uptrend', change24h: 2.8, movement: 'DOWN', previousRank: 1 },
+          { rank: 3, symbol: 'SUI', pair: 'SUI/THB', finalScore: 89.2, role: 'Best Breakout', change24h: 7.2, movement: 'SAME', previousRank: 3 },
+          { rank: 4, symbol: 'RENDER', pair: 'RENDER/THB', finalScore: 87.4, role: 'Best Momentum', change24h: 5.1, movement: 'NEW' },
+          { rank: 5, symbol: 'AAVE', pair: 'AAVE/THB', finalScore: 86.2, role: 'Best Risk/Reward', change24h: 2.1, movement: 'DOWN', previousRank: 4 },
         ],
       },
       {
@@ -1083,6 +1084,7 @@ export class MarketStore {
         top5: (this.top5Candidates.length > 0 ? this.top5Candidates : []).map(item => ({
           rank: item.rank,
           symbol: item.symbol,
+          pair: item.pair || `${item.symbol}/THB`,
           finalScore: item.finalScore,
           role: item.role,
           change24h: item.change24h,
@@ -1114,6 +1116,7 @@ export class MarketStore {
       btcTicker,
       kpis,
       news: this.news,
+      usdThbRate: this.usdThbRate || 33.24,
     });
 
     const previousMap = new Map<string, number>();
@@ -1163,6 +1166,7 @@ export class MarketStore {
           return {
             rank: c.rank,
             symbol: c.symbol,
+            pair: c.pair || `${c.symbol}/THB`,
             finalScore: c.finalScore,
             role: c.role,
             change24h: c.change24h,
@@ -1194,6 +1198,8 @@ export class MarketStore {
 
     return {
       top5: this.top5Candidates,
+      denominatedCurrency: 'THB',
+      usdThbRate: this.usdThbRate || 33.24,
       marketContext: this.lastMarketContext || {
         btcTrend,
         btcTrendTh,

@@ -152,6 +152,7 @@ export interface Top3OverallItem {
   trendTh: string;
   risk: RiskLevel;
   colorType: 'gold' | 'silver' | 'bronze';
+  pair?: string;
 }
 
 export interface AlertItem {
@@ -714,8 +715,11 @@ export interface TrailingStopPlan {
 export interface QuantV3OpportunityItem {
   rank: number;
   symbol: string;
+  pair?: string;
   name: string;
   price: number;
+  priceThb?: number;
+  denominatedCurrency?: 'THB' | 'USDT';
   sector?: string;
   opportunityScore: number;
   breakoutQualityScore: number;
@@ -756,9 +760,12 @@ export interface Top5CandidateItem {
   roleTh: string;
   badgeColor: string;
   symbol: string;
+  pair?: string;
   name: string;
   sector?: string;
   price: number;
+  priceThb?: number;
+  denominatedCurrency?: 'THB' | 'USDT';
   change24h: number;
   change7d: number;
   volume24h: number;
@@ -845,6 +852,7 @@ export interface Top5SnapshotHistory {
   top5: {
     rank: number;
     symbol: string;
+    pair?: string;
     finalScore: number;
     role: string;
     change24h: number;
@@ -855,6 +863,8 @@ export interface Top5SnapshotHistory {
 
 export interface Top5Response {
   top5: Top5CandidateItem[];
+  denominatedCurrency?: 'THB' | 'USDT';
+  usdThbRate?: number;
   marketContext: {
     btcTrend: 'bull' | 'bear' | 'neutral';
     btcTrendTh: string;
@@ -882,8 +892,11 @@ export type BuyNowStatus = 'STRONG BUY NOW' | 'BUY NOW' | 'SCALE IN';
 export interface BuyNowCandidateItem {
   rank: number;
   symbol: string;
+  pair?: string;
   name: string;
   price: number;
+  priceThb?: number;
+  denominatedCurrency?: 'THB' | 'USDT';
   buyNowScore: number;       // 80 - 100
   coinQualityScore: number;   // 0 - 100
   opportunityScore: number;   // 0 - 100
@@ -948,6 +961,8 @@ export interface QuantV3FullEvaluation {
   opportunities: QuantV3OpportunityItem[];
   marketContext: Top5Response['marketContext'];
   evaluatedTotal: number;
+  denominatedCurrency?: 'THB' | 'USDT';
+  usdThbRate?: number;
 }
 
 export interface QuantV3ApiResponse {
@@ -999,6 +1014,8 @@ export interface BuyNowResponse {
   marketMessage?: string;
   evaluatedTotal: number;
   timestamp: string;
+  denominatedCurrency?: 'THB' | 'USDT';
+  usdThbRate?: number;
 }
 
 // ==========================================

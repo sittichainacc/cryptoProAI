@@ -120,8 +120,21 @@ export const Top3OverallCard: React.FC<Top3OverallCardProps> = ({
 
               {/* Coin Details */}
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '17px', fontWeight: 800 }}>{item.symbol}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '17px', fontWeight: 800 }}>{item.pair || `${item.symbol} / THB`}</span>
+                  <span
+                    style={{
+                      fontSize: '9.5px',
+                      fontWeight: 800,
+                      padding: '1px 5px',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                      color: 'var(--neon-green-light)',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                    }}
+                  >
+                    THB
+                  </span>
                   <PriceCell
                     price={item.price * multiplier}
                     prefix={prefix}

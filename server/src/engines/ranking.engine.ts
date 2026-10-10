@@ -21,12 +21,15 @@ export class RankingEngine {
     btcTicker?: TickerData;
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
+    usdThbRate?: number;
   }): { 
     top5: Top5CandidateItem[]; 
     buyNowCandidates: any[]; 
     opportunities: QuantV3OpportunityItem[];
     marketContext: Top5Response['marketContext']; 
-    totalEvaluated: number 
+    totalEvaluated: number;
+    denominatedCurrency?: 'THB' | 'USDT';
+    usdThbRate?: number;
   } {
     const result = QuantV3Engine.evaluateUniverse(params);
     return {
@@ -35,6 +38,8 @@ export class RankingEngine {
       opportunities: result.opportunities,
       marketContext: result.marketContext,
       totalEvaluated: result.evaluatedTotal,
+      denominatedCurrency: 'THB',
+      usdThbRate: params.usdThbRate || 33.24,
     };
   }
 
@@ -47,6 +52,7 @@ export class RankingEngine {
     btcTicker?: TickerData;
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
+    usdThbRate?: number;
   }): BuyNowResponse {
     const result = QuantV3Engine.evaluateUniverse(params);
     const isMarketBlocked = result.marketContext.favoredStrategy === 'Capital Preservation' || 
@@ -70,6 +76,8 @@ export class RankingEngine {
       marketMessage,
       evaluatedTotal: result.evaluatedTotal,
       timestamp: new Date().toISOString(),
+      denominatedCurrency: 'THB',
+      usdThbRate: params.usdThbRate || 33.24,
     };
   }
 
@@ -81,6 +89,7 @@ export class RankingEngine {
     btcTicker?: TickerData;
     kpis?: MarketOverviewKPIs | null;
     news?: CryptoNewsItem[];
+    usdThbRate?: number;
   }): QuantV3OpportunityItem[] {
     const result = QuantV3Engine.evaluateUniverse(params);
     return result.opportunities;
