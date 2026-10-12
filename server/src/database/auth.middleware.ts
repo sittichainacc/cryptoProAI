@@ -30,13 +30,19 @@ export async function resolveUserId(req: Request): Promise<string> {
     if (res.rows.length > 0) return res.rows[0].id;
   }
 
-  // 3. Fallback to default guest user 'crypto_guest'
+  // 3. Fallback (Bypass Mode): Default to active Admin user 'totokung' or any admin in DB
+  const adminRes = await pool.query<{ id: string }>(
+    "SELECT id FROM public.user_profiles WHERE username = 'totokung' OR role = 'admin' ORDER BY created_at ASC LIMIT 1"
+  );
+  if (adminRes.rows.length > 0) return adminRes.rows[0].id;
+
+  // 4. Fallback to default guest user 'crypto_guest'
   const guestRes = await pool.query<{ id: string }>(
     "SELECT id FROM public.user_profiles WHERE username = 'crypto_guest' LIMIT 1"
   );
   if (guestRes.rows.length > 0) return guestRes.rows[0].id;
 
-  // 4. Ultimate fallback to first available active user
+  // 5. Ultimate fallback to first available active user
   const firstUser = await pool.query<{ id: string }>(
     'SELECT id FROM public.user_profiles ORDER BY created_at ASC LIMIT 1'
   );
@@ -44,17 +50,43 @@ export async function resolveUserId(req: Request): Promise<string> {
 }
 
 /**
- * Get full User Context from request
+ * Get full User Context from request (Temporarily bypassed with full Admin privileges)
  */
 export async function resolveUserContext(req: Request): Promise<UserContext | null> {
   const userId = await resolveUserId(req);
-  if (!userId) return null;
+  if (!userId) {
+    return {
+      id: '00000000-0000-0000-0000-000000000001',
+      username: 'totokung',
+      role: 'admin',
+      max_watchlists: 999,
+      max_alerts: 999,
+      daily_api_quota: 99999,
+    };
+  }
 
   const res = await pool.query<UserContext>(
     'SELECT id, username, role, max_watchlists, max_alerts, daily_api_quota FROM public.user_profiles WHERE id = $1',
     [userId]
   );
-  return res.rows[0] || null;
+  if (res.rows[0]) {
+    // ปิดระบบจำกัดสิทธิ์ชั่วคราว: มอบสิทธิ์ Admin และโควต้าสูงสุดให้ใช้งานได้ครบทุกส่วน
+    return {
+      ...res.rows[0],
+      role: 'admin',
+      max_watchlists: 999,
+      max_alerts: 999,
+      daily_api_quota: 99999,
+    };
+  }
+  return {
+    id: userId,
+    username: 'totokung',
+    role: 'admin',
+    max_watchlists: 999,
+    max_alerts: 999,
+    daily_api_quota: 99999,
+  };
 }
 
 export const ROLE_HIERARCHY: Record<string, number> = {
@@ -66,34 +98,22 @@ export const ROLE_HIERARCHY: Record<string, number> = {
 };
 
 /**
- * Middleware to enforce minimum role tier requirement
+ * Middleware to enforce minimum role tier requirement (Temporarily bypassed for open access)
  */
-export function requireMinRole(minRole: 'free' | 'gold' | 'premium' | 'platinum' | 'admin') {
-  return async (req: Request, res: any, next: any) => {
+export function requireMinRole(_minRole: 'free' | 'gold' | 'premium' | 'platinum' | 'admin') {
+  return async (req: Request, _res: any, next: any) => {
     try {
+      // ปิดชั่วคราว: อนุญาตให้ทุกส่วนเข้าถึงได้ทันทีโดยไม่ต้อง login หรือตรวจสอบระดับสมาชิก
       const user = await resolveUserContext(req);
-      const userRole = user?.role || 'free';
-      const userLevel = ROLE_HIERARCHY[userRole] ?? 1;
-      const requiredLevel = ROLE_HIERARCHY[minRole] ?? 1;
-
-      if (userLevel < requiredLevel) {
-        return res.status(403).json({
-          success: false,
-          error: `สิทธิ์การเข้าถึงไม่เพียงพอ: ฟังก์ชันนี้ต้องการสมาชิกระดับ ${minRole.toUpperCase()} ขึ้นไป`,
-          requiredRole: minRole,
-          currentRole: userRole,
-        });
-      }
-
       (req as any).user = user;
       next();
-    } catch (err: any) {
-      return res.status(500).json({ success: false, error: err.message });
+    } catch (_err: any) {
+      next();
     }
   };
 }
 
 /**
- * Middleware to enforce Super-Admin access only
+ * Middleware to enforce Super-Admin access only (Temporarily bypassed)
  */
 export const requireAdmin = requireMinRole('admin');

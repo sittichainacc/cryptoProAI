@@ -87,11 +87,12 @@ export const App: React.FC = () => {
   const [currency, setCurrency] = useState<'THB' | 'USDT'>('THB');
   const [userRole, setUserRole] = useState<'admin' | 'platinum' | 'premium' | 'gold' | 'free'>(() => {
     const saved = localStorage.getItem('cryptopro_auth_role');
-    if (saved === 'admin') return 'admin';
     if (saved === 'platinum') return 'platinum';
     if (saved === 'premium') return 'premium';
     if (saved === 'gold') return 'gold';
-    return 'free';
+    if (saved === 'free') return 'free';
+    // ปิด login ชั่วคราว: ค่าเริ่มต้นเป็น admin เพื่อให้เข้าถึงได้ทุกฟังก์ชัน
+    return 'admin';
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -395,36 +396,17 @@ export const App: React.FC = () => {
     api.getRecentAlerts().then((al) => setAlerts(Array.isArray(al) ? al : [])).catch(console.error);
   };
 
-  // เมนู FOCUS เฉพาะ Admin — ถ้าไม่ใช่ Admin ให้กลับหน้า Home
-  useEffect(() => {
-    if (userRole !== 'admin' && (activeSidebarTab === 'focus' || activeSidebarTab === 'user-management')) setActiveSidebarTab('dashboard');
-  }, [userRole, activeSidebarTab]);
-
   const handleLogout = () => {
-    setUserRole('free');
+    setUserRole('admin');
     localStorage.removeItem('cryptopro_auth_role');
     localStorage.removeItem('cryptopro_auth_user');
-    // Reload guest watchlist and alerts from Supabase PostgreSQL
     api.getWatchlist().then((wl) => setWatchlist(Array.isArray(wl) ? wl : [])).catch(console.error);
     api.getRecentAlerts().then((al) => setAlerts(Array.isArray(al) ? al : [])).catch(console.error);
   };
 
-  // ─── Tier-based access helper ──────────────────────────────────────────────
-  // free: Home + Gold Signal + Watchlist (5) + Alerts (3)
-  // gold: + Market, Screener, Technical Chart, News, Watchlist (15), Alerts (10)
-  // premium: + AI Signals, Reports, Strategy, Settings, Watchlist (30), Alerts (25)
-  // platinum: + Top5 Ultimate, Top5 Premium, Top5, Portfolio, Analysis, Whale Radar, Watchlist (100), Alerts (100)
-  // admin: ALL including Focus Cockpit, User Management Console, Watchlist (999), Alerts (999)
-  const canAccess = (tab: string): boolean => {
-    if (userRole === 'admin') return true;
-    const freeAccess = ['dashboard', 'global-stocks', 'gold-signal', 'watchlist', 'alerts'];
-    const goldAccess = [...freeAccess, 'market', 'screener', 'technical', 'news'];
-    const premiumAccess = [...goldAccess, 'signals', 'reports', 'strategy', 'settings'];
-    const platinumAccess = [...premiumAccess, 'top5-ultimate', 'top5-premium', 'top5', 'portfolio', 'analysis', 'whale-radar'];
-    if (userRole === 'platinum') return platinumAccess.includes(tab);
-    if (userRole === 'premium') return premiumAccess.includes(tab);
-    if (userRole === 'gold') return goldAccess.includes(tab);
-    return freeAccess.includes(tab);
+  // ปิดระบบ login ชั่วคราว: เปิดให้เข้าได้ทุกเมนู
+  const canAccess = (_tab: string): boolean => {
+    return true;
   };
 
   const getRequiredTier = (tab: string): string => {

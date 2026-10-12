@@ -72,9 +72,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const ROLE_RANK: Record<string, number> = { free: 0, gold: 1, premium: 2, platinum: 3, admin: 4 };
-  const userRank = ROLE_RANK[userRole] ?? 0;
+  const userRank = 4; // Bypassed: full access
 
-  const isRoleUnlocked = (minRole: string) => userRank >= (ROLE_RANK[minRole] ?? 0);
+  // ปิดระบบจำกัดสิทธิ์ชั่วคราว: ปลดล็อกเมนูทั้งหมด
+  const isRoleUnlocked = (_minRole: string) => true;
 
   const getTierLabel = (minRole: string) => {
     if (minRole === 'admin') return 'Admin เท่านั้น';

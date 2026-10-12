@@ -1,15 +1,29 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
+
+// Ensure .env is loaded even if run from project root or subdirectories
+if (!process.env.DB_HOST && !process.env.DATABASE_URL) {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    dotenv.config({ path: path.resolve(__dirname, '../../../server/.env') });
+    dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+  } catch (_e) {
+    // ignore
+  }
+}
 
 const { Pool } = pg;
 
 export const dbConfig = {
-  host: process.env.DB_HOST || 'db.sfotlpjydhdpcmkooqwr.supabase.co',
+  host: process.env.DB_HOST || 'aws-0-ap-northeast-2.pooler.supabase.com',
   port: parseInt(process.env.DB_PORT || '5432', 10),
   database: process.env.DB_NAME || 'postgres',
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'postgres.sfotlpjydhdpcmkooqwr',
   password: process.env.DB_PASSWORD || 'vhV2AHJp#k#g27%',
   ssl: {
     rejectUnauthorized: false,

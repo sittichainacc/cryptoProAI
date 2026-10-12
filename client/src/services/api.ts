@@ -49,9 +49,12 @@ export function getAuthHeaders(customHeaders: Record<string, string> = {}): Reco
       if (user?.username) {
         headers['x-username'] = user.username;
       }
+    } else {
+      // ปิด login ชั่วคราว: ส่ง header ผู้ใช้ admin (totokung) ให้ backend ทำงานได้เต็มสิทธิ์
+      headers['x-username'] = 'totokung';
     }
   } catch (e) {
-    // ignore
+    headers['x-username'] = 'totokung';
   }
   return headers;
 }

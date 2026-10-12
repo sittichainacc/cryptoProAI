@@ -1,12 +1,27 @@
 import pg from 'pg';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+dotenv.config();
+if (!process.env.DB_HOST && !process.env.DATABASE_URL) {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    dotenv.config({ path: path.resolve(__dirname, '.env') });
+    dotenv.config({ path: path.resolve(__dirname, '../server/.env') });
+  } catch (_e) {
+    // ignore
+  }
+}
+
 const { Pool } = pg;
 
 const pool = new Pool({
-  host: 'db.sfotlpjydhdpcmkooqwr.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'vhV2AHJp#k#g27%',
+  host: process.env.DB_HOST || 'aws-0-ap-northeast-2.pooler.supabase.com',
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+  database: process.env.DB_NAME || 'postgres',
+  user: process.env.DB_USER || 'postgres.sfotlpjydhdpcmkooqwr',
+  password: process.env.DB_PASSWORD || 'vhV2AHJp#k#g27%',
   ssl: { rejectUnauthorized: false },
 });
 

@@ -63,9 +63,9 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({
       return null;
     }
   })();
-  const userRole = currentUser?.role || 'free';
-  const maxQuota = currentUser?.maxWatchlists || (userRole === 'admin' ? 999 : userRole === 'platinum' ? 100 : userRole === 'premium' ? 30 : userRole === 'gold' ? 15 : 5);
-  const roleBadgeColor = userRole === 'admin' ? '#F43F5E' : userRole === 'platinum' ? '#A78BFA' : userRole === 'premium' ? '#38BDF8' : userRole === 'gold' ? '#F59E0B' : '#94A3B8';
+  const userRole = currentUser?.role || 'admin';
+  const maxQuota = currentUser?.maxWatchlists || 999;
+  const roleBadgeColor = '#F43F5E';
 
   const handleOpenEdit = (coin: TickerData) => {
     setEditingCoin(coin);

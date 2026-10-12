@@ -41,7 +41,7 @@ app.get(['/api/db/status', '/db/status'], async (_req, res) => {
     res.json({
       connected: true,
       provider: 'Supabase PostgreSQL',
-      host: process.env.DB_HOST || 'db.sfotlpjydhdpcmkooqwr.supabase.co',
+      host: process.env.DB_HOST || 'aws-0-ap-northeast-2.pooler.supabase.com',
       database: process.env.DB_NAME || 'postgres',
       time: result.rows[0].current_time,
       version: result.rows[0].version,
